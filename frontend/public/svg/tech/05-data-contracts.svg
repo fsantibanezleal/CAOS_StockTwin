@@ -1,94 +1,82 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" class="arch-svg" role="img" aria-label="The design: two data contracts and the lane gate">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 510" width="880" class="arch-svg" role="img">
   <style>
-    .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
-    .arch-svg .mono { font-family: var(--font-mono, ui-monospace, Consolas, monospace); }
-    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1.2; }
-    .arch-svg .bx-in { stroke: var(--color-accent); }
-    .arch-svg .bx-out { stroke: var(--color-good); }
-    .arch-svg .bx-gate { stroke: var(--color-warn); }
-    .arch-svg .grp { fill: none; stroke: var(--color-border); stroke-dasharray: 5 4; }
-    .arch-svg .ttl { fill: var(--color-fg); font-size: 13px; font-weight: 700; }
-    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10px; }
-    .arch-svg .it { fill: var(--color-fg); font-size: 10.5px; }
-    .arch-svg .cd { fill: var(--color-accent); font-size: 9.5px; }
-    .arch-svg .key { fill: var(--color-good); font-size: 9.5px; }
-    .arch-svg .mu { fill: var(--color-fg-subtle); font-size: 10px; }
-    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.5; }
-    .arch-svg .lbl { fill: var(--color-fg-subtle); font-size: 9.5px; }
+    .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
+    .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
+    .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
+    .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
+    .mono { font: 10px ui-monospace, monospace; fill: var(--color-accent); }
+    .mu  { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); font-style: italic; }
+    .lbl { font: 9.5px system-ui, sans-serif; fill: var(--color-fg-faint); }
+    .hdr { font: 700 11px system-ui, sans-serif; fill: var(--color-fg-faint); letter-spacing: 0.06em; }
+    .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.5; marker-end: url(#a); }
+    .flow-hi { fill: none; stroke: var(--color-accent); stroke-width: 1.8; marker-end: url(#ah); }
   </style>
   <defs>
-    <marker id="dc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-fg-faint)"/>
+    </marker>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
     </marker>
   </defs>
-
-  <text class="ttl" x="22" y="30">The design, two data contracts + the lane gate</text>
-  <text class="sub" x="22" y="47">a contract is a validated schema; everything in and out of the pipeline passes one, so the app is bring-your-own-data</text>
-
-  <!-- Contract 1: ingestion -->
-  <rect class="bx bx-in" x="14" y="68" width="252" height="220" rx="11"/>
-  <text class="it" x="30" y="92" style="font-weight:700">Contract 1 · Ingestion</text>
-  <text class="cd mono" x="30" y="108">io/schema.py · io/contract.py</text>
-  <text class="mu" x="30" y="128">what a valid INPUT case looks like:</text>
-  <rect class="bx" x="30" y="138" width="220" height="40" rx="6"/>
-  <text class="it" x="42" y="156">field names + dtypes + units</text>
-  <text class="mu" x="42" y="170">domain quantities, not pixels</text>
-  <rect class="bx" x="30" y="184" width="220" height="40" rx="6"/>
-  <text class="it" x="42" y="202">range / NaN / outlier guards</text>
-  <text class="mu" x="42" y="216">rejects malformed cases early</text>
-  <rect class="bx" x="30" y="230" width="220" height="44" rx="6"/>
-  <text class="it" x="42" y="248">accepts built-in OR your data</text>
-  <text class="key mono" x="42" y="264">data/examples/*.csv</text>
-
-  <!-- Pipeline + gate -->
-  <rect class="bx bx-gate" x="324" y="68" width="252" height="220" rx="11"/>
-  <text class="it" x="340" y="92" style="font-weight:700">Pipeline + lane gate</text>
-  <text class="cd mono" x="340" y="108">core/gate.py · pipeline.py</text>
-  <rect class="bx" x="340" y="124" width="220" height="42" rx="6"/>
-  <text class="it" x="352" y="142">staged, deterministic</text>
-  <text class="cd mono" x="352" y="158">stages/*.py · core/trace.py</text>
-  <rect class="bx" x="340" y="172" width="220" height="42" rx="6"/>
-  <text class="it" x="352" y="190">lane gate: default vs retrain</text>
-  <text class="mu" x="352" y="206">numpy-light unless --retrain</text>
-  <rect class="bx" x="340" y="220" width="220" height="54" rx="6"/>
-  <text class="it" x="352" y="238">manifest = provenance</text>
-  <text class="cd mono" x="352" y="254">core/manifest.py</text>
-  <text class="mu" x="352" y="268">seeds, inputs, hashes, reproducible</text>
-
-  <!-- Contract 2: artifact -->
-  <rect class="bx bx-out" x="634" y="68" width="252" height="220" rx="11"/>
-  <text class="it" x="650" y="92" style="font-weight:700">Contract 2 · Artifact</text>
-  <text class="cd mono" x="650" y="108">data/derived/ · manifests</text>
-  <text class="mu" x="650" y="128">what a valid OUTPUT looks like:</text>
-  <rect class="bx" x="650" y="138" width="220" height="40" rx="6"/>
-  <text class="it" x="662" y="156">per-case results + metrics</text>
-  <text class="key mono" x="662" y="170">case-results.json</text>
-  <rect class="bx" x="650" y="184" width="220" height="40" rx="6"/>
-  <text class="it" x="662" y="202">model index (onnx + meta)</text>
-  <text class="key mono" x="662" y="216">manifests/index.json</text>
-  <rect class="bx" x="650" y="230" width="220" height="44" rx="6"/>
-  <text class="it" x="662" y="248">the SAME shape the web reads</text>
-  <text class="key mono" x="662" y="264">contract.types.ts (mirror)</text>
-
-  <path class="flow" d="M266,178 H322" marker-end="url(#dc-arrow)"/>
-  <path class="flow" d="M576,178 H632" marker-end="url(#dc-arrow)"/>
-  <text class="lbl" x="272" y="170">validate</text>
-  <text class="lbl" x="582" y="170">emit + validate</text>
-
-  <!-- cases by category + mirror -->
-  <rect class="grp" x="14" y="312" width="430" height="142" rx="10"/>
-  <text class="it" x="30" y="334" style="font-weight:700">Cases by category</text>
-  <text class="cd mono" x="30" y="350">cases/&lt;domain&gt;_cases.py · registry.py</text>
-  <text class="mu" x="30" y="372">• control / degenerate, sanity anchors</text>
-  <text class="mu" x="30" y="392">• canonical regimes, the science range</text>
-  <text class="mu" x="30" y="412">• real-data, sourced, labelled honestly</text>
-  <text class="mu" x="30" y="438">each case carries its own units + provenance</text>
-
-  <rect class="grp" x="460" y="312" width="426" height="142" rx="10"/>
-  <text class="it" x="476" y="334" style="font-weight:700">The mirror that gates the build</text>
-  <text class="mu" x="476" y="356">the TS type mirrors Contract 2 exactly;</text>
-  <text class="mu" x="476" y="374">if the pipeline changes the artifact shape</text>
-  <text class="mu" x="476" y="392">and the mirror is not updated, tsc fails.</text>
-  <text class="cd mono" x="476" y="414">frontend/src/lib/contract.types.ts</text>
-  <text class="mu" x="476" y="438">→ web and pipeline can never silently drift</text>
+  <text class="hdr" x="14" y="20">CONTRACT 1 · INGESTION · THE BRING-YOUR-OWN-DATA GATE</text>
+  <rect class="bx-hi" x="14" y="28" width="852" height="132" rx="6"/>
+  <text class="ttl" x="28" y="48">A truck dump log, validated column by column</text>
+  <text class="mono" x="28" y="63">stlab/io/contract.py::validate_rows()</text>
+  <text class="it" x="28" y="82">- REJECT on a hard range, with the reason recorded and counted. Nothing is silently coerced:</text>
+  <text class="it" x="28" y="97">- a coerced row looks like data and is not. Out-of-order timestamps and off-pad dumps are rejected too.</text>
+  <text class="it" x="28" y="112">- FLAG on a soft check: kept, counted, carried into the manifest, and rendered with a marker.</text>
+  <text class="it" x="28" y="127">- The soft checks are a grade beyond four robust sigmas of the file median, and moisture above</text>
+  <text class="it" x="28" y="142">- 20 percent, because the dry angle of repose stops being valid for wet handling.</text>
+  <text class="mu" x="28" y="154">The table on the Implementation page is GENERATED from this code, so documentation cannot drift from behaviour.</text>
+  <text class="hdr" x="14" y="190">CONTRACT 2 · ARTIFACT · PROCESSING TO WEB</text>
+  <rect class="bx-off" x="14" y="198" width="418" height="132" rx="6"/>
+  <text class="ttl" x="28" y="218">The manifest</text>
+  <text class="mono" x="28" y="233">stlab/core/manifest.py</text>
+  <text class="it" x="28" y="252">- a PURE function of parameters and seed</text>
+  <text class="it" x="28" y="267">- no wall-clock, no host name, no absolute path</text>
+  <text class="it" x="28" y="282">- case, reason, expected band, kill criterion</text>
+  <text class="it" x="28" y="297">- artifact sha256 and bytes, lane verdict, budgets</text>
+  <text class="it" x="28" y="312">- flags, metrics with their band, regen command</text>
+  <rect class="bx-off" x="448" y="198" width="418" height="132" rx="6"/>
+  <text class="ttl" x="462" y="218">The compact trace</text>
+  <text class="mono" x="462" y="233">stlab/core/trace.py</text>
+  <text class="it" x="462" y="252">- EVENTS and geometry only: the dumps, the cuts,</text>
+  <text class="it" x="462" y="267">- the provenance fractions, the height snapshots</text>
+  <text class="it" x="462" y="282">- NO verdicts. The ratio, the variograms, the</text>
+  <text class="it" x="462" y="297">- efficiency and the recommendation are all</text>
+  <text class="it" x="462" y="312">- recomputed in the browser from those events.</text>
+  <text class="hdr" x="14" y="360">THE CASES ARE THE VALIDATION DESIGN</text>
+  <rect class="bx" x="14" y="368" width="156" height="90" rx="6"/>
+  <text class="ttl" x="24" y="388">Stacking geometry</text>
+  <text class="mono" x="24" y="404">5 cases</text>
+  <text class="it" x="24" y="422">chevron, windrow, cone</text>
+  <text class="it" x="24" y="434">shell, strata, chevcon</text>
+  <rect class="bx" x="188" y="368" width="156" height="90" rx="6"/>
+  <text class="ttl" x="198" y="388">Reclaim method</text>
+  <text class="mono" x="198" y="404">3 cases</text>
+  <text class="it" x="198" y="422">bucket wheel, end,</text>
+  <text class="it" x="198" y="434">loader; full-face is the</text>
+  <text class="it" x="198" y="446">reference</text>
+  <rect class="bx" x="362" y="368" width="156" height="90" rx="6"/>
+  <text class="ttl" x="372" y="388">Input variability</text>
+  <text class="mono" x="372" y="404">4 cases</text>
+  <text class="it" x="372" y="422">short range, long range,</text>
+  <text class="it" x="372" y="434">trending, bimodal</text>
+  <rect class="bx" x="536" y="368" width="156" height="90" rx="6"/>
+  <text class="ttl" x="546" y="388">Segregation regime</text>
+  <text class="mono" x="546" y="404">2 cases</text>
+  <text class="it" x="546" y="422">strong kinetic sieving,</text>
+  <text class="it" x="546" y="434">the stratifying regime</text>
+  <rect class="bx-gate" x="710" y="368" width="156" height="90" rx="6"/>
+  <text class="ttl" x="720" y="388">Controls</text>
+  <text class="mono" x="720" y="404">3 cases</text>
+  <text class="it" x="720" y="422">perfect mixer, zero</text>
+  <text class="it" x="720" y="434">segregation, starvation</text>
+  <text class="mu" x="14" y="480">Splits are by seed AND input structure: splitting by seed alone would leak the shape of the stream. All seventeen cases are held out.</text>
+  <text class="mu" x="14" y="496">Real lane: MineLib block models are fetched at RUNTIME into browser memory. Never committed, never bundled, never fetched by CI.</text>
 </svg>
