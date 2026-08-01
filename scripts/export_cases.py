@@ -112,9 +112,21 @@ export function variantOf(c: CaseDef, id: string | null): VariantDef | null {
   return c.variants.find((v) => v.id === id) ?? null;
 }
 
-/** The default regime of a case: its middle variant, or the case itself when it has none. */
+/**
+ * The regime a case OPENS on: the one whose override equals the case as declared.
+ *
+ * Opening on the middle of the family instead looked reasonable and was wrong: the App then showed
+ * "Modified from G01_chevron" with a Reset button on first paint, because the reader had been put
+ * somewhere other than the case the selector names. The declared point is the reference the case's
+ * expected band and kill criterion are written about, so that is where it opens.
+ */
 export function defaultVariant(c: CaseDef): VariantDef | null {
-  return c.variants.length ? c.variants[Math.floor(c.variants.length / 2)] : null;
+  if (!c.variants.length) return null;
+  const declared = c.variants.find((v) => {
+    const [k, val] = Object.entries(v.overrides)[0] as [keyof CaseDef, number];
+    return c[k] === val;
+  });
+  return declared ?? c.variants[Math.floor(c.variants.length / 2)];
 }
 """
 

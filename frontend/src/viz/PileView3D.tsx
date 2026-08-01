@@ -252,10 +252,18 @@ export function PileView3D(props: PileView3DProps) {
     const field = scalar === 'grade' ? grade : scalar === 'coarse' ? coarse : height;
     for (let c = 0; c < nx * ny; c++) if (field[c] > vmax) vmax = field[c];
 
+    // EMPTY PAD IS NOT MATERIAL AT ZERO, and colouring it as though it were is a lie about the
+    // geometry. Feeding height 0 into the colour ramp paints every un-stacked cell in the ramp's
+    // bottom colour, so a chevron bed on a 192 by 72 m pad renders as a saturated slab covering the
+    // whole pad with a small ridge on it, and a reader reasonably concludes the pad is full. The
+    // empty floor is drawn in the pad colour instead, so what is coloured is what was actually built.
+    const EMPTY_M = 1e-4;
+    const floor: [number, number, number] = [58, 62, 70];
     const colourOf = (c: number): [number, number, number] => {
+      if (height[c] <= EMPTY_M) return floor;
       if (scalar === 'origin') {
         const lots = columnLots?.[c];
-        if (!lots || lots.length === 0) return [40, 44, 52];
+        if (!lots || lots.length === 0) return floor;
         return eventColour(lots[lots.length - 1].eventId);
       }
       return viridis(field[c] / vmax);
