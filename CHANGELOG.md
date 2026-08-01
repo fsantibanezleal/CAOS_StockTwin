@@ -57,8 +57,8 @@ the repository rather than only its text.
 
 - A cross-lane tie-break defect: the browser heap compared height only, while the canonical engine
   breaks ties by cell index, so equal-height cells toppled in a different order.
-- The template-residue guard never scanned `.sh` or `.ps1`, which is how an `examplelab` invocation
-  survived instantiation inside `scripts/precompute.*`.
+- The template-residue guard never scanned `.sh` or `.ps1`, which is how an example-lab invocation
+  from the template survived instantiation inside `scripts/precompute.*`.
 - `requirements-offline.txt`, a sixth lane file invented where five are defined, folded back into the
   frozen `requirements-precompute.txt`.
 

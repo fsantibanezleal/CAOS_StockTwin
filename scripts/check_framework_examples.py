@@ -29,7 +29,23 @@ SKIP = {
     "05_uplot": "browser-side TypeScript, exercised by the frontend build and the visual gate",
 }
 
+#: card -> the engine its example imports, for cards whose engine belongs to the PRECOMPUTE lane.
+#:
+#: CI installs the core lane only, deliberately: the pile engine arrives as `bedblend`, which has no
+#: dependencies, so a broken heavy engine can never make the science look broken. That means the
+#: oreblocks and GSTools examples cannot run in the core job, and the honest behaviour is to say so
+#: rather than either to fail the build or to pretend the example was verified. Running the checker in
+#: an environment that HAS the engine (the precompute venv, or the release bake) executes them.
+LANE_ENGINE = {"01_oreblocks": "oreblocks", "02_gstools": "gstools"}
+
 BLOCK = re.compile(r"```(?P<lang>python|ts)\n(?P<code>.*?)```", re.S)
+
+
+def _installed(module: str) -> bool:
+    """True when the engine is importable in THIS interpreter."""
+    import importlib.util
+
+    return importlib.util.find_spec(module) is not None
 
 
 def main() -> int:
@@ -55,6 +71,11 @@ def main() -> int:
             continue
         if m.group("lang") != "python":
             print(f"  SKIP {card.name}: example is {m.group('lang')}")
+            skipped += 1
+            continue
+        engine = LANE_ENGINE.get(card.name)
+        if engine and not _installed(engine):
+            print(f"  SKIP {card.name}: {engine} is a precompute-lane engine and is not installed here")
             skipped += 1
             continue
         proc = subprocess.run([sys.executable, "-c", m.group("code")],

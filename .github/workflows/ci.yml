@@ -32,12 +32,32 @@ jobs:
         run: python data-pipeline/run.py G01_chevron --output "${{ runner.temp }}/st-smoke" --band-seeds 3
       - name: CONTRACT 2, manifests and artifacts consistent (no drift)
         run: python scripts/check_artifacts.py
-      # A framework card whose example no longer runs reads as verified and is not, so the examples
-      # are executed rather than trusted. Cards documenting a tier that is deliberately not installed
-      # here (the DEM calibration, the browser-side libraries) are skipped BY NAME with the reason
-      # printed, never silently.
-      - name: The framework cards' examples actually run
+      # The core job has only the core lane, so this executes the one example that lives there and
+      # reports the rest as skipped with their reason. The `examples` job below installs the
+      # precompute lane and runs the others for real.
+      - name: The framework cards' examples actually run (core lane)
         run: python scripts/check_framework_examples.py
+
+  examples:
+    # A framework card whose example no longer runs reads as verified and is not. The core job cannot
+    # run the precompute-lane examples, and reporting them as skipped there is honest but weak, so
+    # this job installs those engines and actually executes them. The DEM card stays skipped by name:
+    # PyChrono is conda-only and must never become a CI dependency.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements-precompute.txt
+      - name: Every runnable framework example, executed
+        run: |
+          python scripts/check_framework_examples.py | tee /tmp/fw.log
+          # the point of this job is that the precompute examples RUN here; a silent skip would
+          # defeat it, so assert they did
+          grep -q "OK   01_oreblocks" /tmp/fw.log || { echo "::error::the oreblocks example did not run"; exit 1; }
+          grep -q "OK   02_gstools"  /tmp/fw.log || { echo "::error::the gstools example did not run"; exit 1; }
 
   generated:
     # Three files in this repository are DERIVED from the code: the TypeScript case registry, the case
