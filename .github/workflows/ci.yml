@@ -32,6 +32,12 @@ jobs:
         run: python data-pipeline/run.py G01_chevron --output "${{ runner.temp }}/st-smoke" --band-seeds 3
       - name: CONTRACT 2, manifests and artifacts consistent (no drift)
         run: python scripts/check_artifacts.py
+      # A framework card whose example no longer runs reads as verified and is not, so the examples
+      # are executed rather than trusted. Cards documenting a tier that is deliberately not installed
+      # here (the DEM calibration, the browser-side libraries) are skipped BY NAME with the reason
+      # printed, never silently.
+      - name: The framework cards' examples actually run
+        run: python scripts/check_framework_examples.py
 
   generated:
     # Three files in this repository are DERIVED from the code: the TypeScript case registry, the case
