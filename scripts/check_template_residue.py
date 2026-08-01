@@ -57,6 +57,9 @@ FORBIDDEN_CONTENT = (
 TEXT_SUFFIXES = {
     ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".md", ".json",
     ".css", ".html", ".yml", ".yaml", ".toml", ".txt", ".cfg", ".ini",
+    # shell and PowerShell were missing, which is exactly how an `examplelab` invocation survived
+    # in scripts/precompute.{sh,ps1} through a full instantiation
+    ".sh", ".ps1", ".bat", ".cmd",
 }
 
 

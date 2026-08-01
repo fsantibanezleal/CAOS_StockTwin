@@ -1,62 +1,37 @@
-# 05 · The in-app Architecture / "How it works" modal (ADR-0058)
+# Guide: the architecture modal
 
-Every CAOS/Faena web app **MUST** ship an in-app **Architecture / "How it works"** modal, opened by an
-always-visible **ⓘ button in the header**. It is the fast visual proof the app is a *real, complete system*, not a
-demo. The chrome (button + modal) is provided by the shared shell; each product supplies only its diagrams + copy.
+The header carries an always-visible information button that opens a tabbed modal pairing one
+hand-authored theme-aware SVG with a bilingual explanation, at complete depth. It is what lets a reader
+SEE that the app is a real system rather than a demo.
 
-Binding decision: [`conventions/architecture/0-archetype/ADR-0058-in-app-architecture-modal.md`](../../../conventions/architecture/0-archetype/ADR-0058-in-app-architecture-modal.md)
-(in CAOS_MANAGE). Reference implementations: Veta and Circuita.
+## The five tabs
 
-## What you inherit from the template
+1. what the app is, plus the design-build flow
+2. the lanes: what runs live in the browser, what is offline precompute, what is replay
+3. the web-app flow
+4. the science, with the real equations at each step
+5. the two data contracts, the cases by category, and the lane gate
 
-- **Chrome**, `@fasl-work/caos-app-shell` (≥ **0.1.2**) exposes the ⓘ button + the `ArchitectureModal`. The
-  `ShellConfig` gained an `architecture` field; when it is present the button appears, when absent it is hidden.
-- **Five themed placeholder SVGs** in [`frontend/public/svg/tech/`](../../frontend/public/svg/tech/):
-  `01-the-app.svg`, `02-lanes.svg`, `03-web-flow.svg`, `04-the-science.svg`, `05-data-contracts.svg`. Every colour is
-  a shell CSS-variable token (`--color-surface`, `--color-border`, `--color-accent`, `--color-fg`, `--color-good`,
-  `--color-warn`, …) so the diagram repaints with the active light/dark theme.
-- **A paste-ready config**, [`frontend/src/architecture.ts.txt`](../../frontend/src/architecture.ts.txt) with the
-  five ADR-0058 tabs already wired to the SVGs and bilingual ES/EN bodies.
+## How the diagrams are made
 
-## How to wire it (per product)
+`scripts/make_arch_svgs.py` generates all five from one style vocabulary. A generator rather than five
+hand-written files, because the style floor is a shared class vocabulary, a typography scale, labelled
+flows and structured bands, and writing that five times guarantees the fifth drifts from the first.
 
-1. **Copy** `frontend/src/architecture.ts.txt` → `frontend/src/architecture.ts`.
-2. **Specialise** the product-specific tabs:
-   - Replace `public/svg/tech/01-the-app.svg` with a diagram of THIS product's domain (problem → input → method →
-     value) and edit the `app` tab's `body_en` / `body_es`.
-   - Replace `public/svg/tech/04-the-science.svg` with THIS product's real algorithm + equations and edit the
-     `science` tab body.
-   - Tabs `lanes`, `web-flow`, `design` are archetype-generic, the shipped SVGs + copy are reusable as-is. Keep
-     them; tweak only if your product deviates from the archetype.
-   - Add domain tabs if useful (never *fewer* than the five).
-3. **Pass it to the shell** in `frontend/src/main.tsx`:
+## The colour rule, enforced by the generator
 
-   ```ts
-   import { architecture } from './architecture';
+ZERO hardcoded colour. Every fill and stroke is a CSS variable token of the app's palette, because the
+shell FETCHES and INLINES these files so they follow the theme; an `<img>` would not inherit the
+variables, and a single hex would break one theme. The generator scans its own output and fails the
+build if it finds one, so the rule is structural rather than a matter of discipline.
 
-   const shellConfig = {
-     product: { name: 'YourProduct', mark: <YourIcon size={18} /> },
-     routes: [/* … */],
-     links: { github: '…' },
-     version: '0.06.000',
-     architecture,            // ← turns the ⓘ button on
-   };
-   ```
+```bash
+python scripts/make_arch_svgs.py
+# colour guard: OK, 5 diagrams, every colour a palette token
+```
 
-4. **Pin the shell** to `^0.1.2` in `frontend/package.json` (the version that ships the modal).
+## Verifying
 
-## The five mandatory tabs (ADR-0058 minimum)
-
-| id | tab | generic? | what it must show |
-|----|-----|----------|-------------------|
-| `app` | The app | **product** | the domain problem → input → method → value; why it is real, not a demo |
-| `lanes` | Lanes, web / offline / compute | generic | what runs **live in the web** vs **offline/compute** (bake + train) vs **replay** |
-| `web-flow` | Web-app flow | generic | App recomputes live; the 6 pages; contract mirror; copy-data overlay; deploy |
-| `science` | The science | **product** | the real algorithm step by step, with the genuine equations |
-| `design` | Data contracts / design | generic | the two contracts (ingestion + artifact) + the lane gate + cases-by-category |
-
-## Verify before deploy
-
-The screenshot-verify step (mandatory before any deploy) **must open the modal and confirm every tab renders its
-diagram (themed, no broken SVG) + its text with no error**, in both light and dark. A product is **not "done"**
-without the ⓘ Architecture modal at full depth, it is a NON-NEGOTIABLE row in the product-quality bar.
+The product gate opens the modal, asserts a dialog appeared, and asserts at least one inlined `<svg>`
+rather than an `<img>`. Beyond that, look at the rendered tabs in both themes: text that leaves its box
+or a muted-on-muted label is the classic failure and no predicate catches it.

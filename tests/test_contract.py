@@ -7,7 +7,7 @@ bring-your-own-data gate is that a reader learns what their file actually contai
 """
 from __future__ import annotations
 
-from stlab.io.contract import contract_doc, validate_rows
+from pipeline.io.contract import contract_doc, validate_rows
 
 
 def _row(**kw):
@@ -68,3 +68,42 @@ def test_the_documented_contract_matches_the_enforced_one():
     names = {r["column"] for r in doc}
     assert {"timestamp", "tonnes", "grade_cu_pct", "coarse_frac", "moisture_pct"} <= names
     assert all(r["unit"] and r["rule"] for r in doc)
+
+
+def test_the_shipped_example_passes_contract_1_and_exercises_every_outcome():
+    """`data/examples/truck_log_example.csv` is the bring-your-own-data door, so it must work.
+
+    The instantiate guide asks for a tiny sample that passes CONTRACT 1. A sample where every row is
+    clean would prove only that the happy path works, and the outlier policy is the part a reader
+    needs to trust, so this one deliberately carries all three outcomes: a hard range violation that
+    is REJECTED with a reason, a grade far from the file's own robust centre that is FLAGGED and kept,
+    and wet material that is FLAGGED because the dry angle of repose stops being valid above 20
+    percent moisture.
+
+    Asserting the counts here means a change to the policy either keeps this behaviour or updates the
+    example deliberately; it cannot silently start accepting the row it is supposed to reject.
+    """
+    import csv
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent.parent / "data" / "examples" / "truck_log_example.csv"
+    assert path.exists(), "the bring-your-own-data example is missing"
+    rows = list(csv.DictReader(path.open(encoding="utf-8")))
+    assert len(rows) == 24
+
+    rep = validate_rows(rows)
+    assert len(rep.accepted) == 23, rep.summary()
+    assert len(rep.rejected) == 1, rep.summary()
+    assert len(rep.flagged) == 2, rep.summary()
+
+    # nothing is silently coerced: a rejection carries the reason and the offending value
+    assert "tonnes" in rep.rejected[0]["reason"]
+    assert "outside" in rep.rejected[0]["reason"]
+
+    # the two soft checks are the ones a reader has to understand, so they are named explicitly
+    flags = " ".join(f["flag"] for f in rep.flagged)
+    assert "robust sigma" in flags, "the MAD-based grade outlier check did not fire"
+    assert "wet handling" in flags, "the moisture check did not fire"
+
+    # and the accepted rows are usable: they are what the engine consumes
+    assert all(d.tonnes > 0 and d.grade_cu_pct >= 0 for d in rep.accepted)

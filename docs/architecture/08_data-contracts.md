@@ -1,26 +1,30 @@
-# The two data contracts
+# The data contracts
 
-A product is only real if data flows through two **enforced** contracts. Both are CI-checked.
+Both contracts, and the reasoning behind them, are in [data-contract.md](../data-contract.md), which
+is GENERATED from the code that enforces them so the documentation cannot drift from the behaviour.
 
-## CONTRACT 1, ingestion (`raw → pipeline`), the *bring-your-own-data* gate
-`data-pipeline/examplelab/io/contract.py`. Declares the required schema (columns, units, ranges) + an explicit
-**outlier policy** (reject / clip / flag). A dataset is accepted iff it passes; bad rows are rejected **with a
-reason**, never silently coerced; suspicious-but-plausible rows are flagged (the flag is recorded in the
-manifest). This is what lets a third party point the tool at THEIR data instead of only replaying baked cases.
+This page holds only the part no code can derive: why the split exists.
 
-EXAMPLE (SIR): columns `case_id,beta,gamma,N,I0[,days]`; ranges per `RANGES`; reject NaN/Inf/out-of-range/`I0>N`;
-flag `R0>20`. Full table: [`data/README.md`](../../data/README.md).
+## Why two, and not one
 
-## CONTRACT 2, artifact (`pipeline → web`)
-`data-pipeline/examplelab/core/{trace.py, manifest.py}`. Every run writes a compact trace (`example.trace/v1`) +
-a manifest (`example.manifest/v2`) recording params, seed, engine+version, the artifact byte size, the measured
-**[lane/gate](03_the-gate.md)** verdict, the Contract-1 flags, and the evaluation metrics. A flat
-`data/derived/manifests/index.json` inventories every case.
+The two contracts guard opposite directions and fail differently.
 
-**Enforcement:** `frontend/src/lib/contract.types.ts` mirrors this schema, a drift fails `tsc`. `scripts/check_artifacts.py`
-(run in CI) verifies index→manifests→artifacts exist, byte sizes match, and lane==gate. The web loads **only** these
-artifacts; it never recomputes (except the optional live lane, which emits the same trace schema).
+**Contract 1 guards the way IN.** It exists so the product can be applied to data it has never seen.
+Without it, a product only ever replays its own baked cases and the "bring your own data" claim is
+empty. Its failure mode is a plausible-looking row that is wrong: a grade in parts per million read as
+a percentage, a tonnage from a different truck class, a timestamp in the wrong timezone. Those cannot
+be detected downstream, because by then they look exactly like data. So the gate rejects on a hard
+range with a stated reason and flags on a soft one, and coerces nothing.
 
-## Why this matters
-Without Contract 1 the app can't be applied to new data (it's a demo). Without Contract 2 the web can silently
-drift from what the pipeline produced. The contracts are the seam that makes the product a tool, not a slideshow.
+**Contract 2 guards the way OUT.** It exists so what the browser reads is provably what the bake
+wrote. Its failure mode is silent divergence: the writer adds a field, the reader keeps reading the
+old shape, and a panel quietly shows a stale or default number. A TypeScript mirror of the schema
+turns that into a build failure.
+
+## Why the trace carries no verdicts
+
+The temptation is to bake the variance reduction ratio into the artifact: it is already computed, and
+the page could just read it. That would make the number unfalsifiable. A reader who changes a control
+and watches the value move knows it was derived; a reader looking at a value fetched from a file has
+no way to tell it apart from a caption. So the trace carries events and geometry, and every verdict is
+recomputed in the browser.

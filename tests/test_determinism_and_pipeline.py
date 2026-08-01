@@ -12,12 +12,12 @@ from __future__ import annotations
 
 import json
 
-from stlab import registry
-from stlab.cases.definitions import CATEGORIES
-from stlab.model.run import simulate
-from stlab.model.stream import generate_stream
-from stlab.pipeline import DERIVED, precompute
-from stlab.stages import dataset, validate
+from bedblend.run import simulate
+from bedblend.stream import generate_stream
+from pipeline import registry
+from pipeline.cases.definitions import CATEGORIES
+from pipeline.pipeline import DERIVED, precompute
+from pipeline.stages import dataset, validate
 
 
 def test_the_same_seed_gives_the_same_stream():

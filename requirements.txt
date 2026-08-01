@@ -1,3 +1,13 @@
-# CORE lane: everything the pile engine, the segregation solver, the lot ledger and the blending
-# metrics need. numpy only, so a clone installs in seconds and every test runs with no heavy engine.
+# CORE lane: what the product's own pipeline needs to run a case end to end.
+#
+# The bed-blending physics is NOT here, it is a separate published library. `conventions/
+# no-internal-packages.md` forbids a product from declaring its own package, so the pile engine
+# (repose-angle relaxation, Gray-Thornton segregation, the lot ledger, the blending metrics) lives in
+# CAOS_BedBlend and is consumed pinned, exactly as ChargeCascade consumes milldem and DispatchLab
+# consumes minehaulsim.
+#
+# bedblend itself declares no dependencies, so this whole lane installs in seconds and every test
+# runs with no heavy engine present.
+bedblend==0.1.0
+
 numpy>=1.26
