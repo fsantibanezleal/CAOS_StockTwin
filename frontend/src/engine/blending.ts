@@ -169,12 +169,12 @@ export function fitSpherical(
  * where the table says 0.121). The product's own test is ordinal and magnitude-level.
  */
 export const PUBLISHED_ANCHORS = [
-  { vrr: 0.232, en: 'cone shell, circular pile', es: 'conos concentricos, pila circular',
+  { vrr: 0.232, en: 'cone shell, circular pile', es: 'conos concéntricos, pila circular',
     src: 'Loubser and de Korte 2015, Table IV' },
   { vrr: 0.121, en: 'chevcon, circular pile', es: 'chevcon, pila circular',
     src: 'Loubser and de Korte 2015, Table IV' },
   { vrr: 0.10, en: 'chevcon plus a full-face reclaimer', es: 'chevcon con recuperador de cara completa',
     src: 'Bond, Coursaux and Worthington 2000' },
   { vrr: 0.03, en: 'a real blending bed, 200 to 600 layers', es: 'una cama de mezcla real, 200 a 600 capas',
-    src: 'Schramm, AT MINERALS PROCESSING 06/2021' },
+    src: 'Schramm, AT minerals processing 06/2021' },
 ] as const;

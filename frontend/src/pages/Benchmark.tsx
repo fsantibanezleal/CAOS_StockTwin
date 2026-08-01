@@ -30,7 +30,7 @@ export default function Benchmark() {
         <h1>Benchmark</h1>
         <p className="lede">
           {es
-            ? 'Todos los numeros de esta pagina se leen del artefacto comprometido que produjo el horneado canonico sobre 31 semillas por caso. Ninguno esta escrito a mano. Las cuatro afirmaciones ordinales se publican aqui pasen o fallen.'
+            ? 'Todos los numeros de esta página se leen del artefacto comprometido que produjo el horneado canónico sobre 31 semillas por caso. Ninguno esta escrito a mano. Las cuatro afirmaciones ordinales se publican aquí pasen o fallen.'
             : 'Every number on this page is read from the committed artifact produced by the canonical bake over 31 seeds per case. None is typed in. The four ordinal assertions are published here whether they pass or fail.'}
         </p>
       </div>
@@ -39,8 +39,8 @@ export default function Benchmark() {
         <h2>{es ? 'Anclas publicadas' : 'Published anchors'}</h2>
         <p>
           {es
-            ? 'El eje de apilado se compara contra resultados publicados y no solo contra si mismo. Estos digitos NO son objetivos de reproduccion: vienen de una pila circular de otras dimensiones y su fuente es internamente inconsistente sobre ellos. La prueba es ordinal y de orden de magnitud.'
-            : 'The stacking axis is scored against published results, not only against itself. These digits are NOT reproduction targets: they come from a circular pile of different dimensions and their source is internally inconsistent about them. The test is ordinal and magnitude-level.'}
+            ? 'El eje de apilado se compara contra resultados publicados y no solo contra si mismo. Estos digitos NO son objetivos de reproducción: vienen de una pila circular de otras dimensiones y su fuente es internamente inconsistente sobre ellos. La prueba es ordinal y de orden de magnitud.'
+            : 'The stacking axis is scored against published results, not only against itself. These digits are not reproduction targets: they come from a circular pile of different dimensions and their source is internally inconsistent about them. The test is ordinal and magnitude-level.'}
         </p>
         <table className="cmp-table st-table">
           <thead>
@@ -63,10 +63,10 @@ export default function Benchmark() {
 
       {state === 'missing' && (
         <section>
-          <h2>{es ? 'El horneado canonico no esta presente en esta construccion' : 'The canonical bake is not present in this build'}</h2>
+          <h2>{es ? 'El horneado canónico no está presente en esta construcción' : 'The canonical bake is not present in this build'}</h2>
           <Callout variant="honest" title={es ? 'Sin numeros en vez de numeros inventados' : 'No numbers rather than invented numbers'}>
             {es
-              ? 'Esta pagina lee unicamente del artefacto comprometido. Cuando el artefacto no esta, la pagina lo dice y no muestra nada: un cero en una columna de metricas es indistinguible de una medicion real, y rellenar la tabla con valores plausibles es exactamente el fallo que esta regla existe para evitar. Para producirlo, ejecuta el horneado canonico y reconstruye el sitio; el comando esta en la pagina de Implementacion. Mientras tanto, la App calcula todas estas metricas en vivo para el caso seleccionado.'
+              ? 'Esta página lee unicamente del artefacto comprometido. Cuando el artefacto no está, la página lo dice y no muestra nada: un cero en una columna de métricas es indistinguible de una medición real, y rellenar la tabla con valores plausibles es exactamente el fallo que está regla existe para evitar. Para producirlo, ejecuta el horneado canónico y reconstruye el sitio; el comando esta en la página de Implementación. Mientras tanto, la App calcula todas estas métricas en vivo para el caso seleccionado.'
               : 'This page reads only from the committed artifact. When the artifact is absent the page says so and shows nothing: a zero in a metric column is indistinguishable from a real measurement, and filling the table with plausible values is exactly the failure this rule exists to prevent. To produce it, run the canonical bake and rebuild the site; the command is on the Implementation page. In the meantime the App computes all of these metrics live for the selected case.'}
           </Callout>
         </section>
@@ -80,7 +80,7 @@ export default function Benchmark() {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>{es ? 'afirmacion' : 'assertion'}</th>
+                  <th>{es ? 'afirmación' : 'assertion'}</th>
                   <th>{es ? 'medido' : 'measured'}</th>
                   <th>{es ? 'veredicto' : 'verdict'}</th>
                 </tr>
@@ -100,16 +100,16 @@ export default function Benchmark() {
               </tbody>
             </table>
             {matrix.assertions.some((a) => !a.pass) && (
-              <Callout variant="honest" title={es ? 'Una afirmacion fallo' : 'An assertion failed'}>
+              <Callout variant="honest" title={es ? 'Una afirmación fallo' : 'An assertion failed'}>
                 {es
-                  ? 'Una afirmacion fallida se publica con los numeros que la hicieron fallar. Un resultado negativo es un resultado; ajustar la parametrizacion hasta que pase seria convertir una prueba en una decoracion.'
+                  ? 'Una afirmación fallida se publica con los numeros que la hicieron fallar. Un resultado negativo es un resultado; ajustar la parametrización hasta que pase sería convertir una prueba en una decoración.'
                   : 'A failed assertion is published with the numbers that failed it. A negative result is a result; tuning the parameterisation until it passes would turn a test into a decoration.'}
               </Callout>
             )}
           </section>
 
           <section>
-            <h2>{es ? 'La matriz completa, caso por metrica' : 'The complete case-by-metric matrix'}</h2>
+            <h2>{es ? 'La matriz completa, caso por métrica' : 'The complete case-by-metric matrix'}</h2>
             <p>
               {es
                 ? `${matrix.rows.length} casos, cada uno con su banda de credibilidad sobre las semillas indicadas. Una celda faltante hace fallar la compuerta de completitud; no se promedia para hacerla desaparecer.`
@@ -126,7 +126,7 @@ export default function Benchmark() {
                     <th>N</th>
                     <th>{es ? 'eficiencia' : 'efficiency'}</th>
                     <th>E</th>
-                    <th>{es ? 'segregacion' : 'segregation'}</th>
+                    <th>{es ? 'segregación' : 'segregation'}</th>
                     <th>{es ? 'residencia' : 'residence'}</th>
                     <th>{es ? 'semillas' : 'seeds'}</th>
                   </tr>
@@ -155,23 +155,23 @@ export default function Benchmark() {
             <h2>{es ? 'El eje de apilado' : 'The stacking axis'}</h2>
             <p>
               {es
-                ? 'El orden que la literatura acuerda, chevcon mejor que conos concentricos, se reproduce. Pero chevron sale MEJOR que chevcon, lo que a primera vista contradice a Loubser y de Korte y no lo hace: su comparacion es sobre un patio CIRCULAR, donde la operacion continua obliga al apilador a recorrer el anillo y chevron no es una opcion disponible. En una cama lineal cada capa de chevron abarca toda la longitud, asi que un corte en cualquier estacion muestrea capas de toda la construccion; las de chevcon vienen de una ventana viajera y estan correlacionadas entre si.'
-                : 'The ordering the literature agrees on, chevcon better than cone shell, is reproduced. But chevron comes out BETTER than chevcon, which at first reading contradicts Loubser and de Korte and does not: their comparison is on a CIRCULAR yard, where continuous operation forces the stacker around the ring and chevron is not an available method. On a linear bed every chevron layer spans the whole length, so a cut at any station samples layers from across the entire build; chevcon’s come from a travelling window and are correlated with one another.'}
+                ? 'El orden que la literatura acuerda, chevcon mejor que conos concéntricos, se reproduce. Pero chevron sale mejor que chevcon, lo que a primera vista contradice a Loubser y de Korte y no lo hace: su comparación es sobre un patio circular, donde la operación continua obliga al apilador a recorrer el anillo y chevron no es una opción disponible. En una cama lineal cada capa de chevron abarca toda la longitud, así que un corte en cualquier estación muestrea capas de toda la construcción; las de chevcon vienen de una ventana viajera y están correlacionadas entre si.'
+                : 'The ordering the literature agrees on, chevcon better than cone shell, is reproduced. But chevron comes out better than chevcon, which at first reading contradicts Loubser and de Korte and does not: their comparison is on a circular yard, where continuous operation forces the stacker around the ring and chevron is not an available method. On a linear bed every chevron layer spans the whole length, so a cut at any station samples layers from across the entire build; chevcon’s come from a travelling window and are correlated with one another.'}
               {' '}<Cite id="loubser2015" paren />
             </p>
             <p>
               {es
-                ? 'La columna de eficiencia es el diagnostico util. Chevcon cruza MAS capas por corte que chevron y aun asi mezcla peor, lo que muestra que el conteo de capas por si solo no es la respuesta: lo que importa es cuantas capas INDEPENDIENTES cruza el corte.'
-                : 'The efficiency column is the useful diagnostic. Chevcon crosses MORE layers per cut than chevron and still blends worse, which shows that layer count alone is not the answer: what matters is how many INDEPENDENT layers the cut crosses.'}
+                ? 'La columna de eficiencia es el diagnóstico útil. Chevcon cruza mas capas por corte que chevron y aun así mezcla peor, lo que muestra que el conteo de capas por si solo no es la respuesta: lo que importa es cuántas capas independientes cruza el corte.'
+                : 'The efficiency column is the useful diagnostic. Chevcon crosses more layers per cut than chevron and still blends worse, which shows that layer count alone is not the answer: what matters is how many independent layers the cut crosses.'}
             </p>
           </section>
 
           <section>
             <h2>{es ? 'El tier aprendido' : 'The learned tier'}</h2>
-            <Callout variant="honest" title={es ? 'No activo en esta version' : 'Not active in this release'}>
+            <Callout variant="honest" title={es ? 'No activo en esta versión' : 'Not active in this release'}>
               {es
-                ? 'El corpus barrido, la linea base de regresion multiple al estilo de Kumral y el sustituto de perceptron estan implementados en el carril fuera de linea, pero el veredicto de refutacion no se ha publicado y por eso el tier aprendido NO aparece como metodo en la App. Un modelo sin medir mostrado junto a otros medidos es un defecto, no una caracteristica. Cuando el veredicto exista aparecera aqui con su numero, en la direccion que sea: si la red no supera a la regresion por mas que la banda por remuestreo de la regresion, el resultado negativo se reporta y la red queda solo como demostracion del carril aprendido en el navegador.'
-                : 'The swept corpus, the Kumral-style multiple-regression baseline and the perceptron surrogate are implemented in the offline lane, but the refutation verdict has not been published, so the learned tier does NOT appear as a method in the App. An unmeasured model displayed beside measured ones is a defect, not a feature. When the verdict exists it will appear here with its number, in whichever direction it falls: if the network does not beat the regression by more than the regression’s own bootstrap band, the negative result is reported and the network stays only as a demonstration of the in-browser learned lane.'}
+                ? 'El corpus barrido, la línea base de regresión multiple al estilo de Kumral y el sustituto de perceptron están implementados en el carril fuera de línea, pero el veredicto de refutación no se ha publicado y por eso el tier aprendido NO aparece como método en la App. Un modelo sin medir mostrado junto a otros medidos es un defecto, no una característica. Cuando el veredicto exista aparecera aquí con su número, en la dirección que sea: si la red no supera a la regresión por más que la banda por remuestreo de la regresión, el resultado negativo se reporta y la red queda solo como demostración del carril aprendido en el navegador.'
+                : 'The swept corpus, the Kumral-style multiple-regression baseline and the perceptron surrogate are implemented in the offline lane, but the refutation verdict has not been published, so the learned tier does not appear as a method in the App. An unmeasured model displayed beside measured ones is a defect, not a feature. When the verdict exists it will appear here with its number, in whichever direction it falls: if the network does not beat the regression by more than the regression’s own bootstrap band, the negative result is reported and the network stays only as a demonstration of the in-browser learned lane.'}
             </Callout>
             <Refs ids={['kumral2006']} label="Refs" />
           </section>

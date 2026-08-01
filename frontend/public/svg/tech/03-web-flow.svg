@@ -26,7 +26,7 @@
   <text class="hdr" x="14" y="20">THREE OPERATIONS THAT NEVER MERGE</text>
   <rect class="bx-off" x="14" y="30" width="276" height="110" rx="6"/>
   <text class="ttl" x="26" y="50">1. Canonical bake</text>
-  <text class="mono" x="26" y="65">python -m stlab.pipeline</text>
+  <text class="mono" x="26" y="65">python data-pipeline/run.py</text>
   <text class="it" x="26" y="84">- simulate, band over 31 seeds</text>
   <text class="it" x="26" y="98">- audit invariants and controls</text>
   <text class="it" x="26" y="112">- write trace, metrics, manifest</text>

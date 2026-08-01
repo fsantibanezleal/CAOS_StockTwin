@@ -79,7 +79,7 @@ export const STRUCTURE_LABELS: Record<StreamStructure, { en: string; es: string;
   short_range: {
     en: 'Short range', es: 'Alcance corto',
     note_en: 'Correlation range much shorter than one layer, so layers are nearly independent and the achieved ratio can approach the ideal bound.',
-    note_es: 'Alcance de correlacion mucho menor que una capa, de modo que las capas son casi independientes y el resultado puede acercarse a la cota ideal.',
+    note_es: 'Alcance de correlación mucho menor que una capa, de modo que las capas son casi independientes y el resultado puede acercarse a la cota ideal.',
   },
   long_range: {
     en: 'Long range', es: 'Alcance largo',
@@ -89,12 +89,12 @@ export const STRUCTURE_LABELS: Record<StreamStructure, { en: string; es: string;
   trending: {
     en: 'Trending', es: 'Con deriva',
     note_en: 'A linear grade drift across the shift. The mean moves, so variance reduction on the whole record becomes a misleading summary.',
-    note_es: 'Una deriva lineal de ley durante el turno. La media se desplaza, de modo que la reduccion de varianza sobre todo el registro es un resumen enganoso.',
+    note_es: 'Una deriva lineal de ley durante el turno. La media se desplaza, de modo que la reducción de varianza sobre todo el registro es un resumen engañoso.',
   },
   bimodal: {
     en: 'Bimodal', es: 'Bimodal',
     note_en: 'Two ore types arriving in runs. The reclaimed histogram stays bimodal even when the ratio looks respectable, so the distribution has to be shown.',
-    note_es: 'Dos tipos de mineral que llegan en rachas. El histograma recuperado sigue siendo bimodal aunque la razon parezca aceptable, por eso hay que mostrar la distribucion.',
+    note_es: 'Dos tipos de mineral que llegan en rachas. El histograma recuperado sigue siendo bimodal aunque la razón parezca aceptable, por eso hay que mostrar la distribución.',
   },
 };
 

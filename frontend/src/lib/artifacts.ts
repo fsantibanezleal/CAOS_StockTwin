@@ -61,13 +61,13 @@ export const MINELIB_INSTANCES: MinelibInstance[] = [
     id: 'kd', name: 'KD', gradeCol: 7, tonnageCol: 4, nBlocks: 14153,
     url: `${MIRROR_B}/kd/kd.blocks`,
     provenance_en: 'MineLib instance KD: 14,153 blocks with an explicit copper grade column and per-block tonnage. Fetched at runtime under MineLib’s academic-use grant; never redistributed.',
-    provenance_es: 'Instancia KD de MineLib: 14.153 bloques con columna explicita de ley de cobre y tonelaje por bloque. Descargada en tiempo de ejecucion bajo la licencia academica de MineLib; nunca redistribuida.',
+    provenance_es: 'Instancia KD de MineLib: 14.153 bloques con columna explícita de ley de cobre y tonelaje por bloque. Descargada en tiempo de ejecución bajo la licencia académica de MineLib; nunca redistribuida.',
   },
   {
     id: 'newman1', name: 'Newman 1', gradeCol: 5, tonnageCol: 6, nBlocks: 1060,
     url: `${MIRROR_A}/newman1/newman1.blocks`,
     provenance_en: 'MineLib instance Newman 1: 1,060 blocks with grade and tonnage. Fetched at runtime under MineLib’s academic-use grant; never redistributed.',
-    provenance_es: 'Instancia Newman 1 de MineLib: 1.060 bloques con ley y tonelaje. Descargada en tiempo de ejecucion bajo la licencia academica de MineLib; nunca redistribuida.',
+    provenance_es: 'Instancia Newman 1 de MineLib: 1.060 bloques con ley y tonelaje. Descargada en tiempo de ejecución bajo la licencia académica de MineLib; nunca redistribuida.',
   },
 ];
 

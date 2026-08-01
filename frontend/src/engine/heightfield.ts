@@ -82,12 +82,30 @@ export function neighbourTable(nx: number, ny: number, cellM: number, reposeDeg:
   return table;
 }
 
-/** A binary max-heap keyed on height, with lazy invalidation. */
+/**
+ * A binary max-heap keyed on height, with lazy invalidation.
+ *
+ * THE TIE-BREAK IS PART OF THE CONTRACT, not an implementation detail. The offline lane is
+ * `heapq` over `(-h[c], c)` tuples, so when two cells stand at exactly the same height Python
+ * topples the LOWER CELL INDEX first, deterministically. A heap that compares height alone breaks
+ * those ties by whatever position the entry happens to occupy, which is a different toppling order;
+ * each toppling moves mass, so the two lanes drift apart from the first tie onwards. It surfaced as
+ * a 5.2e-4 grade difference at cut 76 of `G01_chevron`, far downstream of the tie that caused it.
+ *
+ * `higher()` therefore reproduces the tuple comparison exactly: greater height first, and on equal
+ * height the smaller cell index first.
+ */
 class MaxHeap {
   private keys: number[] = [];
   private vals: number[] = [];
 
   get size(): number { return this.vals.length; }
+
+  /** True when slot `a` outranks slot `b`, mirroring Python's `(-h, c)` tuple order. */
+  private higher(a: number, b: number): boolean {
+    if (this.keys[a] !== this.keys[b]) return this.keys[a] > this.keys[b];
+    return this.vals[a] < this.vals[b];
+  }
 
   push(key: number, val: number): void {
     this.keys.push(key);
@@ -95,7 +113,7 @@ class MaxHeap {
     let i = this.vals.length - 1;
     while (i > 0) {
       const p = (i - 1) >> 1;
-      if (this.keys[p] >= this.keys[i]) break;
+      if (!this.higher(i, p)) break;
       this.swap(p, i);
       i = p;
     }
@@ -113,8 +131,8 @@ class MaxHeap {
         const l = 2 * i + 1;
         const r = l + 1;
         let m = i;
-        if (l < this.vals.length && this.keys[l] > this.keys[m]) m = l;
-        if (r < this.vals.length && this.keys[r] > this.keys[m]) m = r;
+        if (l < this.vals.length && this.higher(l, m)) m = l;
+        if (r < this.vals.length && this.higher(r, m)) m = r;
         if (m === i) break;
         this.swap(m, i);
         i = m;
@@ -155,8 +173,16 @@ export function cascade(
   const heap = new MaxHeap();
   const queued = new Set<number>();
   const seeds = active ?? { *[Symbol.iterator]() { for (let c = 0; c < nx * ny; c++) yield c; } };
+  // The offline lane seeds the heap with `[(-h[c], c) for c in seeds]` and its queued set with
+  // `set(seeds)`, so a cell listed twice by a deposit gets TWO heap entries and one membership
+  // entry. Deduping on push here looked like an obvious tidy-up and is not: the second pop finds
+  // the cell already stable and does nothing, but it changes the order every later pop happens in,
+  // and with it the order the floating-point sums accumulate. The lanes then part by ~1e-16 per
+  // toppling and reach 5.4e-4 of grade by cut 76 of G01_chevron. The offline lane is canonical, so
+  // this reproduces it exactly rather than improving on it.
   for (const c of seeds) {
-    if (!queued.has(c)) { queued.add(c); heap.push(h[c], c); }
+    heap.push(h[c], c);
+    queued.add(c);
   }
 
   const moves: Move[] = [];

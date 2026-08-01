@@ -23,7 +23,7 @@ import type { StackingMethod } from './types';
 export const STACKING_LABELS: Record<StackingMethod, { en: string; es: string }> = {
   chevron: { en: 'Chevron', es: 'Chevron' },
   windrow: { en: 'Windrow', es: 'Windrow (cordones)' },
-  coneshell: { en: 'Cone shell', es: 'Conos concentricos' },
+  coneshell: { en: 'Cone shell', es: 'Conos concéntricos' },
   strata: { en: 'Strata', es: 'Estratos inclinados' },
   chevcon: { en: 'Chevcon', es: 'Chevcon' },
 };

@@ -33,11 +33,11 @@ const config: ShellConfig = {
   footer: {
     provenance: {
       en: 'Engines: repose-angle relaxation (Bak et al. 1987), Gray-Thornton segregation (doi:10.1098/rspa.2004.1420), per-cell lot ledger (doi:10.1016/j.minpro.2015.04.012). Data: oreblocks synthetic (CC-BY); MineLib (doi:10.1007/s10479-012-1258-3) fetched at runtime, never bundled.',
-      es: 'Motores: relajacion con angulo de reposo (Bak et al. 1987), segregacion de Gray y Thornton (doi:10.1098/rspa.2004.1420), libro mayor de lotes por celda (doi:10.1016/j.minpro.2015.04.012). Datos: oreblocks sintetico (CC-BY); MineLib (doi:10.1007/s10479-012-1258-3) en tiempo de ejecucion, nunca empaquetado.',
+      es: 'Motores: relajación con ángulo de reposo (Bak et al. 1987), segregación de Gray y Thornton (doi:10.1098/rspa.2004.1420), libro mayor de lotes por celda (doi:10.1016/j.minpro.2015.04.012). Datos: oreblocks sintético (CC-BY); MineLib (doi:10.1007/s10479-012-1258-3) en tiempo de ejecución, nunca empaquetado.',
     },
     disclaimer: {
       en: 'Static, in-browser, no backend. VRR = var_out / var_in, lower is better, always against the derived 1/N bound. Teaching only: no metal accounting, no blending LP, no setpoint.',
-      es: 'Estatico, en el navegador, sin backend. VRR = var_salida / var_entrada, menor es mejor, siempre contra la cota derivada 1/N. Solo ensenanza: sin contabilidad metalurgica, sin LP de mezcla, sin consignas.',
+      es: 'Estático, en el navegador, sin backend. VRR = var_salida / var_entrada, menor es mejor, siempre contra la cota derivada 1/N. Solo ensenanza: sin contabilidad metalurgica, sin LP de mezcla, sin consignas.',
     },
   },
 };

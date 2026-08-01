@@ -1,16 +1,27 @@
-# The live-vs-precompute gate
+# The lane gate
 
-`data-pipeline/examplelab/core/gate.py :: classify_lane()`. A case runs **live** in the browser (Pyodide) iff , 
-by MEASUREMENT, never by hand-wave:
+A method runs live only if the MEASUREMENT allows it. The verdict and the numbers go into the
+manifest, and CI fails on a mislabelled lane. A method tagged `live` whose measured runtime breaches
+its budget is a build failure, not a warning.
 
-- it is **pure-Python**, AND
-- its wheels are a subset of the Pyodide-safe set (`LIVE_WHEELS`, e.g. `{numpy}`), AND
-- `run_ms ≤ RUN_MS_GATE` (interaction budget), AND
-- `trace_bytes ≤ TRACE_BYTES_GATE` (small artifact).
+`stlab/core/gate.py::classify_lane()`
 
-Otherwise the case is **precompute**: the offline pipeline bakes the artifact and the SPA replays it. Either way,
-a committed artifact always exists, so the site replays instantly on first paint (ADR-0054).
+## The budgets, and where they come from
 
-The verdict + the measured numbers are written into the manifest (`gate` field) and CI fails if `manifest.lane`
-disagrees with the gate, so a heavy model can never be mislabeled "live". The EXAMPLE SIR case is pure-Python +
-numpy + small ⇒ classified `live`.
+| budget | value | why that number |
+|---|---|---|
+| `run_ms` | 100 ms | the slider-to-redraw budget. Above it the App stops feeling like an instrument. |
+| `frame_ms` | 8 ms | sixty frames a second leaves 16.7 ms for everything, and the renderer needs half. |
+| `trace_bytes` | 2 MB | a static bundle on a cold content-delivery-network fetch. |
+
+## The one measured exception
+
+Multi-seed credible bands need 31 full simulations. Producing one on every control move would be
+exactly the compute bomb the no-autoplay rule exists to prevent, so the bands are baked offline and
+the live single-seed result is drawn AGAINST them. That is stated on the page rather than left for a
+reader to infer.
+
+## What the gate does not do
+
+It does not decide whether a method is CORRECT, only whether it is affordable. Correctness is the
+invariant audit and the control kill criteria in `stages/evaluate.py`.

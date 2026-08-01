@@ -7,7 +7,7 @@ bring-your-own-data gate is that a reader learns what their file actually contai
 """
 from __future__ import annotations
 
-from stlab.io.contract import contract_doc, validate_rows
+from pipeline.io.contract import contract_doc, validate_rows
 
 
 def _row(**kw):

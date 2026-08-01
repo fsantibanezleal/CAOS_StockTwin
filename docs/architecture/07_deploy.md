@@ -1,9 +1,31 @@
 # Deploy
 
-Default = **GitHub Pages, static** (ADR-0055): `.github/workflows/deploy-pages.yml` regenerates the artifacts
-deterministically, builds the SPA (`copy-data.mjs` overlays `data/derived`), and deploys `frontend/dist`. No
-backend at request time. See [`deploy/pages.md`](../../deploy/pages.md).
+A static site on GitHub Pages over a custom domain, no backend.
 
-The VPS path (systemd + nginx, in `deploy/`) is **dormant**, activated only when `app/` is (an ADR-0002
-trigger). `ci.yml` keeps the base honest on every push: ruff + pytest + a pipeline smoke + `check_artifacts.py`
-(CONTRACT 2) + guards that fail on a tracked `.env`/venv/native-or-heavy binary/raw data/leaked machine path.
+## Why this class
+
+The repository is public, the payload is small (traces are capped at 2 MB per case by the gate), and
+there is no server state, no auth-gated data and no request-time compute. The `app/` FastAPI module
+ships dormant with a README saying so, and CI import-smoke-tests it so it cannot rot.
+
+## The two-step go-live, both required
+
+Under Actions-based Pages the `public/CNAME` file does NOT set the custom domain: the domain reaches
+GitHub and returns 404. Both of these are needed.
+
+1. DNS: `stocktwin CNAME fsantibanezleal.github.io`, DNS-only, overriding the wildcard.
+2. `gh api --method PUT .../pages -f cname=stocktwin.fasl-work.com`, cname only. Adding
+   `https_enforced` errors until the certificate exists; enforce HTTPS after it provisions, then
+   re-run the deploy.
+
+Pages must be enabled with `gh api ... -f build_type=workflow` before the first deploy.
+
+## Deep links
+
+`spa-404.mjs` copies the built `index.html` to `404.html` as a postbuild step, so a hard navigation or
+a refresh on `/focus/<case>` returns the SPA shell and the router resolves the path.
+
+## What deploy must never do
+
+Train a model, retune a threshold, regenerate the canonical benchmark, or replace a scientific
+artifact. It verifies hashes and publishes an already-audited bundle.

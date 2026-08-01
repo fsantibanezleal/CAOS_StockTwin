@@ -16,3 +16,8 @@ gstools>=1.5
 # ONNX: export of the two learned surrogates for in-browser inference through onnxruntime-web.
 onnx>=1.16
 onnxruntime>=1.18
+
+# scikit-learn + skl2onnx: the learned tier (the VRR surrogate and the regression baseline it must beat)
+# is fitted offline and exported to ONNX for the in-browser lane. BSD-3-Clause / Apache-2.0.
+scikit-learn>=1.5
+skl2onnx>=1.17

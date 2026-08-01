@@ -1,12 +1,52 @@
-# Guide, run the precompute pipeline
+# Guide: run the precompute pipeline
+
+## Setup
 
 ```bash
-./scripts/setup.sh            # or scripts/setup.ps1, builds .venv-pipeline + .venv, installs, editable pkg
-./scripts/precompute.sh       # all cases   (or:  ./scripts/precompute.sh EX02_epidemic --seed 7)
-.venv-pipeline/bin/python -m pytest        # (Scripts/python.exe on Windows)
-./scripts/smoke.sh            # CONTRACT 2 check: index <-> manifests <-> artifacts consistent
+py -3.13 -m venv .venv
+.venv/Scripts/python -m pip install -r requirements.txt -r requirements-dev.txt
+.venv/Scripts/python -m pytest tests -q
+.venv/Scripts/python -m ruff check data-pipeline tests scripts
 ```
 
-Outputs land in `data/derived/<case>/trace.json` + `data/derived/manifests/<case>.json` + `index.json`. The run is
-deterministic in `(params, seed)`, same seed ⇒ byte-identical artifact. Stages + their roles:
-[../architecture/05_precompute-pipeline.md](../architecture/05_precompute-pipeline.md).
+For the offline engines, add `-r requirements-precompute.txt`.
+
+## A sandboxed run
+
+```bash
+python -m stlab.pipeline G01_chevron --output build/smoke --band-seeds 3
+```
+
+`--output` is mandatory for anything that is not an intentional release bake. A pytest run in another
+repository on this product line once overwrote a committed bake, and two releases shipped it.
+
+## The canonical bake
+
+```bash
+python -m stlab.pipeline
+```
+
+This writes `data/derived/<case>/{trace,metrics}.json`, `data/derived/manifests/<case>.json`,
+`data/derived/manifests/index.json` and `data/derived/matrix.json`, then runs the release gate. It takes
+a few minutes: 17 cases at 31 seeds each.
+
+## Validate an existing tree
+
+```bash
+python -m stlab.pipeline --validate-only
+```
+
+Checks completeness (every registered case present), integrity (every trace still hashes to what its
+manifest recorded), the invariants and control verdicts recorded at bake time, and lane honesty (no case
+tagged `live` while the gate recorded a reason it should not be).
+
+## Regenerate the derived documentation and the case registry
+
+```bash
+python scripts/export_cases.py        # frontend/src/engine/cases.generated.ts
+python scripts/gen_docs.py            # docs/cases/*.md and docs/data-contract.md
+python scripts/make_arch_svgs.py      # the five architecture-modal diagrams
+```
+
+Each has a `--check` mode that CI runs, so a stale generated file fails the build instead of quietly
+disagreeing with the code.

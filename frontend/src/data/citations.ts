@@ -144,7 +144,7 @@ export const CITATIONS: Citation[] = [
   {
     id: 'schramm2021',
     label: 'Schramm (2021)',
-    citation: 'Schramm, R. Design of blending beds. AT MINERALS PROCESSING 06/2021. Reports a mixing effect of 5 to 7.5 for beds of 200 to 600 layers, the only quantified anchor found for a real bed. Trade publication, no DOI.',
+    citation: 'Schramm, R. Design of blending beds. AT minerals processing 06/2021. Reports a mixing effect of 5 to 7.5 for beds of 200 to 600 layers, the only quantified anchor found for a real bed. Trade publication, no DOI.',
     url: 'https://www.at-minerals.com/en/artikel/at_Design_of_blending_beds-3658023.html',
   },
   {

@@ -93,7 +93,7 @@ export default function Focus() {
     { v: `${(m.efficiency * 100).toFixed(0)} %`, l: es ? 'de lo ideal' : 'of ideal' },
     { v: m.nLayersMean.toFixed(1), l: es ? 'capas/corte' : 'layers/cut' },
     { v: `${apexNow.toFixed(1)} m`, l: es ? 'apice' : 'apex' },
-    { v: m.segregationIndex.toFixed(3), l: es ? 'segregacion' : 'segregation' },
+    { v: m.segregationIndex.toFixed(3), l: es ? 'segregación' : 'segregation' },
   ];
 
   return (
@@ -106,11 +106,11 @@ export default function Focus() {
         {/* the transport sits ON the stage, so the instrument keeps the height a bar would take */}
         <div className="st-overbar" style={{ left: 'auto', right: 14, top: 56, width: '46%' }}>
           <span className="st-muted" style={{ fontSize: '0.68rem' }}>
-            {es ? 'Linea de tiempo' : 'Timeline'}
+            {es ? 'Línea de tiempo' : 'Timeline'}
           </span>
           <input type="range" min={0} max={1} step={0.01} value={pos}
             onChange={(e) => setScrub(Number(e.target.value))}
-            aria-label={es ? 'Linea de tiempo' : 'Timeline'} />
+            aria-label={es ? 'Línea de tiempo' : 'Timeline'} />
           <span className="st-mono" style={{ fontSize: '0.68rem' }}>
             {(run.snapshots[frame].tS / 3600).toFixed(1)} h
           </span>
@@ -152,7 +152,7 @@ export default function Focus() {
 
         <div className="st-chips">
           <button type="button" className={`chip${advanced ? '' : ' on'}`} onClick={() => setAdvanced(false)}>
-            {es ? 'Basico' : 'Basic'}
+            {es ? 'Básico' : 'Basic'}
           </button>
           <button type="button" className={`chip${advanced ? ' on' : ''}`} onClick={() => setAdvanced(true)}>
             {es ? 'Avanzado' : 'Advanced'}
@@ -160,7 +160,7 @@ export default function Focus() {
         </div>
 
         <label className="st-ctl">
-          <span className="st-ctl-h"><span>{es ? 'Metodo de apilado' : 'Stacking method'}</span></span>
+          <span className="st-ctl-h"><span>{es ? 'Método de apilado' : 'Stacking method'}</span></span>
           <select className="st-select" value={stacking}
             onChange={(e) => setStacking(e.target.value as StackingMethod)}>
             {STACKING_METHODS.map((s) => (
@@ -170,7 +170,7 @@ export default function Focus() {
         </label>
 
         <label className="st-ctl">
-          <span className="st-ctl-h"><span>{es ? 'Recuperacion' : 'Reclaim'}</span></span>
+          <span className="st-ctl-h"><span>{es ? 'Recuperación' : 'Reclaim'}</span></span>
           <select className="st-select" value={reclaim}
             onChange={(e) => setReclaim(e.target.value as ReclaimMethod)}>
             {RECLAIM_METHODS.map((r) => (
@@ -183,14 +183,14 @@ export default function Focus() {
 
         <Ctl label={es ? 'Pasadas (capas)' : 'Passes (layers)'} value={nPasses}
           min={4} max={80} step={1} onChange={setNPasses} />
-        <Ctl label={es ? 'Numero de segregacion Sr' : 'Segregation number Sr'} value={sr}
+        <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={sr}
           min={0} max={8} step={0.1} onChange={setSr} fmt={(v) => v.toFixed(1)} />
 
         {advanced && (
           <>
-            <Ctl label={es ? 'Angulo de reposo' : 'Angle of repose'} value={repose}
+            <Ctl label={es ? 'Ángulo de reposo' : 'Angle of repose'} value={repose}
               min={28} max={50} step={0.5} onChange={setRepose} fmt={(v) => `${v.toFixed(1)} deg`} />
-            <Ctl label={es ? 'Tasa de recuperacion' : 'Reclaim rate'} value={reclaimRate}
+            <Ctl label={es ? 'Tasa de recuperación' : 'Reclaim rate'} value={reclaimRate}
               min={0.2} max={3} step={0.1} onChange={setReclaimRate} fmt={(v) => `${v.toFixed(1)} x`} />
             <Ctl label={es ? 'Plano de corte' : 'Cutaway plane'} value={cutAt}
               min={0.15} max={1} step={0.01} onChange={setCutAt} fmt={(v) => `${(v * 100).toFixed(0)} %`} />
@@ -199,7 +199,7 @@ export default function Focus() {
               <select className="st-select" value={scalar} onChange={(e) => setScalar(e.target.value as Scalar)}>
                 <option value="height">{es ? 'Altura' : 'Height'}</option>
                 <option value="grade">{es ? 'Ley de columna' : 'Column grade'}</option>
-                <option value="coarse">{es ? 'Fraccion gruesa' : 'Coarse fraction'}</option>
+                <option value="coarse">{es ? 'Fracción gruesa' : 'Coarse fraction'}</option>
                 <option value="origin">{es ? 'Evento de origen' : 'Source event'}</option>
               </select>
             </label>
@@ -208,7 +208,7 @@ export default function Focus() {
 
         <p className="st-muted" style={{ fontSize: '0.7rem', lineHeight: 1.5 }}>
           {es
-            ? 'Relajacion con angulo de reposo impuesto (Bak, Tang y Wiesenfeld 1987 como regla de vuelco, no como afirmacion de criticidad); segregacion por cribado cinetico segun Gray y Thornton 2005, ecuacion (3.20); libro mayor de lotes por celda al estilo de Zhao et al. 2015. VRR = var_salida / var_entrada, menor es mejor.'
+            ? 'Relajación con ángulo de reposo impuesto (Bak, Tang y Wiesenfeld 1987 como regla de vuelco, no como afirmación de criticidad); segregación por cribado cinético según Gray y Thornton 2005, ecuación (3.20); libro mayor de lotes por celda al estilo de Zhao et al. 2015. VRR = var_salida / var_entrada, menor es mejor.'
             : 'Relaxation with an imposed angle of repose (Bak, Tang and Wiesenfeld 1987 as the toppling rule, not as a criticality claim); kinetic-sieving segregation from Gray and Thornton 2005, equation (3.20); a per-cell lot ledger after Zhao et al. 2015. VRR = var_out / var_in, lower is better.'}
         </p>
 

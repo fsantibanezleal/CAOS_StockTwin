@@ -23,7 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "data-pipeline"))
 
-from stlab.cases.definitions import CASES, CATEGORIES  # noqa: E402
+from pipeline.cases.definitions import CASES, CATEGORIES  # noqa: E402
 
 OUT = ROOT / "frontend" / "src" / "engine" / "cases.generated.ts"
 

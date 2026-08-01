@@ -34,7 +34,7 @@
   <text class="hdr" x="14" y="158">OFFLINE, PRECOMPUTE</text>
   <rect class="bx-off" x="14" y="166" width="418" height="132" rx="6"/>
   <text class="ttl" x="28" y="186">The canonical bake, an explicit release operation</text>
-  <text class="mono" x="28" y="201">python -m stlab.pipeline</text>
+  <text class="mono" x="28" y="201">python data-pipeline/run.py</text>
   <text class="it" x="28" y="220">- 31-seed credible bands per case</text>
   <text class="it" x="28" y="235">- oreblocks ore bodies, GSTools simulation</text>
   <text class="it" x="28" y="250">- surrogate training and ONNX export</text>

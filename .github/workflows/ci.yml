@@ -15,16 +15,63 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install (offline lane + dev + editable pkg)
-        run: pip install -r requirements-precompute.txt -r requirements-dev.txt -e .
+      # The CORE lane only. The offline engines (oreblocks, gstools, onnx) are needed for the canonical
+      # bake, not for the tests: the pile engine arrives as the published `bedblend` library, which
+      # declares no dependencies, so keeping CI on the core lane means a broken heavy dependency
+      # cannot make the science look broken.
+      #
+      # There is NO editable install of this repository. It declares no package
+      # (conventions/no-internal-packages.md); the pipeline is a folder invoked by path.
+      - name: Install (core lane + dev)
+        run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Lint
-        run: ruff check data-pipeline tests
+        run: ruff check data-pipeline tests scripts
       - name: Tests
         run: pytest
-      - name: Pipeline smoke (sandboxed; canonical artifacts are read-only)
-        run: python -m examplelab.pipeline EX02_epidemic --output "${{ runner.temp }}/examplelab-smoke"
-      - name: CONTRACT 2, manifests <-> artifacts consistent (no drift)
+      - name: Pipeline smoke (sandboxed; the canonical artifacts are read-only here)
+        run: python data-pipeline/run.py G01_chevron --output "${{ runner.temp }}/st-smoke" --band-seeds 3
+      - name: CONTRACT 2, manifests and artifacts consistent (no drift)
         run: python scripts/check_artifacts.py
+
+  generated:
+    # Three files in this repository are DERIVED from the code: the TypeScript case registry, the case
+    # documentation pages, and the architecture diagrams. Regenerating them here and failing on a diff
+    # turns "someone edited one side only" into a build failure instead of a discrepancy nobody notices.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: The TypeScript case registry matches the Python definitions
+        run: python scripts/export_cases.py --check
+      - name: The generated documentation pages match the code
+        run: python scripts/gen_docs.py --check
+      - name: The architecture diagrams regenerate identically, with no hardcoded colour
+        run: |
+          python scripts/make_arch_svgs.py
+          git diff --exit-code -- frontend/public/svg/tech
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      # `npm run build` is `tsc --noEmit && vite build`, so the TypeScript mirror of CONTRACT 2 gates
+      # the bundle: a drift between the Python writer and the browser reader fails here rather than
+      # showing up as an empty panel in production.
+      - run: npm run build
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
 
   guards:
     runs-on: ubuntu-latest
@@ -44,13 +91,26 @@ jobs:
             echo "::error::raw/heavy data tracked, commit only compact derived artifacts (data/derived/)"; fail=1; fi
           # no leaked local machine paths in tracked sources
           if git grep -nF 'D:\_Repos' -- . ':!.github' >/dev/null 2>&1; then
-            echo "::error::leaked local machine path (D:\\_Repos) in a tracked file"; fail=1; fi
+            echo "::error::leaked local machine path in a tracked file"; fail=1; fi
+          # MineLib grants academic download only, with NO redistribution. An instance file in the repo
+          # would be a licence breach, and it is the kind that is easy to commit by accident.
+          if git ls-files | grep -qE '\.(blocks|prec|upit)$'; then
+            echo "::error::a MineLib instance file is tracked; those are runtime-fetch only, never committed"; fail=1; fi
+          # NO INTERNAL PACKAGE (conventions/no-internal-packages.md). A product either consumes a
+          # published library from its own repo, or has no package at all. The three shapes that
+          # betray a reappearing internal package:
+          if grep -qE '^\s*\[project\]' pyproject.toml; then
+            echo "::error::pyproject.toml declares a [project] table; this product must declare no package"; fail=1; fi
+          if grep -rqE 'pip install .*-e \.' .github scripts 2>/dev/null; then
+            echo "::error::an editable install of this repo reappeared; the pipeline is invoked by path"; fail=1; fi
+          if grep -rqE 'python -m (pipeline|[a-z_]+lab)\.' .github scripts 2>/dev/null; then
+            echo "::error::the pipeline is being invoked as a module; use python data-pipeline/run.py"; fail=1; fi
           if [ "$fail" -eq 0 ]; then echo "guards: OK"; fi
           exit $fail
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: No template residue (instantiated products must replace the example lab)
+      - name: No template residue (an instantiated product must replace the example lab)
         run: python scripts/check_template_residue.py
       - name: No em-dash or emoji in product content (ADR-0067)
         run: python scripts/check_content_standards.py

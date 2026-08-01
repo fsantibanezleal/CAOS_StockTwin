@@ -145,7 +145,7 @@ def lanes() -> None:
     b += txt(14, 158, "OFFLINE, PRECOMPUTE", "hdr")
     b += box(14, 166, 418, 132, "bx-off")
     b += txt(28, 186, "The canonical bake, an explicit release operation", "ttl")
-    b += txt(28, 201, "python -m stlab.pipeline", "mono")
+    b += txt(28, 201, "python data-pipeline/run.py", "mono")
     for k, it in enumerate([
         "31-seed credible bands per case",
         "oreblocks ore bodies, GSTools simulation",
@@ -184,7 +184,7 @@ def lanes() -> None:
 def web_flow() -> None:
     b = txt(14, 20, "THREE OPERATIONS THAT NEVER MERGE", "hdr")
     ops = [
-        (14, "1. Canonical bake", "python -m stlab.pipeline",
+        (14, "1. Canonical bake", "python data-pipeline/run.py",
          ["simulate, band over 31 seeds", "audit invariants and controls",
           "write trace, metrics, manifest", "content-hash every artifact"], "bx-off"),
         (302, "2. Web build", "npm run build",

@@ -172,7 +172,7 @@ export function ProvenanceSankey({ cuts, selected, onSelect, es }: {
         );
       })}
       <text x={80} y={H - 1} fontSize={9} fill="var(--color-fg-faint)">
-        {es ? 'eventos de deposicion' : 'deposition events'}
+        {es ? 'eventos de deposición' : 'deposition events'}
       </text>
       <text x={W - 94} y={H - 1} fontSize={9} fill="var(--color-fg-faint)" textAnchor="end">
         {es ? 'cortes recuperados' : 'reclaim cuts'}
@@ -199,7 +199,7 @@ export function ProvenanceLedger({ cut, es }: { cut: ReclaimCut | null; es?: boo
           <thead>
             <tr>
               <th>{es ? 'evento' : 'event'}</th>
-              <th>{es ? 'fraccion' : 'fraction'}</th>
+              <th>{es ? 'fracción' : 'fraction'}</th>
               <th>{es ? 'toneladas' : 'tonnes'}</th>
             </tr>
           </thead>
@@ -245,7 +245,7 @@ export function StratColumn({ lots, cell, pad, es }: {
   if (!lots || lots.length === 0 || cell == null) {
     return (
       <p className="st-note st-muted">
-        {es ? 'Haz clic en una columna de la pila para ver su estratigrafia.' : 'Click a column on the pile to see its stratigraphy.'}
+        {es ? 'Haz clic en una columna de la pila para ver su estratigrafía.' : 'Click a column on the pile to see its stratigraphy.'}
       </p>
     );
   }
@@ -262,7 +262,7 @@ export function StratColumn({ lots, cell, pad, es }: {
         {' · '}{lots.length} {es ? 'lotes' : 'lots'}{' · '}{total.toFixed(0)} t
       </p>
       <svg viewBox={`0 0 240 ${H}`} width="100%" height={H} role="img"
-        aria-label={es ? 'Columna estratigrafica del lote seleccionado' : 'Stratigraphic column of the selected cell'}>
+        aria-label={es ? 'Columna estratigráfica del lote seleccionado' : 'Stratigraphic column of the selected cell'}>
         {lots.map((l, k) => {
           const h = Math.max(1.5, (l.tonnes / total) * H);
           y -= h;
@@ -291,7 +291,7 @@ export function StratColumn({ lots, cell, pad, es }: {
       </svg>
       <p className="st-note st-muted">
         {es
-          ? 'Las interfaces entre lotes son mas nitidas en el modelo que en una pila real: el remanejo y la mezcla por avalancha no estan modelados. Las bandas claras marcan esa incertidumbre.'
+          ? 'Las interfaces entre lotes son más nitidas en el modelo que en una pila real: el remanejo y la mezcla por avalancha no están modelados. Las bandas claras marcan esa incertidumbre.'
           : 'Lot interfaces are sharper in the model than in a real pile: re-handling and avalanche mixing are not modelled. The pale bands mark that uncertainty.'}
       </p>
     </div>

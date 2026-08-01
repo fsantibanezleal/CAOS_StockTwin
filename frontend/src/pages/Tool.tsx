@@ -30,16 +30,16 @@ const GROUPS = [
   { id: 'pile', en: 'Pile', es: 'Pila', views: [
     { id: 'pile3d', en: 'The pile', es: 'La pila' },
     { id: 'cutaway', en: 'Cutaway', es: 'Corte interno' },
-    { id: 'column', en: 'Stratigraphic column', es: 'Columna estratigrafica' },
+    { id: 'column', en: 'Stratigraphic column', es: 'Columna estratigráfica' },
   ] },
-  { id: 'build', en: 'Build', es: 'Construccion', views: [
-    { id: 'compare', en: 'Stacking comparison', es: 'Comparacion de apilado' },
-    { id: 'segprofile', en: 'Segregation profile', es: 'Perfil de segregacion' },
-    { id: 'regime', en: 'Stratification regime', es: 'Regimen de estratificacion' },
+  { id: 'build', en: 'Build', es: 'Construcción', views: [
+    { id: 'compare', en: 'Stacking comparison', es: 'Comparación de apilado' },
+    { id: 'segprofile', en: 'Segregation profile', es: 'Perfil de segregación' },
+    { id: 'regime', en: 'Stratification regime', es: 'Régimen de estratificación' },
   ] },
   { id: 'blend', en: 'Blend', es: 'Mezcla', views: [
     { id: 'streams', en: 'Input vs reclaimed', es: 'Entrada vs recuperado' },
-    { id: 'vrr', en: 'Variance reduction', es: 'Reduccion de varianza' },
+    { id: 'vrr', en: 'Variance reduction', es: 'Reducción de varianza' },
     { id: 'variogram', en: 'Variograms', es: 'Variogramas' },
     { id: 'ideal', en: 'Achieved vs 1/N', es: 'Logrado vs 1/N' },
   ] },
@@ -51,7 +51,7 @@ const GROUPS = [
   { id: 'balance', en: 'Balance', es: 'Balance', views: [
     { id: 'mass', en: 'Mass balance', es: 'Balance de masa' },
     { id: 'honesty', en: 'Model honesty', es: 'Honestidad del modelo' },
-    { id: 'decision', en: 'Decision', es: 'Decision' },
+    { id: 'decision', en: 'Decision', es: 'Decisión' },
   ] },
 ] as const;
 
@@ -152,9 +152,9 @@ export default function Tool() {
     { v: `${(m.efficiency * 100).toFixed(0)} %`, l: es ? 'de lo ideal' : 'of the ideal' },
     { v: m.nLayersMean.toFixed(1), l: es ? 'capas/corte' : 'layers/cut' },
     { v: Number.isFinite(m.mixingEffect) ? m.mixingEffect.toFixed(1) : '--', l: es ? 'efecto E' : 'mixing effect E' },
-    { v: m.segregationIndex.toFixed(3), l: es ? 'segregacion' : 'segregation' },
+    { v: m.segregationIndex.toFixed(3), l: es ? 'segregación' : 'segregation' },
     { v: `${run.cuts.length}`, l: es ? 'cortes' : 'cuts' },
-    { v: `${run.runMs.toFixed(0)} ms`, l: es ? 'calculo en vivo' : 'live compute' },
+    { v: `${run.runMs.toFixed(0)} ms`, l: es ? 'cálculo en vivo' : 'live compute' },
   ];
 
   const groups = GROUPS.map((g) => ({
@@ -166,7 +166,7 @@ export default function Tool() {
     <div className="page-body st-layout">
       <aside className="st-side">
         <div className="st-diag" aria-live="polite">
-          <div className="st-diag-l">{es ? 'Reduccion de varianza' : 'Variance reduction'}</div>
+          <div className="st-diag-l">{es ? 'Reducción de varianza' : 'Variance reduction'}</div>
           <div className="st-diag-v">{Number.isFinite(m.vrr) ? m.vrr.toFixed(3) : '--'}</div>
           <div className="st-diag-s"><strong>{regime.label}.</strong> {regime.text}</div>
           <div className="st-formula">VRR = var_out / var_in</div>
@@ -182,7 +182,7 @@ export default function Tool() {
           </span>
           <span className="st-focus-enter-d">
             {es
-              ? 'El mismo caso y los mismos parametros, sin cromo compitiendo: la pila ocupa la pantalla y los indicadores van sobre ella.'
+              ? 'El mismo caso y los mismos parámetros, sin cromo compitiendo: la pila ocupa la pantalla y los indicadores van sobre ella.'
               : 'The same case and the same parameters with no competing chrome: the pile owns the screen and the readouts sit on it.'}
           </span>
         </Link>
@@ -213,7 +213,7 @@ export default function Tool() {
             </select>
             <details>
               <summary className="st-ctl-d" style={{ cursor: 'pointer', margin: '0.35rem 0' }}>
-                {es ? 'Por que este caso esta en la matriz' : 'Why this case is in the matrix'}
+                {es ? 'Por qué este caso está en la matriz' : 'Why this case is in the matrix'}
               </summary>
               <p className="st-note" style={{ marginTop: '0.3rem' }}>{base.reason}</p>
               <p className="st-note st-muted">
@@ -231,17 +231,17 @@ export default function Tool() {
             <Ctl label={es ? 'Semilla' : 'Seed'} value={seed} min={1} max={200} step={1}
               onChange={setSeed}
               hint={es
-                ? 'Cada corrida es funcion pura de (parametros, semilla). Cambia la semilla para ver cuanto se mueve el resultado.'
+                ? 'Cada corrida es función pura de (parámetros, semilla). Cambia la semilla para ver cuánto se mueve el resultado.'
                 : 'Every run is a pure function of (parameters, seed). Change it to see how much the result moves.'} />
           </div>
         )}
 
         {section === 'build' && (
           <div className="st-card">
-            <div className="st-card-t">{es ? 'Metodo de apilado' : 'Stacking method'}</div>
+            <div className="st-card-t">{es ? 'Método de apilado' : 'Stacking method'}</div>
             <select className="st-select" value={stacking}
               onChange={(e) => setStacking(e.target.value as StackingMethod)}
-              aria-label={es ? 'Metodo de apilado' : 'Stacking method'}>
+              aria-label={es ? 'Método de apilado' : 'Stacking method'}>
               {STACKING_METHODS.map((s) => (
                 <option key={s} value={s}>{es ? STACKING_LABELS[s].es : STACKING_LABELS[s].en}</option>
               ))}
@@ -278,10 +278,10 @@ export default function Tool() {
 
         {section === 'reclaim' && (
           <div className="st-card">
-            <div className="st-card-t">{es ? 'Metodo de recuperacion' : 'Reclaim method'}</div>
+            <div className="st-card-t">{es ? 'Método de recuperación' : 'Reclaim method'}</div>
             <select className="st-select" value={reclaim}
               onChange={(e) => setReclaim(e.target.value as ReclaimMethod)}
-              aria-label={es ? 'Metodo de recuperacion' : 'Reclaim method'}>
+              aria-label={es ? 'Método de recuperación' : 'Reclaim method'}>
               {RECLAIM_METHODS.map((r) => (
                 <option key={r} value={r}>
                   {es ? RECLAIM_GEOMETRY[r].machineEs : RECLAIM_GEOMETRY[r].machine}
@@ -293,37 +293,37 @@ export default function Tool() {
                 ? `Alcanza el ${(RECLAIM_GEOMETRY[reclaim].depth * 100).toFixed(0)} % de la columna en un corte. Eso decide cuantas capas cruza.`
                 : `Reaches ${(RECLAIM_GEOMETRY[reclaim].depth * 100).toFixed(0)} % of the column in one cut. That is what decides how many layers it crosses.`}
             </p>
-            <Ctl label={es ? 'Tasa de recuperacion' : 'Reclaim rate'} value={reclaimRate}
+            <Ctl label={es ? 'Tasa de recuperación' : 'Reclaim rate'} value={reclaimRate}
               min={0.2} max={3} step={0.1} onChange={setReclaimRate} fmt={(v) => `${v.toFixed(1)} x`}
               hint={es
                 ? 'Toneladas recuperadas por tonelada apilada. Por encima de 1 la pila se vacia y el recuperador se queda sin material.'
                 : 'Tonnes reclaimed per tonne stacked. Above 1 the pile empties and the reclaimer starves.'} />
             <Ctl label={es ? 'Toneladas por corte' : 'Tonnes per cut'} value={cutTonnes}
               min={200} max={3000} step={50} onChange={setCutTonnes} fmt={(v) => `${v.toFixed(0)} t`}
-              hint={es ? 'El tamano del parcel que recibe la planta.' : 'The size of the parcel the plant receives.'} />
+              hint={es ? 'El tamaño del parcel que recibe la planta.' : 'The size of the parcel the plant receives.'} />
             <Ctl label={es ? 'Ventana objetivo, VRR' : 'Target window, VRR'} value={target}
               min={0.02} max={1} step={0.01} onChange={setTarget} fmt={(v) => v.toFixed(2)}
-              hint={es ? 'El umbral que usa la tarjeta de decision.' : 'The threshold the decision card is judged against.'} />
+              hint={es ? 'El umbral que usa la tarjeta de decisión.' : 'The threshold the decision card is judged against.'} />
           </div>
         )}
 
         {section === 'material' && (
           <div className="st-card">
             <div className="st-card-t">{es ? 'Material' : 'Material'}</div>
-            <Ctl label={es ? 'Angulo de reposo, finos' : 'Angle of repose, fines'} value={repose}
+            <Ctl label={es ? 'Ángulo de reposo, finos' : 'Angle of repose, fines'} value={repose}
               min={28} max={50} step={0.5} onChange={setRepose} fmt={(v) => `${v.toFixed(1)} deg`}
               hint={es
                 ? 'Impuesto, no emergente. Los valores publicados para minerales van de unos 34 a 60 grados.'
                 : 'Imposed, not emergent. Published values for ores run from about 34 to 60 degrees.'} />
-            <Ctl label={es ? 'Angulo de reposo, gruesos' : 'Angle of repose, coarse'} value={reposeCoarse}
+            <Ctl label={es ? 'Ángulo de reposo, gruesos' : 'Angle of repose, coarse'} value={reposeCoarse}
               min={28} max={50} step={0.5} onChange={setReposeCoarse} fmt={(v) => `${v.toFixed(1)} deg`}
               hint={es
-                ? 'Si el grueso es mas empinado que el fino, la mezcla se estratifica en capas alternadas en vez de solo segregarse (Makse et al. 1997).'
+                ? 'Si el grueso es más empinado que el fino, la mezcla se estratifica en capas alternadas en vez de solo segregarse (Makse et al. 1997).'
                 : 'When the coarse species is steeper than the fine one, the mixture stratifies into alternating layers rather than merely segregating (Makse et al. 1997).'} />
-            <Ctl label={es ? 'Numero de segregacion Sr' : 'Segregation number Sr'} value={sr}
+            <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={sr}
               min={0} max={8} step={0.1} onChange={setSr} fmt={(v) => v.toFixed(1)}
               hint={es
-                ? 'Ecuacion (3.19) de Gray y Thornton. En 0 la ecuacion degenera a un trazador pasivo: es el control negativo.'
+                ? 'Ecuación (3.19) de Gray y Thornton. En 0 la ecuación degenera a un trazador pasivo: es el control negativo.'
                 : 'Gray and Thornton equation (3.19). At 0 the equation degenerates to a passive tracer: that is the negative control.'} />
             <p className="st-ctl-d">
               {es
@@ -360,12 +360,12 @@ export default function Tool() {
                     aria-label={es ? 'Escalar mostrado' : 'Scalar overlay'}>
                     <option value="height">{es ? 'Altura' : 'Height'}</option>
                     <option value="grade">{es ? 'Ley de columna' : 'Column grade'}</option>
-                    <option value="coarse">{es ? 'Fraccion gruesa' : 'Coarse fraction'}</option>
+                    <option value="coarse">{es ? 'Fracción gruesa' : 'Coarse fraction'}</option>
                     <option value="origin">{es ? 'Evento de origen' : 'Source event'}</option>
                   </select>
                   <input type="range" min={0} max={1} step={0.01} value={scrubPos}
                     onChange={(e) => setScrub(Number(e.target.value))}
-                    aria-label={es ? 'Linea de tiempo' : 'Timeline'} />
+                    aria-label={es ? 'Línea de tiempo' : 'Timeline'} />
                   <span className="st-mono" style={{ fontSize: '0.72rem' }}>
                     {(run.dumps[dumpIdx].tS / 3600).toFixed(1)} h
                   </span>
@@ -446,24 +446,24 @@ export default function Tool() {
           {view === 'regime' && (
             <PanelBoundary name="regime" es={es}>
               <div className="st-plot">
-                <div className="st-plot-t">{es ? 'Regimen de estratificacion' : 'Stratification regime'}</div>
+                <div className="st-plot-t">{es ? 'Régimen de estratificación' : 'Stratification regime'}</div>
                 <p className="st-note">
                   {reposeCoarse > repose + 0.4
                     ? (es
                       ? `El grueso reposa ${(reposeCoarse - repose).toFixed(1)} grados mas empinado que el fino. Esa es exactamente la condicion de Makse et al. (1997) bajo la cual una mezcla bidispersa vertida se ESTRATIFICA en capas alternadas en vez de solo segregarse.`
                       : `The coarse species stands ${(reposeCoarse - repose).toFixed(1)} degrees steeper than the fine one. That is exactly the Makse et al. (1997) condition under which a poured bidisperse mixture STRATIFIES into alternating layers rather than merely segregating.`)
                     : (es
-                      ? 'Los angulos de reposo son iguales o el fino es el mas empinado. Fuera de la condicion de Makse: la mezcla segrega (grueso al pie) pero no forma capas alternadas.'
+                      ? 'Los angulos de reposo son iguales o el fino es el más empinado. Fuera de la condición de Makse: la mezcla segrega (grueso al pie) pero no forma capas alternadas.'
                       : 'The repose angles are equal, or the fine species is the steeper one. Outside the Makse condition: the mixture segregates (coarse to the toe) but does not form alternating layers.')}
                 </p>
                 <Kpis items={[
                   { v: `${(reposeCoarse - repose).toFixed(1)} deg`, l: es ? 'diferencia de reposo' : 'repose difference' },
-                  { v: m.segregationIndex.toFixed(4), l: es ? 'indice de segregacion' : 'segregation index' },
+                  { v: m.segregationIndex.toFixed(4), l: es ? 'índice de segregación' : 'segregation index' },
                   { v: sr.toFixed(1), l: 'Sr' },
                 ]} />
                 <p className="st-note st-muted">
                   {es
-                    ? 'Abre el corte interno con el escalar de origen para ver la alternancia. El indice de segregacion se satura pasado Sr de aproximadamente uno: la capa fluyente ya esta completamente separada y subir Sr no deja nada mas por separar.'
+                    ? 'Abre el corte interno con el escalar de origen para ver la alternancia. El índice de segregación se satura pasado Sr de aproximadamente uno: la capa fluyente ya está completamente separada y subir Sr no deja nada más por separar.'
                     : 'Open the cutaway with the source-event scalar to see the alternation. The segregation index saturates past Sr of about one: the flowing layer is already fully separated and raising Sr leaves nothing more to separate.'}
                 </p>
               </div>
@@ -481,7 +481,7 @@ export default function Tool() {
               <div className="st-plot">
                 <div className="st-plot-h">
                   <span className="st-plot-t">
-                    {es ? 'Razon de reduccion de varianza' : 'Variance reduction ratio'}
+                    {es ? 'Razón de reducción de varianza' : 'Variance reduction ratio'}
                   </span>
                   <span className="st-plot-n">
                     {es ? 'una semilla, contra las anclas publicadas' : 'single seed, against the published anchors'}
@@ -493,9 +493,9 @@ export default function Tool() {
                     ? `Varianza de entrada ${m.varIn.toExponential(3)}, de salida ${m.varOut.toExponential(3)}. Media de entrada ${m.meanIn.toFixed(4)} %Cu, de salida ${m.meanOut.toFixed(4)} %Cu.`
                     : `Input variance ${m.varIn.toExponential(3)}, output ${m.varOut.toExponential(3)}. Input mean ${m.meanIn.toFixed(4)} %Cu, output ${m.meanOut.toFixed(4)} %Cu.`}
                 </p>
-                <Callout variant="honest" title={es ? 'Lo que este numero no dice' : 'What this number does not say'}>
+                <Callout variant="honest" title={es ? 'Lo que este número no dice' : 'What this number does not say'}>
                   {es
-                    ? 'Una sola semilla. La banda de credibilidad multi-semilla se calcula fuera de linea (31 semillas) y se muestra en Benchmark: producirla en vivo en cada movimiento del control seria una bomba de computo.'
+                    ? 'Una sola semilla. La banda de credibilidad multi-semilla se calcula fuera de línea (31 semillas) y se muestra en Benchmark: producirla en vivo en cada movimiento del control sería una bomba de computo.'
                     : 'One seed. The multi-seed credible band is computed offline over 31 seeds and shown on Benchmark: producing it live on every slider move would be a compute bomb.'}
                 </Callout>
               </div>
@@ -516,7 +516,7 @@ export default function Tool() {
                     series={[{ label: es ? 'gamma medido' : 'measured gamma', values: vin.gamma }]}
                     markers={[{ x: vin.model.range, label: es ? 'alcance' : 'range' },
                       { y: vin.model.sill, label: 'sill' }]}
-                    xLabel={es ? 'Separacion' : 'Lag'} xUnit="t"
+                    xLabel={es ? 'Separación' : 'Lag'} xUnit="t"
                     yLabel="gamma" unit="(%Cu)^2"
                     ariaSummary={es ? 'Tabla del variograma de entrada' : 'Input variogram data table'} />
                 </div>
@@ -530,14 +530,14 @@ export default function Tool() {
                   <UPlotChart x={vout.lagT} height={190}
                     series={[{ label: es ? 'gamma medido' : 'measured gamma', values: vout.gamma }]}
                     markers={[{ y: vout.model.sill, label: 'sill' }]}
-                    xLabel={es ? 'Separacion' : 'Lag'} xUnit="t"
+                    xLabel={es ? 'Separación' : 'Lag'} xUnit="t"
                     yLabel="gamma" unit="(%Cu)^2"
                     ariaSummary={es ? 'Tabla del variograma recuperado' : 'Reclaimed variogram data table'} />
                 </div>
               </div>
               <p className="st-note">
                 {es
-                  ? 'La separacion esta en toneladas acumuladas, no en tiempo: la heterogeneidad de un lote unidimensional es funcion de la masa a lo largo del flujo, y usar el reloj haria que el variograma dependiera de lo ocupado que estuvo el turno.'
+                  ? 'La separación esta en toneladas acumuladas, no en tiempo: la heterogeneidad de un lote unidimensional es función de la masa a lo largo del flujo, y usar el reloj haría que el variograma dependiera de lo ocupado que estuvo el turno.'
                   : 'The lag is in cumulative tonnes, not clock time: the heterogeneity of a one-dimensional lot is a function of mass along the stream, and using the clock would make the variogram depend on how busy the shift was.'}
               </p>
             </PanelBoundary>
@@ -616,7 +616,7 @@ export default function Tool() {
               <div className="st-plot">
                 <div className="st-plot-h">
                   <span className="st-plot-t">
-                    {es ? 'Distribucion de tiempo de residencia' : 'Residence-time distribution'}
+                    {es ? 'Distribución de tiempo de residencia' : 'Residence-time distribution'}
                   </span>
                   <span className="st-plot-n">{rt.character}</span>
                 </div>
@@ -631,8 +631,8 @@ export default function Tool() {
                     { x: rt.meanS / 3600, label: es ? 'medido' : 'measured', colour: 'var(--color-accent)' },
                   ]}
                   xLabel={es ? 'Residencia' : 'Residence'} xUnit="h"
-                  yLabel={es ? 'Fraccion de masa' : 'Mass fraction'}
-                  ariaSummary={es ? 'Tabla de la distribucion de residencia' : 'Residence-time data table'} />
+                  yLabel={es ? 'Fracción de masa' : 'Mass fraction'}
+                  ariaSummary={es ? 'Tabla de la distribución de residencia' : 'Residence-time data table'} />
                 <Kpis items={[
                   { v: `${(rt.meanS / 3600).toFixed(2)} h`, l: es ? 'residencia media' : 'mean residence' },
                   { v: `${(rt.fifoMeanS / 3600).toFixed(2)} h`, l: 'FIFO' },
@@ -641,8 +641,8 @@ export default function Tool() {
                 ]} />
                 <p className="st-note st-muted">
                   {es
-                    ? 'Las referencias FIFO y LIFO se calculan para LA MISMA secuencia de eventos, de modo que el caracter real de la pila queda ubicado entre dos curvas que pudo haber tenido, en vez de afirmarse que es una de ellas. La etiqueta es una banda descriptiva: no hay un umbral publicado que haga que 0,6 sea "mayoritariamente FIFO".'
-                    : 'The FIFO and LIFO references are computed for the SAME event sequence, so the pile’s actual character is placed between two curves it could have had rather than asserted to be one of them. The label is a descriptive band: there is no published threshold that makes 0.6 "mostly first-in-first-out".'}
+                    ? 'Las referencias FIFO y LIFO se calculan para LA misma secuencia de eventos, de modo que el caracter real de la pila queda ubicado entre dos curvas que pudo haber tenido, en vez de afirmarse que es una de ellas. La etiqueta es una banda descriptiva: no hay un umbral publicado que haga que 0,6 sea "mayoritariamente FIFO".'
+                    : 'The FIFO and LIFO references are computed for the same event sequence, so the pile’s actual character is placed between two curves it could have had rather than asserted to be one of them. The label is a descriptive band: there is no published threshold that makes 0.6 "mostly first-in-first-out".'}
                 </p>
               </div>
             </PanelBoundary>
@@ -701,11 +701,11 @@ function StackingCompare({ base, seed, nPasses, sr, reclaim, structure, rangeT, 
       <table className="st-table">
         <thead>
           <tr>
-            <th>{es ? 'metodo' : 'method'}</th>
+            <th>{es ? 'método' : 'method'}</th>
             <th>VRR</th>
             <th>{es ? 'capas/corte' : 'layers/cut'}</th>
             <th>{es ? 'de lo ideal' : 'of ideal'}</th>
-            <th>{es ? 'segregacion' : 'segregation'}</th>
+            <th>{es ? 'segregación' : 'segregation'}</th>
           </tr>
         </thead>
         <tbody>
@@ -720,10 +720,10 @@ function StackingCompare({ base, seed, nPasses, sr, reclaim, structure, rangeT, 
           ))}
         </tbody>
       </table>
-      <Callout variant="honest" title={es ? 'Chevron gana en una pila LINEAL' : 'Chevron wins on a LINEAR pile'}>
+      <Callout variant="honest" title={es ? 'Chevron gana en una pila lineal' : 'Chevron wins on a linear pile'}>
         {es
-          ? 'La literatura compara chevcon contra conos concentricos en un patio CIRCULAR, donde chevron no es una opcion: el apilador tiene que recorrer el anillo. En una cama lineal cada capa de chevron abarca toda la longitud, asi que un corte en cualquier estacion muestrea capas de toda la construccion. Chevcon cruza MAS capas por corte y aun asi mezcla peor, porque sus capas vienen de una ventana temporal y estan correlacionadas entre si. El conteo de capas por si solo no es la respuesta.'
-          : 'The literature compares chevcon against cone shell on a CIRCULAR yard, where chevron is not an option: the stacker has to travel the ring. On a linear bed every chevron layer spans the whole length, so a cut at any station samples layers from across the entire build. Chevcon crosses MORE layers per cut and still blends worse, because its layers come from a travelling window and are correlated with one another. Layer count alone is not the answer.'}
+          ? 'La literatura compara chevcon contra conos concéntricos en un patio circular, donde chevron no es una opción: el apilador tiene que recorrer el anillo. En una cama lineal cada capa de chevron abarca toda la longitud, así que un corte en cualquier estación muestrea capas de toda la construcción. Chevcon cruza mas capas por corte y aun así mezcla peor, porque sus capas vienen de una ventana temporal y están correlacionadas entre si. El conteo de capas por si solo no es la respuesta.'
+          : 'The literature compares chevcon against cone shell on a circular yard, where chevron is not an option: the stacker has to travel the ring. On a linear bed every chevron layer spans the whole length, so a cut at any station samples layers from across the entire build. Chevcon crosses more layers per cut and still blends worse, because its layers come from a travelling window and are correlated with one another. Layer count alone is not the answer.'}
       </Callout>
     </div>
   );
@@ -754,23 +754,23 @@ function SegregationProfile({ run, es }: { run: ReturnType<typeof simulate>; es?
       <div className="st-plot-h">
         <span className="st-plot-t">{es ? 'Perfil apice a pie' : 'Apex-to-toe profile'}</span>
         <span className="st-plot-n">
-          {es ? 'indice de segregacion' : 'segregation index'} {run.metrics.segregationIndex.toFixed(4)}
+          {es ? 'índice de segregación' : 'segregation index'} {run.metrics.segregationIndex.toFixed(4)}
         </span>
       </div>
       <UPlotChart x={prof.h} height={210}
         series={[
-          { label: es ? 'fraccion gruesa' : 'coarse fraction', values: prof.cf },
+          { label: es ? 'fracción gruesa' : 'coarse fraction', values: prof.cf },
           { label: es ? 'ley de columna, %Cu' : 'column grade, %Cu', values: prof.cu },
         ]}
         markers={[{ y: prof.cf.length ? prof.cf.reduce((a, b) => a + b, 0) / prof.cf.length : 0,
           label: es ? 'media' : 'mean' }]}
         xLabel={es ? 'Altura de columna' : 'Column height'} xUnit="m"
         yLabel={es ? 'Valor' : 'Value'}
-        ariaSummary={es ? 'Tabla del perfil de segregacion' : 'Segregation profile data table'} />
+        ariaSummary={es ? 'Tabla del perfil de segregación' : 'Segregation profile data table'} />
       <p className="st-note">
         {es
-          ? 'El grueso al pie es una SALIDA del solucionador de Gray y Thornton, no una regla escrita en el codigo: los finos drenan a la base de la capa fluyente y se depositan primero, de modo que lo que llega mas lejos es grueso.'
-          : 'Coarse at the toe is an OUTPUT of the Gray and Thornton solver, not a rule written into the code: fines drain to the base of the flowing layer and are deposited first, so what travels furthest is coarse.'}
+          ? 'El grueso al pie es una salida del solucionador de Gray y Thornton, no una regla escrita en el codigo: los finos drenan a la base de la capa fluyente y se depositan primero, de modo que lo que llega más lejos es grueso.'
+          : 'Coarse at the toe is an output of the Gray and Thornton solver, not a rule written into the code: fines drain to the base of the flowing layer and are deposited first, so what travels furthest is coarse.'}
       </p>
     </div>
   );
@@ -825,8 +825,8 @@ function StreamsView({ run, es }: { run: ReturnType<typeof simulate>; es?: boole
       </div>
       <p className="st-note">
         {es
-          ? 'Ambos flujos se grafican sobre TONELAJE ACUMULADO, no sobre el reloj. Kumral exige que las dos varianzas se calculen sobre la misma base, y los cortes son un orden de magnitud mayores que los volteos que los alimentaron.'
-          : 'Both streams are plotted against CUMULATIVE TONNAGE, not the clock. Kumral requires both variances on the same base, and cuts are an order of magnitude larger than the dumps that fed them.'}
+          ? 'Ambos flujos se grafican sobre tonelaje acumulado, no sobre el reloj. Kumral exige que las dos varianzas se calculen sobre la misma base, y los cortes son un orden de magnitud mayores que los volteos que los alimentaron.'
+          : 'Both streams are plotted against cumulative tonnage, not the clock. Kumral requires both variances on the same base, and cuts are an order of magnitude larger than the dumps that fed them.'}
       </p>
     </div>
   );
@@ -865,9 +865,9 @@ function IdealCurve({ run, nPasses, es }: {
         { v: `${(m.efficiency * 100).toFixed(0)} %`, l: es ? 'de lo alcanzable' : 'of the attainable' },
         { v: `${nPasses}`, l: es ? 'pasadas' : 'passes' },
       ]} />
-      <Callout variant="honest" title={es ? 'Por que la cota nunca se alcanza' : 'Why the bound is never reached'}>
+      <Callout variant="honest" title={es ? 'Por qué la cota nunca se alcanza' : 'Why the bound is never reached'}>
         {es
-          ? 'Si las N capas que cruza un corte fueran extracciones independientes, la media del corte tendria varianza var_in/N, asi que lo ideal es 1/N y el efecto de mezcla ideal es raiz de N. Una cama real alcanza un efecto de 5 a 7,5 con 200 a 600 capas, donde lo ideal seria 14,1 a 24,5: recupera aproximadamente entre un cuarto y un tercio del beneficio. Las capas sucesivas estan autocorrelacionadas, un corte no muestrea todas por igual y la segregacion sesga lo que cada corte contiene. Un simulador que reportara la curva 1/N como resultado inflaria el beneficio en un orden de magnitud.'
+          ? 'Si las N capas que cruza un corte fueran extracciones independientes, la media del corte tendría varianza var_in/N, así que lo ideal es 1/N y el efecto de mezcla ideal es raiz de N. Una cama real alcanza un efecto de 5 a 7,5 con 200 a 600 capas, donde lo ideal sería 14,1 a 24,5: recupera aproximadamente entre un cuarto y un tercio del beneficio. Las capas sucesivas están autocorrelacionadas, un corte no muestrea todas por igual y la segregación sesga lo que cada corte contiene. Un simulador que reportara la curva 1/N como resultado inflaria el beneficio en un orden de magnitud.'
           : 'If the N layers a cut crosses were independent draws, the cut mean would have variance var_in/N, so the ideal is 1/N and the ideal mixing effect is the square root of N. A real bed reaches an effect of 5 to 7.5 over 200 to 600 layers, where the ideal would be 14.1 to 24.5: it recovers roughly a quarter to a third of the benefit. Successive layers are autocorrelated, a cut does not sample every layer equally, and segregation biases what each cut contains. A simulator reporting the 1/N curve as its result would inflate the benefit by an order of magnitude.'}
       </Callout>
     </div>
@@ -905,7 +905,7 @@ function MassBalance({ run, es }: { run: ReturnType<typeof simulate>; es?: boole
           { label: es ? 'depositado' : 'deposited', values: dep },
           { label: es ? 'en pila' : 'in pile', values: inp, fill: true },
           { label: es ? 'recuperado' : 'reclaimed', values: rec },
-          { label: es ? 'residual de conservacion' : 'conservation residual', values: resid, dash: true },
+          { label: es ? 'residual de conservación' : 'conservation residual', values: resid, dash: true },
         ]}
         xLabel={es ? 'Tiempo' : 'Time'} xUnit="h"
         yLabel={es ? 'Tonelaje' : 'Tonnage'} unit="kt"
@@ -916,12 +916,12 @@ function MassBalance({ run, es }: { run: ReturnType<typeof simulate>; es?: boole
           : `Deposited minus (in pile plus reclaimed) = ${run.metrics.massResidualT.toExponential(3)} t. `}
         <span className={Math.abs(run.metrics.massResidualT) < 1e-6 ? 'st-pass' : 'st-fail'}>
           {Math.abs(run.metrics.massResidualT) < 1e-6
-            ? (es ? 'conservado a precision de maquina' : 'conserved to machine precision')
+            ? (es ? 'conservado a precisión de máquina' : 'conserved to machine precision')
             : (es ? 'FALLO' : 'FAILED')}
         </span>
         {'. '}
         {es
-          ? 'El residual se muestra en pantalla en vez de afirmarse en prosa, porque un solucionador que perdiera una fraccion de un por ciento por volteo seguiria dibujando un cono convincente.'
+          ? 'El residual se muestra en pantalla en vez de afirmarse en prosa, porque un solucionador que perdiera una fracción de un por ciento por volteo seguiria dibujando un cono convincente.'
           : 'The residual is shown on screen rather than asserted in prose, because a solver losing a fraction of a percent per dump would still draw a convincing cone.'}
       </p>
     </div>
@@ -938,11 +938,11 @@ function Honesty({ run, es }: { run: ReturnType<typeof simulate>; es?: boolean }
   }
   const checks = [
     { ok: Math.abs(m.massResidualT) < 1e-6, v: m.massResidualT.toExponential(2),
-      en: 'Deposited equals in-pile plus reclaimed', es: 'Depositado igual a en-pila mas recuperado' },
+      en: 'Deposited equals in-pile plus reclaimed', es: 'Depositado igual a en-pila más recuperado' },
     { ok: worstFrac < 1e-9, v: worstFrac.toExponential(2),
       en: 'Provenance fractions sum to one on every cut', es: 'Las fracciones de procedencia suman uno en cada corte' },
     { ok: run.steepestSlopeDeg <= run.pad.reposeDeg + 0.5, v: `${run.steepestSlopeDeg.toFixed(2)} deg`,
-      en: 'No slope stands steeper than the imposed angle of repose', es: 'Ninguna pendiente supera el angulo de reposo impuesto' },
+      en: 'No slope stands steeper than the imposed angle of repose', es: 'Ninguna pendiente supera el ángulo de reposo impuesto' },
     { ok: run.cuts.every((c) => c.tonnes > 0 && Number.isFinite(c.gradeCuPct)), v: `${run.cuts.length}`,
       en: 'No cut has zero, negative or non-finite tonnage or grade', es: 'Ningun corte tiene tonelaje o ley nula, negativa o no finita' },
   ];
@@ -965,13 +965,13 @@ function Honesty({ run, es }: { run: ReturnType<typeof simulate>; es?: boolean }
       </table>
       <p className="st-note">
         {es
-          ? 'Estas son las identidades que atrapan la clase de error que produce una imagen plausible con numeros equivocados, la unica clase que todavia importa cuando el codigo ya corre. Se recalculan en el navegador a partir de los eventos, no se leen de un artefacto.'
+          ? 'Estas son las identidades que atrapan la clase de error que produce una imagen plausible con numeros equivocados, la única clase que todavia importa cuando el codigo ya corre. Se recalculan en el navegador a partir de los eventos, no se leen de un artefacto.'
           : 'These are the identities that catch the class of bug producing a plausible picture with wrong numbers, the only class that still matters once the code runs. They are recomputed in the browser from the events, not read from an artifact.'}
       </p>
-      <Callout variant="honest" title={es ? 'Limites del modelo' : 'What the model does not do'}>
+      <Callout variant="honest" title={es ? 'Límites del modelo' : 'What the model does not do'}>
         {es
-          ? 'Las interfaces entre lotes son mas nitidas que en una pila real: el remanejo y la mezcla por avalancha no estan modelados. El angulo de reposo es IMPUESTO desde rangos de manual, no emergente. La segregacion es un modelo continuo publicado, no verdad a escala de particula. Los datos son sinteticos salvo cuando se selecciona el carril real.'
-          : 'Lot interfaces are sharper than a real pile’s: re-handling and avalanche mixing are not modelled. The angle of repose is IMPOSED from handbook ranges, not emergent. The segregation is a published continuum model, not particle-scale truth. The data is synthetic except when the real lane is selected.'}
+          ? 'Las interfaces entre lotes son más nitidas que en una pila real: el remanejo y la mezcla por avalancha no están modelados. El ángulo de reposo es impuesto desde rangos de manual, no emergente. La segregación es un modelo continuo publicado, no verdad a escala de particula. Los datos son sinteticos salvo cuando se selecciona el carril real.'
+          : 'Lot interfaces are sharper than a real pile’s: re-handling and avalanche mixing are not modelled. The angle of repose is imposed from handbook ranges, not emergent. The segregation is a published continuum model, not particle-scale truth. The data is synthetic except when the real lane is selected.'}
       </Callout>
     </div>
   );
@@ -986,7 +986,7 @@ function Decision({ run, target, stacking, reclaim, nPasses, es }: {
   const recs: string[] = [];
   if (!meets && stacking === 'coneshell') {
     recs.push(es
-      ? 'Cambia de conos concentricos a chevcon o chevron. Bond, Coursaux y Worthington (2000), confirmados por Loubser y de Korte (2015), reportan los conos como inadecuados cuando la homogeneizacion importa.'
+      ? 'Cambia de conos concéntricos a chevcon o chevron. Bond, Coursaux y Worthington (2000), confirmados por Loubser y de Korte (2015), reportan los conos como inadecuados cuando la homogeneización importa.'
       : 'Move off cone shell to chevcon or chevron. Bond, Coursaux and Worthington (2000), confirmed by Loubser and de Korte (2015), report cone shell as unsuitable when homogenization matters.');
   }
   if (!meets && reclaim !== 'fullface') {
@@ -1006,14 +1006,14 @@ function Decision({ run, target, stacking, reclaim, nPasses, es }: {
   }
   if (recs.length === 0) {
     recs.push(es
-      ? 'La configuracion cumple el objetivo. Verificalo con la banda multi-semilla en Benchmark antes de tratarlo como un resultado.'
+      ? 'La configuración cumple el objetivo. Verificalo con la banda multi-semilla en Benchmark antes de tratarlo como un resultado.'
       : 'The configuration meets the target. Check it against the multi-seed band on Benchmark before treating it as a result.');
   }
 
   return (
     <div className="st-plot">
       <div className="st-plot-h">
-        <span className="st-plot-t">{es ? 'Diagnostico y recomendacion' : 'Diagnosis and recommendation'}</span>
+        <span className="st-plot-t">{es ? 'Diagnóstico y recomendación' : 'Diagnosis and recommendation'}</span>
         <span className={meets ? 'st-pass' : 'st-fail'}>
           {meets ? (es ? 'CUMPLE' : 'MEETS TARGET') : (es ? 'NO CUMPLE' : 'BELOW TARGET')}
         </span>
@@ -1023,14 +1023,14 @@ function Decision({ run, target, stacking, reclaim, nPasses, es }: {
         { v: target.toFixed(2), l: es ? 'objetivo' : 'target' },
         { v: `${(m.efficiency * 100).toFixed(0)} %`, l: es ? 'de lo ideal' : 'of the ideal' },
         { v: m.nLayersMean.toFixed(1), l: es ? 'capas por corte' : 'layers per cut' },
-        { v: m.segregationIndex.toFixed(3), l: es ? 'segregacion' : 'segregation' },
+        { v: m.segregationIndex.toFixed(3), l: es ? 'segregación' : 'segregation' },
       ]} />
       <ul className="st-note">
         {recs.map((r) => <li key={r.slice(0, 40)} style={{ marginBottom: '0.4rem' }}>{r}</li>)}
       </ul>
       <Callout variant="honest" title={es ? 'Alcance' : 'Scope'}>
         {es
-          ? 'Cada recomendacion esta atada a un umbral cuantitativo y a una regla de diseno citada. Este producto no emite consignas de planta, no resuelve el programa lineal de mezcla (eso es BlendLP) y no hace contabilidad metalurgica.'
+          ? 'Cada recomendación esta atada a un umbral cuantitativo y a una regla de diseño citada. Este producto no emite consignas de planta, no resuelve el programa lineal de mezcla (eso es BlendLP) y no hace contabilidad metalurgica.'
           : 'Every recommendation is tied to a quantitative threshold and a cited design rule. This product emits no plant setpoint, does not solve the blending linear program (that is BlendLP), and does no metallurgical accounting.'}
       </Callout>
     </div>
