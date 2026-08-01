@@ -9,6 +9,28 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.02.001] - 2026-08-01
+
+Two defects found by LOOKING at the deployed site rather than by reading the build, which passed
+every gate with both of them present.
+
+### Fixed
+
+- **The App opened on the middle of the variant family**, so it said "Modified from G01_chevron" with
+  a Reset button on first paint and reported a variance reduction of 0.082 where the case's own
+  documentation says 0.061. A case now opens on the regime whose override equals the case as
+  declared, which is the point its expected band and kill criterion are written about, and the App
+  therefore agrees with the baked artifact on first load.
+- **The empty pad was coloured as material at height zero.** Feeding 0 into the colour ramp painted
+  every un-stacked cell in the ramp's bottom colour, so a bed on a 192 by 72 m pad rendered as a
+  saturated slab covering the whole pad with a small ridge on it, and the honest reading of that
+  picture is that the pad is full. The empty floor is drawn in a neutral pad colour now, so what is
+  coloured is what was actually built.
+
+Neither was caught by the gate, which measures geometry, pixel counts and reachability. Both were
+visible in the first screenshot of the live site.
+
+
 ## [0.02.000] - 2026-08-01
 
 The release that makes the product's own claims true. A full audit against the ADRs and conventions
