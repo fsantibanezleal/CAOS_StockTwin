@@ -295,3 +295,11 @@ main.page:has(> .page-body:not(.st-layout)) { overflow-y: auto; min-height: 0; }
   border-color: var(--color-accent);
   color: var(--color-accent-contrast, #fff);
 }
+
+/* the label of a rail control that is a select rather than a slider */
+.st-ctl-l {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--color-fg-subtle);
+  margin: 0.4rem 0 0.2rem;
+}

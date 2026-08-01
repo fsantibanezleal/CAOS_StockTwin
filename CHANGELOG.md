@@ -9,6 +9,60 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.02.000] - 2026-08-01
+
+The release that makes the product's own claims true. A full audit against the ADRs and conventions
+found eight violations; this fixes all of them, and the two that mattered most changed the shape of
+the repository rather than only its text.
+
+### Changed
+
+- **The engine is no longer in this repository.** The bed-blending physics is now `bedblend`, a
+  separately published library in CAOS_BedBlend, consumed here as a pinned dependency. A product may
+  not declare its own package: either the code is a real library in its own repo with a real PyPI
+  project, or it is not a package at all. This repository had been in the forbidden middle, declaring
+  an unpublished `stlab` that nobody could install. It now declares no package: `data-pipeline/` is a
+  folder invoked as `python data-pipeline/run.py <CASE>`, and three CI guards fail the build if a
+  `[project]` table, an editable install, or a `python -m` invocation ever reappears.
+- **Spanish is written properly.** 425 user-facing strings had no accents at all, which reads as
+  broken to any Spanish speaker. Restored by rule rather than by vocabulary, so the fix covers words
+  nobody enumerated, with the ambiguous cases (`esta`/`está`, `aun`/`aún`, interrogatives) resolved by
+  phrase. 198 capitals-as-emphasis removed from prose in both languages.
+- **The regime control is a select in the rail, not a bar above the stage.** Chips above the stage
+  cost a permanent row of chrome and took the App instrument from 53 to 44.7 percent of the viewport
+  at 1280x800, below the floor. The rail's Case section was then split in two, because a panel that
+  cannot show its own controls is a sizing failure rather than something to wrap in a scrollbar.
+
+### Added
+
+- **84 operating regimes**, six for each of the fourteen parametric cases. Each category sweeps the
+  knob its own answer turns on: layer count for the stacking axis, parcel size for reclaim, variogram
+  range for input variability, and the segregation number from the passive-tracer limit through
+  saturation. Selecting one re-runs the real engine in the browser. The three controls carry NO
+  regimes, deliberately: a control is one point with a numerical kill criterion, and padding it to
+  reach a chip count would be fabricating experiments.
+- **The cross-lane parity, measured and published** on the Benchmark page. The browser mirror and the
+  canonical engine agree on the input stream to 5.7e-14, deposited tonnage to 1.8e-13, total mass to
+  1.1e-11 and the layer count exactly, while the lot size-split composition differs by 9.8e-4 and cut
+  grade by 5.4e-4. Mass and geometry are exact; the drift is floating-point accumulation order in the
+  segregation path. Reported rather than claimed away, and pinned against regression by a test.
+- **A `LICENSE`.** The repository is public and had none, so the code was legally all-rights-reserved.
+- **Framework cards as one folder per engine**, 24 pages, with the three Python examples EXECUTED in
+  CI. A card whose example no longer runs reads as verified and is not.
+- **A bring-your-own-data sample** that exercises all three outcomes of the ingestion contract: one
+  hard range violation rejected with its reason, one grade beyond four robust sigmas flagged and kept,
+  one wet row flagged because the dry angle of repose stops being valid above 20 percent moisture.
+
+### Fixed
+
+- A cross-lane tie-break defect: the browser heap compared height only, while the canonical engine
+  breaks ties by cell index, so equal-height cells toppled in a different order.
+- The template-residue guard never scanned `.sh` or `.ps1`, which is how an `examplelab` invocation
+  survived instantiation inside `scripts/precompute.*`.
+- `requirements-offline.txt`, a sixth lane file invented where five are defined, folded back into the
+  frozen `requirements-precompute.txt`.
+
+
 ### Added
 
 - **The pile engine** (`stlab.model`), the shared analytic core the TypeScript live lane mirrors.

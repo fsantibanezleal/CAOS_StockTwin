@@ -214,6 +214,7 @@ export default function Tool() {
           onPick={setSection}
           sections={[
             { id: 'case', label: es ? 'Caso' : 'Case' },
+            { id: 'regime', label: es ? 'Régimen' : 'Regime' },
             { id: 'build', label: es ? 'Apilado' : 'Stack' },
             { id: 'stream', label: es ? 'Flujo' : 'Stream' },
             { id: 'reclaim', label: es ? 'Recuperar' : 'Reclaim' },
@@ -250,11 +251,24 @@ export default function Tool() {
                 </button>
               </p>
             )}
+          </div>
+        )}
+
+        {section === 'regime' && (
+          <div className="st-card">
+            <div className="st-card-t">{es ? 'Punto de operación' : 'Operating point'}</div>
+            <VariantBar
+              variants={base.variants}
+              active={variantId}
+              onPick={setVariantId}
+              es={es}
+              familyLabel={VARIANT_FAMILY[base.category]?.[es ? 'es' : 'en']}
+            />
             <Ctl label={es ? 'Semilla' : 'Seed'} value={seed} min={1} max={200} step={1}
               onChange={setSeed}
               hint={es
-                ? 'Cada corrida es función pura de (parámetros, semilla). Cambia la semilla para ver cuánto se mueve el resultado.'
-                : 'Every run is a pure function of (parameters, seed). Change it to see how much the result moves.'} />
+                ? 'Cada corrida es función pura de (parámetros, semilla). Cambiar la semilla muestra cuánto se mueve el resultado.'
+                : 'Every run is a pure function of (parameters, seed). Changing it shows how much the result moves.'} />
           </div>
         )}
 
@@ -361,13 +375,6 @@ export default function Tool() {
       </aside>
 
       <main className="st-main">
-        <VariantBar
-          variants={base.variants}
-          active={variantId}
-          onPick={setVariantId}
-          es={es}
-          familyLabel={VARIANT_FAMILY[base.category]?.[es ? 'es' : 'en']}
-        />
         <TabRow groups={groups} active={view} onPick={setView} es={es} />
 
         <div className="st-tabpanel">
