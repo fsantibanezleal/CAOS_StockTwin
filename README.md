@@ -1,85 +1,126 @@
-# CAOS product template, a REAL product repo (not a demo)
+# StockTwin
 
-<!-- BADGE HEADER (ADR-0065), copy this block to the top of an instantiated product README.
-     Replace <OWNER>/<REPO> and the CI workflow filename. Every badge here is auto-updating and truthful.
-     Allowed: CI (from Actions), license, latest version/tag, live demo, and arXiv ONLY once a real preprint exists.
-     FORBIDDEN: hand-typed count/claim badges (tests N passing, languages N, coverage unless from CI, agents N, ...)
-     and supply-chain-security theater (OpenSSF Scorecard, SLSA, VirusTotal) unless the repo actually ships signed
-     installable binaries. A badge that states something a tool does not verify live is vanity, do not add it.
-[![CI](https://img.shields.io/github/actions/workflow/status/<OWNER>/<REPO>/ci.yml?branch=main&label=CI)](https://github.com/<OWNER>/<REPO>/actions)
-[![License](https://img.shields.io/github/license/<OWNER>/<REPO>)](LICENSE)
-[![Version](https://img.shields.io/github/v/tag/<OWNER>/<REPO>?label=version&sort=semver)](https://github.com/<OWNER>/<REPO>/tags)
-[![Live demo](https://img.shields.io/badge/demo-live-2ea44f)](https://<SLUG>.fasl-work.com)
--->
+[![CI](https://img.shields.io/github/actions/workflow/status/fsantibanezleal/CAOS_StockTwin/ci.yml?branch=main&label=CI)](https://github.com/fsantibanezleal/CAOS_StockTwin/actions)
+[![License](https://img.shields.io/github/license/fsantibanezleal/CAOS_StockTwin)](LICENSE)
+[![Version](https://img.shields.io/github/v/tag/fsantibanezleal/CAOS_StockTwin?label=version&sort=semver)](https://github.com/fsantibanezleal/CAOS_StockTwin/tags)
 
-This is the **canonical template** every Faena/CAOS data-product repo is instantiated from. It exists because
-ad-hoc products (bespoke scripts, baked cases, no reproducible env, no data contract) kept shipping, they
-*look* done but **cannot be applied to new data**, so they are demos, not tools. This template makes the standard
-**executable**: clone it, run two scripts, and you have a reproducible offline pipeline that ingests data in a
-**standard format**, processes it through **typed, seeded, tested stages**, emits **committed standard-format
-artifacts + a manifest**, and feeds a web app that **replays** them, and that any third party can point at
-**their own data**.
+**A stockpile you can watch being built and taken apart, with every reclaimed tonne traced back to the
+trucks it came from.**
 
-It is modelled on the validated exemplar **CAOS_SIMLAB** (`simlab/pipeline.py`, `requirements-*.txt`,
-`scripts/setup+precompute`, `docs/frameworks`, `data/artifacts`, `manifests/`).
+Haul trucks deposit loads onto a pad. The pile relaxes to its angle of repose. Granular size
+segregation redistributes material along every avalanche path, so the toe ends up coarser than the
+crest. A reclaimer takes cuts that blend the stacked layers back together, and how well it blends
+depends entirely on how the pile was built and how far the machine can reach into it.
 
-## The two data contracts (the thing that was missing everywhere)
+StockTwin simulates that, measures it, and shows the working.
 
-A product is only real if data flows through **two enforced contracts**:
+## The three questions it answers
 
-1. **Ingestion contract, `raw → processing`.** `data-pipeline/<slug>lab/io/contract.py` (shipped as `examplelab`) defines the required schema (columns,
-   units, ranges) of an input dataset and an explicit **outlier policy** (reject / clip / flag). This is the
-   *"bring your own data"* gate: a user's dataset is accepted iff it satisfies the contract. Documented in
-   [docs/data-contract.md](docs/data-contract.md).
-2. **Artifact contract, `processing → web`.** Every canonical pipeline run writes a compact,
-   standard-format artifact and a `manifests/<case>.json` (params, seed, run_ms, bytes, gate verdict,
-   format/version). The web replay lane loads only these. A separately named reduced live engine may compute
-   valid interactive results when its parity/latency/memory gates pass; it never overwrites or masquerades
-   as canonical offline truth. A TS type mirrors the manifest schema so contract drift fails the build.
+**How much does a stockpile homogenize the feed?** As the variance reduction ratio,
 
-If either contract is missing, the product is a demo. CI enforces both.
-
-## Quickstart (proves the template runs end-to-end)
-
-```bash
-# 1. create the reproducible environment (.venv + pinned per-need requirements)
-./scripts/setup.sh                      # or scripts/setup.ps1 on Windows PowerShell
-
-# 2. run the offline pipeline over every case → data/artifacts/ + manifests/
-./scripts/precompute.sh                 # or scripts/precompute.ps1
-
-# 3. the tests (determinism, both data contracts, the gate, parity)
-.venv/bin/python -m pytest              # .venv/Scripts/python.exe on Windows
-
-# 4. the web app consumes the artifacts (copy-data enforces the artifact contract)
-cd web && npm install && node copy-data.mjs && npm run dev
+```
+VRR = var_out / var_in            lower is better
 ```
 
-## How to instantiate this template for a NEW product
+always with a multi-seed credible band, and always drawn against the independent-layer bound `1 / N`.
+Never alone: if the `N` layers a cut crosses were independent the ideal would be `1/N`, and real
+blending beds recover only about a quarter to a third of that. A number without that comparison
+overstates the benefit by roughly an order of magnitude.
 
-See [docs/guides/00_instantiate.md](docs/guides/00_instantiate.md). In short: copy this tree, **delete the
-`.template-source` sentinel** (this arms the residue guard, `scripts/check_template_residue.py`, which then
-fails CI if any example lab or placeholder text survives), rename the `examplelab` package (in
-`data-pipeline/`) to `<slug>lab`, **replace the EXAMPLE engine** (the SIR model in
-`data-pipeline/<slug>lab/model/` + `stages/`) with your
-product's complete research-chosen classical→SOTA→frontier method registry. Every promised method must
-pass ADR-0069's vertical acceptance contract and be documented in `docs/frameworks/`, pinned in
-`requirements-precompute.txt` or `requirements-gpu.txt`, and actually executed by the pipeline. Write the
-ingestion contract, split policy, cases/variants, and fill the `docs/` wiki **as you build, not at the end**.
+**Where did this reclaimed tonne come from?** Every pad cell owns an ordered stack of lots, each
+carrying the deposition event it came from. A reclaim cut reports the fraction of its tonnage that came
+from each dump, and those fractions sum to one, checked numerically on every cut of every case.
 
-## Hard rules this template bakes in
+**How much is size segregation biasing the cut?** The flowing layer on each avalanche is solved with
+the Gray and Thornton kinetic-sieving model, so coarse-at-the-toe is an OUTPUT of the physics rather
+than a rule written into the code.
 
-- **The deep research is binding, not decoration.** Every engine/solver/library the research selected lives in
-  `docs/frameworks/<tool>/` *and* `requirements-precompute.txt`, and the pipeline actually uses it. No hand-rolled
-  substitute for a SOTA engine the research prescribed.
-- **The repository is the product.** It implements ingest, preprocess, dataset/split, feature extraction,
-  training/fine-tuning, inference, evaluation, export, and validation for every promised method. The web is
-  the companion workbench, not a substitute for those engines.
-- **Canonical science is offline.** Tests run in sandboxes; release bake is explicit; deployment verifies
-  checksums and publishes existing evidence. Deploy never trains, benchmarks, or mutates canonical artifacts.
-- **Standard formats end-to-end** (`data-pipeline/<slug>lab/io/formats.py`): domain-standard in, compact-standard out.
-- **Reproducible**: pinned requirements per need; `scripts/setup`; CI installs them and runs a pipeline smoke.
-- **Applicable to new data**: the ingestion contract is the bring-your-own-data door.
-- **Versioned** (X.XX.XXX, CHANGELOG + tags from day 1) with **license/attribution hygiene**.
+## What it is not
 
-See [docs/architecture/01_overview.md](docs/architecture/01_overview.md) for the full rationale.
+- Not in-plant metal accounting. No metal balance, no plant mass balance, no production ledger.
+- Not a comminution or flotation model.
+- Not a blending optimizer. It exposes the per-cell grade field and the reclaim-front state an
+  optimizer would consume; it does not solve the linear program.
+- It emits no plant setpoint.
+
+## The method ladder
+
+Fifteen methods, two of them learned. Each has to pass a vertical acceptance gate before it may appear
+as a tab: a real engine, pinned dependencies, calibration where applicable, inference, held-out
+evaluation, artifacts, tests, and a documentation page. A name in a selector is not a method.
+
+| Rung | Methods |
+|---|---|
+| **Classical** | relaxation with an imposed angle of repose; five stacking geometries (chevron, windrow, cone shell, strata, chevcon); four reclaim geometries (full-face, bucket wheel, end, front-end loader); the variance reduction ratio; experimental variograms; the `1/N` independent-layer bound; the residence-time distribution; geostatistical stream synthesis |
+| **SOTA** | Gray-Thornton kinetic segregation solved as a conservation law; the Makse stratification regime; the depth-averaged mu(I) reclaim-face slump; a discrete-element ground-truth heap; the per-cell lot ledger with reclaim provenance |
+| **Beyond the published state of this problem** | a learned variance-reduction surrogate and a learned segregation-profile surrogate, both conditional on beating a multiple-regression baseline on the same corpus, and both reported as a negative result if they do not |
+
+## The case matrix
+
+Seventeen cases in five categories, three of them controls with numerical kill criteria.
+
+| Category | Cases |
+|---|---|
+| Stacking geometry | chevron, windrow, cone shell, strata, chevcon |
+| Reclaim method | bucket wheel, end reclaim, front-end loader (chevron plus full-face is the reference) |
+| Input variability | short range, long range, trending, bimodal |
+| Segregation regime | strong kinetic sieving, the stratifying regime |
+| Controls | perfect mixer, zero segregation, starvation |
+
+The controls are what make the rest believable. The perfect mixer must reproduce the `1/N` bound inside
+its band; the zero-segregation control must leave every lot's size split exactly untouched; the
+starvation control must empty the pile and say so, without a negative or NaN tonnage.
+
+## Benchmark anchors
+
+The stacking axis is scored against published results, not only against itself:
+
+| Anchor | Value | Source |
+|---|---|---|
+| Cone shell, circular pile, optimised | VRR 0.232 | Loubser and de Korte 2015, doi:10.17159/2411-9717/2015/v115n8a15 |
+| Chevcon, circular pile, optimised | VRR 0.121 | the same, Table IV |
+| Chevcon plus a full-face reclaimer | about ten to one variance reduction | Bond, Coursaux and Worthington 2000 |
+| A real blending bed | mixing effect 5 to 7.5 at 200 to 600 layers | Schramm, AT MINERALS PROCESSING 06/2021 |
+
+Those digits are NOT reproduction targets: they come from a differently dimensioned circular pile, and
+the source is internally inconsistent about them. The test is ordinal and magnitude-level, it is written
+down before the run, and it either passes or is reported as a failure.
+
+## Data
+
+**Synthetic lane, committed:** ore bodies from
+[`oreblocks`](https://github.com/fsantibanezleal/CAOS_OreBlocks) plus an exponential-covariance grade
+stream, both seeded and byte-reproducible, labelled synthetic everywhere.
+
+**Real lane, never committed:** MineLib published block models carry real copper grades and tonnages.
+MineLib grants academic download only, with no redistribution, so the instances are fetched at runtime
+into browser memory and appear nowhere in this repository or in the built bundle.
+
+There is no open truck-by-truck dump log with grades at a usable licence. That was searched and the
+verdict recorded. A dump log is a derived artefact of a block model plus a dig sequence, so the product
+generates one rather than pretending a public one exists.
+
+## Run it locally
+
+```powershell
+py -3.13 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
+.\.venv\Scripts\python.exe -m pytest tests -q
+.\.venv\Scripts\python.exe -m ruff check data-pipeline tests
+
+# a sandboxed bake; NEVER omit --output unless this is an intentional release bake
+.\.venv\Scripts\python.exe -m stlab.pipeline G01_chevron --output build\smoke --band-seeds 3
+```
+
+The canonical bake, the web build and the deploy are separate operations. Deployment verifies the
+committed artifacts and publishes them; it never runs science.
+
+## Documentation
+
+The [`docs/`](docs/) wiki carries the theory, the equations, the real DOIs and the caveats: a page per
+method, a page per case, and one per framework the offline lane depends on. Start at
+[`docs/README.md`](docs/README.md).
+
+## License
+
+MIT. Developed by Felipe Santibáñez-Leal.
