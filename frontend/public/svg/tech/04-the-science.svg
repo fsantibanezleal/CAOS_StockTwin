@@ -1,73 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The science / algorithm flow, placeholder, specialise per product">
-  <!-- PLACEHOLDER (template). Each product REPLACES this with its real algorithm,
-       step by step, with the genuine equations. Keep the shell tokens (themed). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 584" width="880" class="arch-svg" role="img">
   <style>
-    .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
-    .arch-svg .mono { font-family: var(--font-mono, ui-monospace, Consolas, monospace); }
-    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1.2; }
-    .arch-svg .bx-hi { stroke: var(--color-accent); }
-    .arch-svg .bx-good { stroke: var(--color-good); }
-    .arch-svg .ttl { fill: var(--color-fg); font-size: 13px; font-weight: 700; }
-    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10px; }
-    .arch-svg .it { fill: var(--color-fg); font-size: 10.5px; }
-    .arch-svg .cd { fill: var(--color-accent); font-size: 9.5px; }
-    .arch-svg .eq { fill: var(--color-fg); font-size: 12px; font-style: italic; }
-    .arch-svg .mu { fill: var(--color-fg-subtle); font-size: 10px; }
-    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.6; }
-    .arch-svg .ph { fill: var(--color-warn); font-size: 10px; font-weight: 600; }
+    .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
+    .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
+    .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
+    .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
+    .mono { font: 10px ui-monospace, monospace; fill: var(--color-accent); }
+    .mu  { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); font-style: italic; }
+    .lbl { font: 9.5px system-ui, sans-serif; fill: var(--color-fg-faint); }
+    .hdr { font: 700 11px system-ui, sans-serif; fill: var(--color-fg-faint); letter-spacing: 0.06em; }
+    .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.5; marker-end: url(#a); }
+    .flow-hi { fill: none; stroke: var(--color-accent); stroke-width: 1.8; marker-end: url(#ah); }
   </style>
   <defs>
-    <marker id="sc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-fg-faint)"/>
+    </marker>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
     </marker>
   </defs>
-
-  <text class="ttl" x="22" y="30">The science / algorithm flow</text>
-  <text class="ph" x="22" y="47">PLACEHOLDER, replace with this product's real stages + equations (e.g. image → watershed → PSD → Rosin–Rammler)</text>
-
-  <!-- staged pipeline -->
-  <rect class="bx bx-hi" x="20" y="78" width="180" height="92" rx="10"/>
-  <text class="it" x="34" y="104">① Ingest + normalise</text>
-  <text class="mu" x="34" y="124">validated input (Contract 1)</text>
-  <text class="cd mono" x="34" y="150">stages/01_*.py</text>
-
-  <rect class="bx bx-hi" x="232" y="78" width="180" height="92" rx="10"/>
-  <text class="it" x="246" y="104">② Core transform</text>
-  <text class="mu" x="246" y="124">the real method / model</text>
-  <text class="cd mono" x="246" y="150">stages/02_*.py</text>
-
-  <rect class="bx bx-hi" x="444" y="78" width="180" height="92" rx="10"/>
-  <text class="it" x="458" y="104">③ Estimate + fit</text>
-  <text class="mu" x="458" y="124">parameters, uncertainty</text>
-  <text class="cd mono" x="458" y="150">stages/03_*.py</text>
-
-  <rect class="bx bx-good" x="656" y="78" width="180" height="92" rx="10"/>
-  <text class="it" x="670" y="104">④ Metrics + artifact</text>
-  <text class="mu" x="670" y="124">scored vs baseline / truth</text>
-  <text class="cd mono" x="670" y="150">stages/04_*.py</text>
-
-  <path class="flow" d="M200,124 H230" marker-end="url(#sc-arrow)"/>
-  <path class="flow" d="M412,124 H442" marker-end="url(#sc-arrow)"/>
-  <path class="flow" d="M624,124 H654" marker-end="url(#sc-arrow)"/>
-
-  <!-- equation band -->
-  <rect class="bx" x="20" y="200" width="816" height="86" rx="10"/>
-  <text class="it" x="36" y="224">The governing relation (replace with the product's real equation):</text>
-  <text class="eq" x="36" y="256">y = f( x ; θ )            P(x) = 1 − exp[ −(x / x_c)^n ]            (placeholder)</text>
-  <text class="mu" x="36" y="276">render the real maths with KaTeX on the Methodology page; this SVG mirrors it visually.</text>
-
-  <!-- baseline vs learned -->
-  <rect class="bx" x="20" y="312" width="404" height="128" rx="10"/>
-  <text class="it" x="36" y="336" style="font-weight:700">Classical baseline</text>
-  <text class="mu" x="36" y="358">a transparent, deterministic method , </text>
-  <text class="mu" x="36" y="378">the honest reference every result is</text>
-  <text class="mu" x="36" y="398">measured against.</text>
-  <text class="cd mono" x="36" y="424">src/&lt;domain&gt;/*.ts (runs live)</text>
-
-  <rect class="bx bx-good" x="444" y="312" width="392" height="128" rx="10"/>
-  <text class="it" x="460" y="336" style="font-weight:700">Learned model</text>
-  <text class="mu" x="460" y="358">trained offline (torch), exported to</text>
-  <text class="mu" x="460" y="378">ONNX, run client-side; reported with</text>
-  <text class="mu" x="460" y="398">held-out skill vs the baseline.</text>
-  <text class="cd mono" x="460" y="424">model/learned.py → *.onnx → ort.ts</text>
+  <text class="hdr" x="14" y="20">THE CHAIN, WITH THE EQUATION AT EACH STEP</text>
+  <rect class="bx" x="14" y="30" width="852" height="76" rx="6"/>
+  <text class="ttl" x="28" y="50">Grade stream</text>
+  <text class="mono" x="160" y="50">model/stream.py</text>
+  <text class="it" x="28" y="71">C(h) = sill exp(-3h/a), generated exactly by a one-step recursion in cumulative tonnage</text>
+  <text class="mu" x="28" y="89">Autocorrelation is the point: correlated layers are not independent samples.</text>
+  <path class="flow-hi" d="M 440 106 L 440 116"/>
+  <rect class="bx-hi" x="14" y="118" width="852" height="76" rx="6"/>
+  <text class="ttl" x="28" y="138">Relaxation</text>
+  <text class="mono" x="160" y="138">heightfield.py::cascade</text>
+  <text class="it" x="28" y="159">T = sum_k max(0, d_k - T);   t_k = max(0, d_k - T);   D_orth = dx tan(theta_r)</text>
+  <text class="mu" x="28" y="177">The highest unstable cell topples first, so the transfers ARE the avalanche path.</text>
+  <path class="flow-hi" d="M 440 194 L 440 204"/>
+  <rect class="bx-hi" x="14" y="206" width="852" height="76" rx="6"/>
+  <text class="ttl" x="28" y="226">Segregation</text>
+  <text class="mono" x="160" y="226">model/segregation.py</text>
+  <text class="it" x="28" y="247">d(phi)/dx + d/dz[ -Sr phi (1 - phi) ] = 0,   zero flux at the free surface and the base</text>
+  <text class="mu" x="28" y="265">Gray and Thornton (3.20), Godunov flux. Coarse at the toe is an OUTPUT.</text>
+  <path class="flow-hi" d="M 440 282 L 440 292"/>
+  <rect class="bx-hi" x="14" y="294" width="852" height="76" rx="6"/>
+  <text class="ttl" x="28" y="314">Lot ledger</text>
+  <text class="mono" x="160" y="314">model/pile.py::Pile</text>
+  <text class="it" x="28" y="335">g_cut = sum m_i g_i / sum m_i;   f_e = sum_(e_i = e) m_i / sum m_i;   sum_e f_e = 1</text>
+  <text class="mu" x="28" y="353">A lot stack per cell. The sum-to-one identity is checked on every cut of every case.</text>
+  <path class="flow-hi" d="M 440 370 L 440 380"/>
+  <rect class="bx-web" x="14" y="382" width="852" height="76" rx="6"/>
+  <text class="ttl" x="28" y="402">Blending metrics</text>
+  <text class="mono" x="160" y="402">model/blending.py</text>
+  <text class="it" x="28" y="423">VRR = var_out / var_in  (lower is better);   VRR_ideal = 1/N;   E = sigma_in/sigma_out = sqrt(N)</text>
+  <text class="mu" x="28" y="441">Tonnage base, per Kumral. The ideal bound is DERIVED and labelled as derived.</text>
+  <path class="flow-hi" d="M 440 458 L 440 468"/>
+  <rect class="bx-web" x="14" y="470" width="852" height="76" rx="6"/>
+  <text class="ttl" x="28" y="490">Residence time</text>
+  <text class="mono" x="160" y="490">model/rtd.py</text>
+  <text class="it" x="28" y="511">tau = sum m_i (t_out - t_in) / sum m_i;   dimensionless spread = sigma^2 / tau^2</text>
+  <text class="mu" x="28" y="529">FIFO and LIFO references walked for the SAME event sequence, not approximated.</text>
+  <text class="mu" x="14" y="570">The one free parameter in the whole chain is the segregation number Sr, and stlab/stages/calibrate.py publishes its residual.</text>
 </svg>

@@ -1,121 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" width="900" class="arch-svg" role="img" aria-label="The three lanes: what runs in the web, offline/compute and replay">
-  <!-- Hand-authored. Every colour is a shell CSS variable, so the diagram repaints
-       with the active light/dark theme when inlined into the SPA (ADR-0058). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 468" width="880" class="arch-svg" role="img">
   <style>
-    .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
-    .arch-svg .mono { font-family: var(--font-mono, ui-monospace, Consolas, monospace); }
-    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1.2; }
-    .arch-svg .lane { fill: none; stroke-width: 1.4; }
-    .arch-svg .lane-web { stroke: var(--color-accent); }
-    .arch-svg .lane-comp { stroke: var(--color-magenta); }
-    .arch-svg .lane-rep { stroke: var(--color-good); }
-    .arch-svg .bx-web { stroke: var(--color-accent); }
-    .arch-svg .bx-comp { stroke: var(--color-magenta); }
-    .arch-svg .bx-rep { stroke: var(--color-good); }
-    .arch-svg .ttl { fill: var(--color-fg); font-size: 13px; font-weight: 700; }
-    .arch-svg .lnt { font-size: 12.5px; font-weight: 700; }
-    .arch-svg .lnt-web { fill: var(--color-accent); }
-    .arch-svg .lnt-comp { fill: var(--color-magenta); }
-    .arch-svg .lnt-rep { fill: var(--color-good); }
-    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10px; }
-    .arch-svg .it { fill: var(--color-fg); font-size: 10.5px; }
-    .arch-svg .cd { fill: var(--color-accent); font-size: 9.5px; }
-    .arch-svg .mu { fill: var(--color-fg-subtle); font-size: 10px; }
-    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.4; }
-    .arch-svg .lbl { fill: var(--color-fg-subtle); font-size: 9.5px; }
+    .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
+    .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
+    .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
+    .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
+    .mono { font: 10px ui-monospace, monospace; fill: var(--color-accent); }
+    .mu  { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); font-style: italic; }
+    .lbl { font: 9.5px system-ui, sans-serif; fill: var(--color-fg-faint); }
+    .hdr { font: 700 11px system-ui, sans-serif; fill: var(--color-fg-faint); letter-spacing: 0.06em; }
+    .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.5; marker-end: url(#a); }
+    .flow-hi { fill: none; stroke: var(--color-accent); stroke-width: 1.8; marker-end: url(#ah); }
   </style>
   <defs>
-    <marker id="ln-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-fg-faint)"/>
+    </marker>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
     </marker>
   </defs>
-
-  <text class="ttl" x="22" y="30">Three lanes, what runs WHERE</text>
-  <text class="sub" x="22" y="47">the same TypeScript engine runs in the browser AND under Node; Python only bakes &amp; trains offline</text>
-
-  <!-- ===== WEB lane ===== -->
-  <rect class="bx bx-web" x="14" y="66" width="290" height="392" rx="11"/>
-  <text class="lnt lnt-web" x="30" y="92">WEB · live, in the browser</text>
-  <text class="sub" x="30" y="108">no server, static GitHub Pages</text>
-
-  <rect class="bx" x="30" y="122" width="258" height="58" rx="7"/>
-  <text class="it" x="42" y="142">Deterministic engine (TS)</text>
-  <text class="cd mono" x="42" y="158">frontend/src/&lt;domain&gt;/</text>
-  <text class="mu" x="42" y="172">re-runs on every control change</text>
-
-  <rect class="bx" x="30" y="190" width="258" height="58" rx="7"/>
-  <text class="it" x="42" y="210">In-browser inference</text>
-  <text class="cd mono" x="42" y="226">onnxruntime-web · WASM</text>
-  <text class="mu" x="42" y="240">*.onnx loaded from /public, numThreads=1</text>
-
-  <rect class="bx" x="30" y="258" width="258" height="58" rx="7"/>
-  <text class="it" x="42" y="278">6-page SPA + live viz</text>
-  <text class="cd mono" x="42" y="294">caos-app-shell · uPlot · three</text>
-  <text class="mu" x="42" y="308">App reacts to the case selector</text>
-
-  <rect class="bx" x="30" y="326" width="258" height="58" rx="7"/>
-  <text class="it" x="42" y="346">Loads baked artifacts</text>
-  <text class="cd mono" x="42" y="362">/case-results.json · /data/manifests</text>
-  <text class="mu" x="42" y="376">read-only, never recomputes the bake</text>
-  <text class="mu" x="30" y="406">User: pick a case OR drop your own data</text>
-  <text class="mu" x="30" y="420">→ engine + inference run client-side, live</text>
-
-  <!-- ===== COMPUTE lane ===== -->
-  <rect class="bx bx-comp" x="318" y="66" width="290" height="392" rx="11"/>
-  <text class="lnt lnt-comp" x="334" y="92">OFFLINE · compute (your machine)</text>
-  <text class="sub" x="334" y="108">Python, isolated .venv, never in the browser</text>
-
-  <rect class="bx" x="334" y="122" width="258" height="58" rx="7"/>
-  <text class="it" x="346" y="142">Precompute / bake pipeline</text>
-  <text class="cd mono" x="346" y="158">data-pipeline/&lt;pkg&gt;/pipeline.py</text>
-  <text class="mu" x="346" y="172">numpy-light default · staged · gated</text>
-
-  <rect class="bx" x="334" y="190" width="258" height="58" rx="7"/>
-  <text class="it" x="346" y="210">Model training (heavy lane)</text>
-  <text class="cd mono" x="346" y="226">--retrain · .venv-precompute · torch</text>
-  <text class="mu" x="346" y="240">exports torch → ONNX, never ships the venv</text>
-
-  <rect class="bx" x="334" y="258" width="258" height="58" rx="7"/>
-  <text class="it" x="346" y="278">Two-language bake (parity)</text>
-  <text class="cd mono" x="346" y="294">science/bake_cases.mjs · tsx</text>
-  <text class="mu" x="346" y="308">Node runs the SAME TS engine</text>
-
-  <rect class="bx" x="334" y="326" width="258" height="58" rx="7"/>
-  <text class="it" x="346" y="346">Writes canonical artifacts</text>
-  <text class="cd mono" x="346" y="362">data/derived/ + manifests + trace</text>
-  <text class="mu" x="346" y="376">deterministic, git-clean after re-run</text>
-  <text class="mu" x="334" y="406">Run once per data/model change; the</text>
-  <text class="mu" x="334" y="420">artifacts are committed, the venvs are not</text>
-
-  <!-- ===== REPLAY lane ===== -->
-  <rect class="bx bx-rep" x="622" y="66" width="264" height="392" rx="11"/>
-  <text class="lnt lnt-rep" x="638" y="92">REPLAY · committed bridge</text>
-  <text class="sub" x="638" y="108">the contract between compute &amp; web</text>
-
-  <rect class="bx" x="638" y="122" width="232" height="64" rx="7"/>
-  <text class="it" x="650" y="142">Canonical artifacts</text>
-  <text class="cd mono" x="650" y="158">data/derived/*.json + *.onnx</text>
-  <text class="mu" x="650" y="174">small, reviewable, versioned in git</text>
-
-  <rect class="bx" x="638" y="196" width="232" height="64" rx="7"/>
-  <text class="it" x="650" y="216">Overlay into the SPA</text>
-  <text class="cd mono" x="650" y="232">frontend/copy-data.mjs</text>
-  <text class="mu" x="650" y="248">copies derived → frontend/public</text>
-
-  <rect class="bx" x="638" y="270" width="232" height="64" rx="7"/>
-  <text class="it" x="650" y="290">Typed mirror gates the build</text>
-  <text class="cd mono" x="650" y="306">frontend/src/lib/contract.types.ts</text>
-  <text class="mu" x="650" y="322">tsc fails if web ≠ pipeline shape</text>
-
-  <text class="mu" x="638" y="356">Replay = how the live app shows real,</text>
-  <text class="mu" x="638" y="370">reproducible results with no backend.</text>
-  <text class="mu" x="638" y="392">If a model is pending, the app still</text>
-  <text class="mu" x="638" y="406">runs the classical baseline; the toggle</text>
-  <text class="mu" x="638" y="420">turns on once the ONNX exists.</text>
-
-  <!-- flows compute -> replay -> web -->
-  <path class="flow" d="M608,355 H636" marker-end="url(#ln-arrow)"/>
-  <path class="flow" d="M636,300 H612 Q300,300 304,300" />
-  <path class="flow" d="M620,228 H306" marker-end="url(#ln-arrow)"/>
-  <text class="lbl" x="430" y="222">artifacts overlaid → loaded live</text>
+  <text class="hdr" x="14" y="20">LIVE, IN THE BROWSER</text>
+  <rect class="bx-web" x="14" y="28" width="852" height="106" rx="6"/>
+  <text class="ttl" x="28" y="48">TypeScript engine, recomputed on every control change</text>
+  <text class="mono" x="28" y="63">frontend/src/engine/{heightfield,segregation,pile,stacking,blending,rtd,stream,run}.ts</text>
+  <text class="it" x="28" y="82">- the priority-cascade relaxation, the five stacking paths, the four reclaim geometries, the lot ledger</text>
+  <text class="it" x="28" y="97">- Gray-Thornton segregation, the variance reduction ratio, the variograms, the residence-time distribution</text>
+  <text class="it" x="28" y="112">- budget: 100 ms slider to redraw, 8 ms per relaxation sweep. Measured, and reported on the page.</text>
+  <text class="mu" x="28" y="128">Not Pyodide: a cold start plus per-frame marshalling cannot meet the 100 ms budget.</text>
+  <text class="hdr" x="14" y="158">OFFLINE, PRECOMPUTE</text>
+  <rect class="bx-off" x="14" y="166" width="418" height="132" rx="6"/>
+  <text class="ttl" x="28" y="186">The canonical bake, an explicit release operation</text>
+  <text class="mono" x="28" y="201">python data-pipeline/run.py</text>
+  <text class="it" x="28" y="220">- 31-seed credible bands per case</text>
+  <text class="it" x="28" y="235">- oreblocks ore bodies, GSTools simulation</text>
+  <text class="it" x="28" y="250">- surrogate training and ONNX export</text>
+  <text class="it" x="28" y="265">- the complete case by metric matrix</text>
+  <text class="mu" x="28" y="288">Tests write only to a sandbox output root.</text>
+  <rect class="bx-off" x="448" y="166" width="418" height="132" rx="6"/>
+  <text class="ttl" x="462" y="186">Discrete element, a separate conda environment</text>
+  <text class="mono" x="462" y="201">environment-dem.yml  ·  stlab/stages/calibrate.py</text>
+  <text class="it" x="462" y="220">- a bidisperse pour calibrates the segregation number</text>
+  <text class="it" x="462" y="235">- PyChrono has no pip wheel, so the lane is separate</text>
+  <text class="it" x="462" y="250">- kill criterion: if it cannot run, method 7 is DELISTED</text>
+  <text class="it" x="462" y="265">- and the calibration falls back to published distances</text>
+  <text class="mu" x="462" y="288">The Benchmark page states which path was taken.</text>
+  <text class="hdr" x="14" y="324">REPLAY</text>
+  <rect class="bx" x="14" y="332" width="852" height="68" rx="6"/>
+  <text class="ttl" x="28" y="352">The committed compact trace and its manifest</text>
+  <text class="mono" x="28" y="367">data/derived/&lt;case&gt;/trace.json  ·  data/derived/manifests/&lt;case&gt;.json</text>
+  <text class="it" x="28" y="386">First paint, and the cross-case pages. The trace carries EVENTS only: every verdict is recomputed in the browser.</text>
+  <rect class="bx-gate" x="14" y="412" width="852" height="42" rx="6"/>
+  <text class="ttl" x="28" y="430">THE GATE decides the lane by MEASUREMENT, not by intent</text>
+  <text class="mono" x="28" y="446">stlab/core/gate.py::classify_lane()  -&gt;  verdict and budgets into the manifest; CI fails on a mislabelled lane</text>
 </svg>

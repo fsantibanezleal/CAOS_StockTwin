@@ -1,55 +1,42 @@
-# StockTwin, the offline engine and shared analytic core (ADR-0057, instantiated from the product-repo
-# archetype; ADR-0069 for the scientific-completeness contract).
+# Repo-local tool configuration ONLY. This product declares NO package.
 #
-# The default lane is numpy-only, so a clone installs instantly and the whole pile engine, the
-# Gray-Thornton segregation solver, the lot ledger and every blending metric run with no heavy
-# dependency at all. The offline lanes that DO need engines pin them separately:
-#   requirements-precompute.txt  oreblocks (ore-body generation), gstools (sequential Gaussian
-#                                simulation), onnx (surrogate export)
-#   environment-dem.yml          pychrono, which has no pip wheel and is conda-forge only
-[build-system]
-requires = ["setuptools>=68"]
-build-backend = "setuptools.build_meta"
-
-[project]
-name = "stlab"
-# PEP 440 form of the display version X.XX.XXX (see CHANGELOG.md and stlab.__version__).
-version = "0.1.0"
-description = "StockTwin: stockpile deposition, granular segregation, reclaim and per-cell grade traceability."
-readme = "README.md"
-requires-python = ">=3.11"
-license = { text = "MIT" }
-authors = [{ name = "Felipe Santibáñez-Leal" }]
-keywords = [
-  "mining", "stockpile", "blending", "homogenization", "bed-blending", "chevron", "chevcon",
-  "segregation", "kinetic-sieving", "angle-of-repose", "reclaim", "traceability", "variogram",
-  "variance-reduction-ratio", "grade-control",
-]
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12",
-  "Programming Language :: Python :: 3.13",
-  "Topic :: Scientific/Engineering",
-]
-dependencies = ["numpy>=1.26"]
-
-[project.urls]
-Homepage = "https://stocktwin.fasl-work.com"
-Source = "https://github.com/fsantibanezleal/CAOS_StockTwin"
-
-[tool.setuptools.packages.find]
-where = ["data-pipeline"]
+# Per conventions/no-internal-packages.md the choice is binary: code required as a package becomes its
+# own repository with a real PyPI project, consumed as a pinned dependency; code that is not that is
+# not a package at all, with no name, no install and no `python -m <name>`.
+#
+# StockTwin took the first branch for its engine. The bed-blending physics (repose-angle relaxation,
+# Gray-Thornton segregation, the lot ledger, the blending metrics) now lives in CAOS_BedBlend and
+# installs as `bedblend`, the same shape as milldem for ChargeCascade and minehaulsim for DispatchLab.
+#
+# What remains under data-pipeline/ is product-specific: the case registry, the pipeline stages, the
+# two data contracts and the data lanes. It is a plain folder invoked by path:
+#
+#     python data-pipeline/run.py <CASE_ID>
+#
+# The offline lanes that need heavy engines pin them separately:
+#   requirements-precompute.txt   oreblocks, gstools, onnx, scikit-learn
+#   environment-dem.yml           pychrono, which has no pip wheel and is conda-forge only
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+# the pipeline folder is on the path for tests because it is a folder, not an installed package
+pythonpath = ["data-pipeline"]
 
 [tool.ruff]
 line-length = 110
 target-version = "py311"
-exclude = [".venv", "frontend", "build"]
+exclude = [".venv", ".venv-pipeline", "frontend", "build"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E741"]
+
+[tool.ruff.lint.per-file-ignores]
+# These hold literal content rather than logic: a CSS class vocabulary and diagram copy in one, the
+# template of a generated TypeScript module in another. Wrapping a CSS declaration or a sentence of
+# diagram text mid-line makes them harder to read, so the line-length rule is lifted here and nowhere
+# else.
+"scripts/make_arch_svgs.py" = ["E501"]
+"scripts/export_cases.py" = ["E501"]
+"scripts/check_artifacts.py" = ["E501"]

@@ -1,6 +1,11 @@
-# Run the offline pipeline (pass-through args). E.g.:  ./scripts/precompute.ps1 EX02_epidemic --seed 7
+# Run the offline pipeline (pass-through args). E.g.:  ./scripts/precompute.ps1 G01_chevron --band-seeds 5
+#
+# Invoked BY PATH, not as `python -m <package>`: this product declares no package
+# (conventions/no-internal-packages.md). The pile engine is the separately published `bedblend`
+# library, installed into the venv; everything under data-pipeline/ is product scripts.
 $ErrorActionPreference = "Stop"
 Set-Location (Join-Path $PSScriptRoot "..")
 $vp = Join-Path ".venv-pipeline" "Scripts\python.exe"
 if (-not (Test-Path $vp)) { $vp = Join-Path ".venv-pipeline" "bin/python" }
-& $vp -m examplelab.pipeline @args
+if (-not (Test-Path $vp)) { Write-Error "no .venv-pipeline; run ./scripts/setup.ps1 first" }
+& $vp data-pipeline/run.py @args

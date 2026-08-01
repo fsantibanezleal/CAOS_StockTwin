@@ -1,12 +1,12 @@
 # Architecture
 
-- [01, overview](architecture/01_overview.md), the archetype, the lanes, the flow, frozen-vs-rework
-- [02, determinism + trace](architecture/02_determinism-and-trace.md)
-- [03, the live/precompute gate](architecture/03_the-gate.md)
-- [04, the live (Pyodide) lane](architecture/04_live-lane-pyodide.md)
-- [05, the staged precompute pipeline](architecture/05_precompute-pipeline.md)
-- [06, model evaluation](architecture/06_model-evaluation.md)
-- [07, deploy](architecture/07_deploy.md)
-- [08, the two data contracts](architecture/08_data-contracts.md)
+How the repository is put together, and why each decision is the way it is.
 
-Binding decision: [ADR-0057](../../conventions/architecture/0-archetype/ADR-0057-product-repo-archetype.md).
+1. [Overview](architecture/01_overview.md) - the repository shape and the rework boundary
+2. [Determinism and the trace](architecture/02_determinism-and-trace.md)
+3. [The lane gate](architecture/03_the-gate.md)
+4. [The live lane, in TypeScript](architecture/04_live-lane-typescript.md)
+5. [The precompute pipeline](architecture/05_precompute-pipeline.md)
+6. [Model evaluation](architecture/06_model-evaluation.md)
+7. [Deploy](architecture/07_deploy.md)
+8. [The data contracts](architecture/08_data-contracts.md)
