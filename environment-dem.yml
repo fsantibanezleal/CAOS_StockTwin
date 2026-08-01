@@ -1,0 +1,23 @@
+# The discrete-element lane, kept separate because PyChrono has no pip wheel.
+#
+# WHY IT IS SEPARATE. The main precompute lane must stay pip-installable so a reader can reproduce the
+# whole bake without conda. PyChrono is published only on conda-forge, so folding it in would make the
+# entire offline lane conda-only for the sake of one calibration step that runs once per release.
+#
+# WHAT IT IS FOR. Method 7: a small bidisperse pour whose measured apex-to-toe coarse-fraction profile
+# calibrates the Gray-Thornton segregation number Sr used by the live lane. The plan's kill criterion
+# applies: if this environment cannot be built on the host, method 7 is DELISTED from the ladder, the
+# calibration falls back to published experimental segregation distances, and the Benchmark page says
+# so rather than the product continuing to describe itself as DEM-calibrated.
+#
+#   conda env create -f environment-dem.yml
+#   conda activate stocktwin-dem
+#   python -m stlab.stages.dem --out models/dem
+name: stocktwin-dem
+channels:
+  - conda-forge
+  - projectchrono
+dependencies:
+  - python=3.12
+  - numpy>=1.26
+  - pychrono

@@ -1,0 +1,55 @@
+# StockTwin, the offline engine and shared analytic core (ADR-0057, instantiated from the product-repo
+# archetype; ADR-0069 for the scientific-completeness contract).
+#
+# The default lane is numpy-only, so a clone installs instantly and the whole pile engine, the
+# Gray-Thornton segregation solver, the lot ledger and every blending metric run with no heavy
+# dependency at all. The offline lanes that DO need engines pin them separately:
+#   requirements-precompute.txt  oreblocks (ore-body generation), gstools (sequential Gaussian
+#                                simulation), onnx (surrogate export)
+#   environment-dem.yml          pychrono, which has no pip wheel and is conda-forge only
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stlab"
+# PEP 440 form of the display version X.XX.XXX (see CHANGELOG.md and stlab.__version__).
+version = "0.1.0"
+description = "StockTwin: stockpile deposition, granular segregation, reclaim and per-cell grade traceability."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Felipe Santibáñez-Leal" }]
+keywords = [
+  "mining", "stockpile", "blending", "homogenization", "bed-blending", "chevron", "chevcon",
+  "segregation", "kinetic-sieving", "angle-of-repose", "reclaim", "traceability", "variogram",
+  "variance-reduction-ratio", "grade-control",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = ["numpy>=1.26"]
+
+[project.urls]
+Homepage = "https://stocktwin.fasl-work.com"
+Source = "https://github.com/fsantibanezleal/CAOS_StockTwin"
+
+[tool.setuptools.packages.find]
+where = ["data-pipeline"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+exclude = [".venv", "frontend", "build"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]

@@ -1,0 +1,5 @@
+# Optional GPU lane. The two surrogates are a multiple regression and a sixteen-unit perceptron over a
+# corpus of a few thousand rows; both train on a laptop CPU in under a second, so there is genuinely
+# nothing here to accelerate. The file is kept because the archetype's lane set is uniform across the
+# product line, and it stays empty rather than pinning a CUDA stack no code path uses.
+-r requirements-precompute.txt

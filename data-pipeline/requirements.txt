@@ -1,0 +1,3 @@
+# The engine package installs from the repo root manifests; this file exists so the data-pipeline
+# directory is self-describing for a reader who opens it first.
+-r ../requirements.txt

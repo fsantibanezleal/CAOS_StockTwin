@@ -1,0 +1,18 @@
+# OFFLINE lane: the engines the canonical bake needs, one pinned entry per research-selected tool,
+# each documented under docs/frameworks/.
+-r requirements.txt
+
+# oreblocks: license-free synthetic 3-D ore-body block models of the MineLib nature, with per-block
+# grades, bench structure, slope precedence and extraction states with loading faces. Apache-2.0.
+# Software note DOI 10.5281/zenodo.21512088. Used to generate the source ore body a dig sequence is
+# taken from, so the synthetic lane is fully committable with no licence question.
+oreblocks>=0.1.0
+
+# GSTools: sequential Gaussian simulation and variogram modelling. Muller, Schuler, Zech and Hesse,
+# Geosci. Model Dev. 15, 3161-3182, 2022, doi:10.5194/gmd-15-3161-2022. Used for the controlled cases
+# where the input variogram range and sill are swept explicitly.
+gstools>=1.5
+
+# ONNX: export of the two learned surrogates for in-browser inference through onnxruntime-web.
+onnx>=1.16
+onnxruntime>=1.18

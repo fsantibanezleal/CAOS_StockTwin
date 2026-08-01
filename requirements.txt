@@ -1,0 +1,3 @@
+# CORE lane: everything the pile engine, the segregation solver, the lot ledger and the blending
+# metrics need. numpy only, so a clone installs in seconds and every test runs with no heavy engine.
+numpy>=1.26
