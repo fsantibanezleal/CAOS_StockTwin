@@ -111,6 +111,193 @@ _VAR = "input-variability"
 _SEG = "segregation-regime"
 _CTL = "control"
 
+
+@dataclass(frozen=True)
+class Variant:
+    """One named operating regime of a case: a parameter override plus what it is there to show.
+
+    A variant is NOT a different case. It is the same experiment at a different point on the one
+    knob that decides that case's category, so the case's reason, expected band and kill criterion
+    all still apply. That is why a variant carries a note rather than its own kill criterion.
+    """
+
+    id: str
+    label_en: str
+    label_es: str
+    note_en: str
+    note_es: str
+    overrides: dict[str, float | int | str]
+
+
+def _passes_family() -> list[Variant]:
+    """The layer count, for the stacking-geometry axis.
+
+    `n_passes` IS the N of the 1/N bound, so this family sweeps the dominant term of every variance
+    reduction claim the product makes. The span is deliberately wide: six passes is a pile nobody
+    would call a blending bed, sixty-four is past the point where more layers stop paying.
+    """
+    spec = [
+        (6,  "6 passes",  "6 pasadas",
+         "Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one.",
+         "Muy pocas capas para mezclar. La cama es un acopio con forma y la razón se queda cerca de uno."),
+        (12, "12 passes", "12 pasadas",
+         "The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide.",
+         "El extremo bajo de la práctica real. La razón empieza a moverse y la brecha con la cota "
+         "ideal es amplia."),
+        (24, "24 passes", "24 pasadas",
+         "The reference regime, and the default the other axes are compared at.",
+         "El régimen de referencia, y el valor con el que se comparan los otros ejes."),
+        (36, "36 passes", "36 pasadas",
+         "Common on a long yard. The returns are still real, but the curve is already bending away "
+         "from the 1/N line rather than tracking it.",
+         "Habitual en una cancha larga. El retorno sigue siendo real, pero la curva ya se aleja de "
+         "la línea 1/N en vez de seguirla."),
+        (48, "48 passes", "48 pasadas",
+         "Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the "
+         "count, is what limits the result.",
+         "Retornos decrecientes: las capas son tan delgadas que lo que limita el resultado es la "
+         "autocorrelación del flujo, no el conteo."),
+        (64, "64 passes", "64 pasadas",
+         "Past the useful end. Compare the achieved ratio against the 1/N line to see how little the "
+         "last twenty passes bought.",
+         "Más allá del punto útil. Comparar la razón lograda contra la línea 1/N muestra lo poco que "
+         "aportaron las últimas veinte pasadas."),
+    ]
+    return [Variant(f"p{n}", en, es, nen, nes, {"n_passes": n}) for n, en, es, nen, nes in spec]
+
+
+def _cut_family() -> list[Variant]:
+    """The parcel size, for the reclaim-method axis.
+
+    A cut is the unit the plant actually receives. A small cut resolves the pile's structure and
+    inherits its variability; a large one integrates over more of the face and hides it. The reclaim
+    geometries separate most clearly at the small end, which is why the family starts there.
+    """
+    spec = [
+        (300,  "300 t",  "300 t",
+         "A small parcel. The reclaim geometry shows through most clearly here, because a small cut "
+         "cannot integrate over enough of the face to hide it.",
+         "Un parcel pequeño. La geometría de recuperación se nota al máximo, porque un corte pequeño "
+         "no alcanza a integrar suficiente frente como para disimularla."),
+        (600,  "600 t",  "600 t",
+         "A short fleet cycle: roughly three truck loads to the plant at a time. Still small enough "
+         "that a shallow-reaching machine has to walk to fill it.",
+         "Un ciclo corto de flota: del orden de tres cargas de camión hacia la planta a la vez. "
+         "Todavía pequeño como para que una máquina de poco alcance deba desplazarse para completarlo."),
+        (900,  "900 t",  "900 t",
+         "The reference parcel, and the default of the other axes.",
+         "El parcel de referencia, y el valor por defecto de los otros ejes."),
+        (1200, "1200 t", "1200 t",
+         "A larger draw. More of the face per cut, so the machines start to look alike.",
+         "Una saca mayor. Más frente por corte, así que las máquinas empiezan a parecerse."),
+        (1800, "1800 t", "1800 t",
+         "A shift-scale parcel. The reclaim axis is now mostly averaged away.",
+         "Un parcel a escala de turno. El eje de recuperación queda casi promediado."),
+        (2400, "2400 t", "2400 t",
+         "Large enough that the cut spans several stations, which is a different machine duty from the "
+         "one the geometry describes; read the layer count rather than the ratio here.",
+         "Suficientemente grande para que el corte abarque varias estaciones, que es un servicio "
+         "distinto del que describe la geometría; aquí conviene leer el conteo de capas y no la razón."),
+    ]
+    return [Variant(f"c{n}", en, es, nen, nes, {"cut_tonnes": float(n)}) for n, en, es, nen, nes in spec]
+
+
+def _range_family() -> list[Variant]:
+    """The variogram range, for the input-variability axis.
+
+    This is the axis on which a blending bed stops working, and the reason is worth stating: layers
+    only average if they are INDEPENDENT. Once the correlation range of the incoming stream exceeds
+    the tonnage in one layer, consecutive layers carry the same grade and there is nothing to average.
+    The family spans from far below one layer to far above the whole pile.
+    """
+    spec = [
+        (200,   "200 t",  "200 t",
+         "Correlation shorter than a single truck. The layers are effectively independent and the "
+         "achieved ratio can approach the 1/N bound.",
+         "Correlación más corta que un solo camión. Las capas son independientes en la práctica y la "
+         "razón lograda puede acercarse a la cota 1/N."),
+        (1000,  "1 kt",   "1 kt",
+         "Still well inside one layer's tonnage, so consecutive layers are close to independent and "
+         "the bed still recovers most of what the bound allows.",
+         "Todavía bien dentro del tonelaje de una capa, así que las capas consecutivas son casi "
+         "independientes y la cama aún recupera la mayor parte de lo que permite la cota."),
+        (4000,  "4 kt",   "4 kt",
+         "The reference structure, comparable to one layer's tonnage.",
+         "La estructura de referencia, comparable al tonelaje de una capa."),
+        (10000, "10 kt",  "10 kt",
+         "Longer than a layer. Consecutive layers now share grade and the bed recovers noticeably less "
+         "than the bound promises.",
+         "Más larga que una capa. Las capas consecutivas comparten ley y la cama recupera bastante "
+         "menos de lo que promete la cota."),
+        (20000, "20 kt",  "20 kt",
+         "Several layers per correlation length. The gap to the ideal is now the headline number.",
+         "Varias capas por longitud de correlación. La brecha con lo ideal pasa a ser el número principal."),
+        (40000, "40 kt",  "40 kt",
+         "Longer than the whole build. Every layer carries nearly the same grade, so the bed has almost "
+         "nothing to average and the ratio approaches one.",
+         "Más larga que toda la construcción. Cada capa lleva casi la misma ley, la cama casi no tiene "
+         "nada que promediar y la razón se acerca a uno."),
+    ]
+    return [Variant(f"r{n}", en, es, nen, nes, {"range_t": float(n)}) for n, en, es, nen, nes in spec]
+
+
+def _sr_family() -> list[Variant]:
+    """The segregation number, for the segregation-regime axis.
+
+    Gray and Thornton's non-dimensional group. Zero is the passive-tracer limit and is the product's
+    negative control; the response saturates past about one, because the flowing layer is already
+    fully separated and raising Sr leaves nothing more to separate. Both ends are worth seeing.
+    """
+    spec = [
+        (0.0, "Sr = 0",   "Sr = 0",
+         "Kinetic sieving switched off. The size split rides with the material untouched, which is the "
+         "negative control: any sorting visible here would be a solver artefact.",
+         "Tamizado cinético apagado. La separación por tamaño viaja con el material sin tocarse, que es "
+         "el control negativo: cualquier clasificación visible aquí sería un artefacto del solver."),
+        (0.5, "Sr = 0.5", "Sr = 0.5",
+         "Weak sieving. The toe is measurably coarser than the apex but the effect is small.",
+         "Tamizado débil. El pie es medible más grueso que el ápice, pero el efecto es pequeño."),
+        (1.0, "Sr = 1",   "Sr = 1",
+         "The reference regime, near the knee of the response.",
+         "El régimen de referencia, cerca del codo de la respuesta."),
+        (2.0, "Sr = 2",   "Sr = 2",
+         "Strong sieving, already close to saturated: the flowing layer separates almost completely "
+         "within the first few bands of the avalanche.",
+         "Tamizado fuerte, ya cerca de la saturación: la capa fluyente se separa casi por completo "
+         "dentro de las primeras bandas de la avalancha."),
+        (4.0, "Sr = 4",   "Sr = 4",
+         "Saturated. The segregation index barely moves from Sr = 2, which is the model's own "
+         "prediction and not a numerical limit.",
+         "Saturado. El índice de segregación casi no se mueve respecto de Sr = 2, que es la predicción "
+         "del propio modelo y no un límite numérico."),
+        (8.0, "Sr = 8",   "Sr = 8",
+         "Past saturation, kept so the flat top of the curve is visible rather than asserted.",
+         "Pasada la saturación, incluido para que la parte plana de la curva se vea en vez de afirmarse."),
+    ]
+    return [Variant(f"s{str(v).replace('.', '')}", en, es, nen, nes, {"sr": v})
+            for v, en, es, nen, nes in spec]
+
+
+#: category -> the parametric family that category's answer actually turns on
+_FAMILIES = {
+    _STACK: _passes_family,
+    _RECL: _cut_family,
+    _VAR: _range_family,
+    _SEG: _sr_family,
+}
+
+
+def variants_for(case: Case) -> list[Variant]:
+    """The operating regimes of a case, or an empty list when it genuinely has none.
+
+    Controls return NOTHING, on purpose. A control is a single deliberate point carrying a numerical
+    kill criterion; sweeping it would destroy the property that makes it a control. ADR-0016 section
+    9A sanctions exactly this and forbids the alternative, which is padding a chip count with
+    fabricated regimes.
+    """
+    fam = _FAMILIES.get(case.category)
+    return fam() if fam else []
+
 CASES: list[Case] = [
     # ---------------------------------------------------------------- G, stacking geometry
     Case(

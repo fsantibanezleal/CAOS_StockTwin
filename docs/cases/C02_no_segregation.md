@@ -37,6 +37,10 @@ result would mean the code is wrong, and the release gate fails the bake when it
 | `cut_tonnes` | 900 t | the parcel size the plant receives |
 | pad | 64 x 24 cells at 3.0 m | 192 by 72 metres |
 
+## Operating regimes
+
+This case carries **no variants**, and that is deliberate. It is a control: one point with a numerical kill criterion. Sweeping it would destroy the property that makes it a control, and padding the list to reach a count would be fabricating regimes.
+
 ## Reproduce it
 
 ```bash

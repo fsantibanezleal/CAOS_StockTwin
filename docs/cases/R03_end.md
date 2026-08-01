@@ -37,6 +37,21 @@ result would mean the code is wrong, and the release gate fails the bake when it
 | `cut_tonnes` | 900 t | the parcel size the plant receives |
 | pad | 64 x 24 cells at 3.0 m | 192 by 72 metres |
 
+## Operating regimes
+
+The family sweeps `cut_tonnes`, the parameter this case's category actually turns on. Selecting
+a regime in the app re-runs the engine in the browser rather than loading a pre-baked frame,
+so the sweep is continuous with the rail's own controls.
+
+| regime | `cut_tonnes` | what it shows |
+|---|---|---|
+| 300 t | `300.0` | A small parcel. The reclaim geometry shows through most clearly here, because a small cut cannot integrate over enough of the face to hide it. |
+| 600 t | `600.0` | A short fleet cycle: roughly three truck loads to the plant at a time. Still small enough that a shallow-reaching machine has to walk to fill it. |
+| 900 t | `900.0` | The reference parcel, and the default of the other axes. |
+| 1200 t | `1200.0` | A larger draw. More of the face per cut, so the machines start to look alike. |
+| 1800 t | `1800.0` | A shift-scale parcel. The reclaim axis is now mostly averaged away. |
+| 2400 t | `2400.0` | Large enough that the cut spans several stations, which is a different machine duty from the one the geometry describes; read the layer count rather than the ratio here. |
+
 ## Reproduce it
 
 ```bash

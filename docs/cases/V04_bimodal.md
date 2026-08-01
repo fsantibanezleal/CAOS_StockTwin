@@ -37,6 +37,21 @@ result would mean the code is wrong, and the release gate fails the bake when it
 | `cut_tonnes` | 900 t | the parcel size the plant receives |
 | pad | 64 x 24 cells at 3.0 m | 192 by 72 metres |
 
+## Operating regimes
+
+The family sweeps `range_t`, the parameter this case's category actually turns on. Selecting
+a regime in the app re-runs the engine in the browser rather than loading a pre-baked frame,
+so the sweep is continuous with the rail's own controls.
+
+| regime | `range_t` | what it shows |
+|---|---|---|
+| 200 t | `200.0` | Correlation shorter than a single truck. The layers are effectively independent and the achieved ratio can approach the 1/N bound. |
+| 1 kt | `1000.0` | Still well inside one layer's tonnage, so consecutive layers are close to independent and the bed still recovers most of what the bound allows. |
+| 4 kt | `4000.0` | The reference structure, comparable to one layer's tonnage. |
+| 10 kt | `10000.0` | Longer than a layer. Consecutive layers now share grade and the bed recovers noticeably less than the bound promises. |
+| 20 kt | `20000.0` | Several layers per correlation length. The gap to the ideal is now the headline number. |
+| 40 kt | `40000.0` | Longer than the whole build. Every layer carries nearly the same grade, so the bed has almost nothing to average and the ratio approaches one. |
+
 ## Reproduce it
 
 ```bash

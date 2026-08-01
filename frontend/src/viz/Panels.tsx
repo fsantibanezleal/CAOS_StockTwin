@@ -387,3 +387,61 @@ export function TabRow({ groups, active, onPick, es }: {
     </div>
   );
 }
+
+/**
+ * The variant bar: the case's operating regimes as chips, above the stage.
+ *
+ * ADR-0016 section 9A requires it, and the reason is that a single point is not an experiment. The
+ * case says what is being tested; the variant says where on the deciding knob it is being tested,
+ * and moving along that knob is what turns a picture into a result a reader can reason about.
+ *
+ * Selecting a chip re-runs the REAL engine in the browser rather than loading a pre-baked frame, so
+ * the sweep is continuous with the rail's own sliders instead of being a separate pre-simulated
+ * mode. The one-line note under the bar says what that regime is there to show.
+ *
+ * A case with NO variants renders the honest empty state rather than a padded row of chips. The three
+ * controls are single deliberate points carrying numerical kill criteria; sweeping one would destroy
+ * the property that makes it a control.
+ */
+export function VariantBar({ variants, active, onPick, es, familyLabel }: {
+  variants: Array<{ id: string; labelEn: string; labelEs: string; noteEn: string; noteEs: string }>;
+  active: string | null;
+  onPick: (id: string) => void;
+  es?: boolean;
+  familyLabel?: string;
+}) {
+  if (variants.length === 0) {
+    return (
+      <div className="st-variants st-variants-none">
+        <span className="st-variants-lab">{es ? 'Régimen' : 'Regime'}</span>
+        <span className="st-variants-note">
+          {es
+            ? 'Control: un punto único con criterio de descarte numérico. Barrerlo destruiría lo que lo hace un control, así que no lleva regímenes.'
+            : 'A control: one point with a numerical kill criterion. Sweeping it would destroy what makes it a control, so it carries no regimes.'}
+        </span>
+      </div>
+    );
+  }
+  const cur = variants.find((v) => v.id === active) ?? variants[0];
+  return (
+    <div className="st-variants">
+      <div className="st-variants-row" role="tablist"
+        aria-label={es ? 'Régimen de operación' : 'Operating regime'}>
+        <span className="st-variants-lab">{familyLabel ?? (es ? 'Régimen' : 'Regime')}</span>
+        {variants.map((v) => (
+          <button
+            key={v.id}
+            type="button"
+            role="tab"
+            aria-selected={v.id === cur.id}
+            className={`st-chip${v.id === cur.id ? ' on' : ''}`}
+            onClick={() => onPick(v.id)}
+          >
+            {es ? v.labelEs : v.labelEn}
+          </button>
+        ))}
+      </div>
+      <p className="st-variants-note">{es ? cur.noteEs : cur.noteEn}</p>
+    </div>
+  );
+}

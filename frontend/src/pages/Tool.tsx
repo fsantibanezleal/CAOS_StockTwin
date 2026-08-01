@@ -4,7 +4,7 @@ import { Maximize2 } from 'lucide-react';
 import { Callout, useShellLang } from '@fasl-work/caos-app-shell';
 import {
   CASES, CASES_BY_ID, RECLAIM_GEOMETRY, RECLAIM_METHODS, STACKING_LABELS, STACKING_METHODS,
-  STRUCTURE_LABELS, blendingRegime, casesByCategory, configFor, dumpsFor,
+  STRUCTURE_LABELS, blendingRegime, casesByCategory, configFor, defaultVariant, dumpsFor,
   inputVariogram, layersPerCut, outputVariogram, residenceTime, simulate,
 } from '../engine';
 import type { ReclaimMethod, StackingMethod, StreamStructure } from '../engine';
@@ -12,7 +12,8 @@ import { PanelBoundary } from '../viz/PanelBoundary';
 import { PileView3D, ScalarLegend, type Scalar } from '../viz/PileView3D';
 import { UPlotChart } from '../viz/UPlotChart';
 import {
-  Ctl, Kpis, ProvenanceLedger, ProvenanceSankey, RailSections, StratColumn, TabRow, VrrGauge,
+  Ctl, Kpis, ProvenanceLedger, ProvenanceSankey, RailSections, StratColumn, TabRow, VariantBar,
+  VrrGauge,
 } from '../viz/Panels';
 
 /**
@@ -55,6 +56,14 @@ const GROUPS = [
   ] },
 ] as const;
 
+/** What each category's variant family sweeps, named so the bar says which knob is moving. */
+const VARIANT_FAMILY: Record<string, { en: string; es: string }> = {
+  'stacking-geometry': { en: 'Layers', es: 'Capas' },
+  'reclaim-method': { en: 'Cut size', es: 'Tamaño de corte' },
+  'input-variability': { en: 'Variogram range', es: 'Alcance del variograma' },
+  'segregation-regime': { en: 'Segregation', es: 'Segregación' },
+};
+
 export default function Tool() {
   const es = useShellLang() === 'es';
   const [caseId, setCaseId] = useState<string>(CASES[0].id);
@@ -70,6 +79,7 @@ export default function Tool() {
   const [rangeT, setRangeT] = useState(base.rangeT);
   const [reclaimRate, setReclaimRate] = useState(base.reclaimRate);
   const [cutTonnes, setCutTonnes] = useState(base.cutTonnes);
+  const [variantId, setVariantId] = useState<string | null>(defaultVariant(base)?.id ?? null);
   const [seed, setSeed] = useState(42);
   const [target, setTarget] = useState(0.15);
 
@@ -86,6 +96,7 @@ export default function Tool() {
   const [seenCase, setSeenCase] = useState(caseId);
   if (seenCase !== caseId) {
     setSeenCase(caseId);
+    setVariantId(defaultVariant(base)?.id ?? null);
     setStacking(base.stacking);
     setReclaim(base.reclaim);
     setNPasses(base.nPasses);
@@ -101,15 +112,25 @@ export default function Tool() {
     setScrub(null);
   }
 
+  // The chip sets the regime; the rail then refines it. Applying the override here rather than
+  // pushing it into the slider state keeps the two composable: clicking a chip moves the knob it
+  // owns and leaves every other knob exactly where the reader put it.
+  const variant = base.variants.find((v) => v.id === variantId) ?? null;
+  const ov = variant?.overrides ?? {};
+  const effPasses = ov.nPasses ?? nPasses;
+  const effCut = ov.cutTonnes ?? cutTonnes;
+  const effRange = ov.rangeT ?? rangeT;
+  const effSr = ov.sr ?? sr;
+
   const run = useMemo(() => {
     const cfg = configFor(base, seed, {
-      stacking, reclaim, nPasses, sr, reclaimRate, cutTonnes,
+      stacking, reclaim, nPasses: effPasses, sr: effSr, reclaimRate, cutTonnes: effCut,
       pad: { nx: base.nx, ny: base.ny, cellM: base.cellM, reposeDeg: repose,
         reposeCoarseDeg: reposeCoarse, bulkDensityTpm3: 1.9 },
     });
-    return simulate(cfg, dumpsFor(base, seed, { structure, rangeT }));
-  }, [base, seed, stacking, reclaim, nPasses, sr, reclaimRate, cutTonnes, repose, reposeCoarse,
-    structure, rangeT]);
+    return simulate(cfg, dumpsFor(base, seed, { structure, rangeT: effRange }));
+  }, [base, seed, stacking, reclaim, effPasses, effSr, reclaimRate, effCut, repose, reposeCoarse,
+    structure, effRange]);
 
   const m = run.metrics;
   const regime = blendingRegime(m, es);
@@ -138,8 +159,9 @@ export default function Tool() {
   const dumpIdx = Math.min(run.dumps.length - 1, Math.round(scrubPos * (run.dumps.length - 1)));
   const stackerXY: [number, number] = [run.dumps[dumpIdx].xM, run.dumps[dumpIdx].yM];
 
-  const modified = stacking !== base.stacking || reclaim !== base.reclaim || nPasses !== base.nPasses
-    || sr !== base.sr || repose !== base.reposeDeg || structure !== base.structure;
+  const modified = stacking !== base.stacking || reclaim !== base.reclaim || effPasses !== base.nPasses
+    || effSr !== base.sr || repose !== base.reposeDeg || structure !== base.structure
+    || effCut !== base.cutTonnes || effRange !== base.rangeT;
 
   const cut = pickedCut != null ? run.cuts.find((c) => c.cutId === pickedCut) ?? null : run.cuts[0] ?? null;
 
@@ -247,7 +269,8 @@ export default function Tool() {
               ))}
             </select>
             <Ctl label={es ? 'Pasadas del apilador (capas)' : 'Stacker passes (layers)'}
-              value={nPasses} min={4} max={80} step={1} onChange={setNPasses}
+              value={effPasses} min={4} max={80} step={1}
+              onChange={(v) => { setVariantId(null); setNPasses(v); }}
               hint={es
                 ? `N de la cota 1/N. La geometria predice ${layersPerCut(stacking, nPasses)} capas por corte; el libro mayor mide ${m.nLayersMean.toFixed(1)}.`
                 : `The N of the 1/N bound. The geometry predicts ${layersPerCut(stacking, nPasses)} layers per cut; the ledger measures ${m.nLayersMean.toFixed(1)}.`} />
@@ -268,7 +291,8 @@ export default function Tool() {
               {es ? STRUCTURE_LABELS[structure].note_es : STRUCTURE_LABELS[structure].note_en}
             </p>
             <Ctl label={es ? 'Alcance del variograma, t' : 'Variogram range, t'}
-              value={rangeT} min={200} max={30000} step={200} onChange={setRangeT}
+              value={effRange} min={200} max={40000} step={200}
+              onChange={(v) => { setVariantId(null); setRangeT(v); }}
               fmt={(v) => `${(v / 1000).toFixed(1)} kt`}
               hint={es
                 ? 'Comparalo con las toneladas por capa: si el alcance supera una capa, las capas no son independientes y la cama ayuda poco.'
@@ -298,8 +322,9 @@ export default function Tool() {
               hint={es
                 ? 'Toneladas recuperadas por tonelada apilada. Por encima de 1 la pila se vacia y el recuperador se queda sin material.'
                 : 'Tonnes reclaimed per tonne stacked. Above 1 the pile empties and the reclaimer starves.'} />
-            <Ctl label={es ? 'Toneladas por corte' : 'Tonnes per cut'} value={cutTonnes}
-              min={200} max={3000} step={50} onChange={setCutTonnes} fmt={(v) => `${v.toFixed(0)} t`}
+            <Ctl label={es ? 'Toneladas por corte' : 'Tonnes per cut'} value={effCut}
+              min={200} max={3000} step={50}
+              onChange={(v) => { setVariantId(null); setCutTonnes(v); }} fmt={(v) => `${v.toFixed(0)} t`}
               hint={es ? 'El tamaño del parcel que recibe la planta.' : 'The size of the parcel the plant receives.'} />
             <Ctl label={es ? 'Ventana objetivo, VRR' : 'Target window, VRR'} value={target}
               min={0.02} max={1} step={0.01} onChange={setTarget} fmt={(v) => v.toFixed(2)}
@@ -320,8 +345,9 @@ export default function Tool() {
               hint={es
                 ? 'Si el grueso es más empinado que el fino, la mezcla se estratifica en capas alternadas en vez de solo segregarse (Makse et al. 1997).'
                 : 'When the coarse species is steeper than the fine one, the mixture stratifies into alternating layers rather than merely segregating (Makse et al. 1997).'} />
-            <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={sr}
-              min={0} max={8} step={0.1} onChange={setSr} fmt={(v) => v.toFixed(1)}
+            <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={effSr}
+              min={0} max={8} step={0.1}
+              onChange={(v) => { setVariantId(null); setSr(v); }} fmt={(v) => v.toFixed(1)}
               hint={es
                 ? 'Ecuación (3.19) de Gray y Thornton. En 0 la ecuación degenera a un trazador pasivo: es el control negativo.'
                 : 'Gray and Thornton equation (3.19). At 0 the equation degenerates to a passive tracer: that is the negative control.'} />
@@ -335,6 +361,13 @@ export default function Tool() {
       </aside>
 
       <main className="st-main">
+        <VariantBar
+          variants={base.variants}
+          active={variantId}
+          onPick={setVariantId}
+          es={es}
+          familyLabel={VARIANT_FAMILY[base.category]?.[es ? 'es' : 'en']}
+        />
         <TabRow groups={groups} active={view} onPick={setView} es={es} />
 
         <div className="st-tabpanel">

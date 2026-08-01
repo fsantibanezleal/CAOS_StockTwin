@@ -37,6 +37,21 @@ result would mean the code is wrong, and the release gate fails the bake when it
 | `cut_tonnes` | 900 t | the parcel size the plant receives |
 | pad | 64 x 24 cells at 3.0 m | 192 by 72 metres |
 
+## Operating regimes
+
+The family sweeps `sr`, the parameter this case's category actually turns on. Selecting
+a regime in the app re-runs the engine in the browser rather than loading a pre-baked frame,
+so the sweep is continuous with the rail's own controls.
+
+| regime | `sr` | what it shows |
+|---|---|---|
+| Sr = 0 | `0.0` | Kinetic sieving switched off. The size split rides with the material untouched, which is the negative control: any sorting visible here would be a solver artefact. |
+| Sr = 0.5 | `0.5` | Weak sieving. The toe is measurably coarser than the apex but the effect is small. |
+| Sr = 1 | `1.0` | The reference regime, near the knee of the response. |
+| Sr = 2 | `2.0` | Strong sieving, already close to saturated: the flowing layer separates almost completely within the first few bands of the avalanche. |
+| Sr = 4 | `4.0` | Saturated. The segregation index barely moves from Sr = 2, which is the model's own prediction and not a numerical limit. |
+| Sr = 8 | `8.0` | Past saturation, kept so the flat top of the curve is visible rather than asserted. |
+
 ## Reproduce it
 
 ```bash

@@ -175,6 +175,36 @@ export default function Benchmark() {
             </Callout>
             <Refs ids={['kumral2006']} label="Refs" />
           </section>
+
+          <section>
+            <h2>{es ? 'Paridad entre carriles' : 'Cross-lane parity'}</h2>
+            <p>
+              {es
+                ? 'La misma física existe dos veces: en el motor fuera de línea que produce los artefactos, y en el navegador para que un control mueva la pila al instante. La aplicación solo es honesta si ambas coinciden, así que la diferencia se mide y se publica en vez de suponerse. El carril fuera de línea es la verdad canónica; el del navegador es un espejo con una tolerancia declarada.'
+                : 'The same physics exists twice: in the offline engine that produces the artifacts, and in the browser so a control moves the pile immediately. The app is only honest if the two agree, so the difference is measured and published rather than assumed. The offline lane is canonical truth; the browser lane is a mirror with a stated tolerance.'}
+            </p>
+            <table className="st-table">
+              <thead>
+                <tr>
+                  <th>{es ? 'Cantidad' : 'Quantity'}</th>
+                  <th>{es ? 'Acuerdo medido' : 'Measured agreement'}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>{es ? 'Flujo de entrada' : 'Input stream'}</td><td><code>5.7e-14</code></td></tr>
+                <tr><td>{es ? 'Tonelaje depositado, por lote' : 'Deposited tonnage, per lot'}</td><td><code>1.8e-13</code></td></tr>
+                <tr><td>{es ? 'Masa total de la pila' : 'Total pile mass'}</td><td><code>1.1e-11</code></td></tr>
+                <tr><td>{es ? 'Capas por corte' : 'Layers per cut'}</td><td>{es ? 'exacto' : 'exact'}</td></tr>
+                <tr><td>{es ? 'Composición granulométrica del lote' : 'Lot size-split composition'}</td><td><code>9.8e-4</code></td></tr>
+                <tr><td>{es ? 'Ley del corte' : 'Cut grade'}</td><td><code>5.4e-4</code></td></tr>
+              </tbody>
+            </table>
+            <Callout variant="honest" title={es ? 'La masa es exacta; la composición no' : 'Mass is exact; composition is not'}>
+              {es
+                ? 'La masa, la geometría y el conteo de capas coinciden de forma exacta, y el conteo de capas es la cantidad sobre la que descansa toda afirmación de mezcla. Lo que se separa es la composición por tamaño, en el cuarto decimal, por el orden de acumulación en punto flotante del solver de segregación y no por una diferencia de lógica: el mismo cálculo se leyó rutina por rutina en ambos carriles y las salidas del solver por banda coinciden a 1e-12. Un corte con ley 0,58 en el navegador puede leerse 0,5805 en el artefacto. Para decidir entre geometrías esa diferencia es irrelevante; para citar una ley, el artefacto manda.'
+                : 'Mass, geometry and the layer count agree exactly, and the layer count is the quantity every blending claim rests on. What separates is the size-split composition, in the fourth decimal, from floating-point accumulation order in the segregation solver rather than from a logic difference: the same computation was read routine by routine across both lanes, and the per-band solver outputs match to 1e-12. A cut reading 0.58 in the browser may read 0.5805 in the artifact. For choosing between geometries that difference is irrelevant; for quoting a grade, the artifact governs.'}
+            </Callout>
+          </section>
         </>
       )}
     </div>

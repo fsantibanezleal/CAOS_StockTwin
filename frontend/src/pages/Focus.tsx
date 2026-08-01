@@ -4,11 +4,11 @@ import { Minimize2 } from 'lucide-react';
 import { useShellLang } from '@fasl-work/caos-app-shell';
 import {
   CASES, CASES_BY_ID, RECLAIM_GEOMETRY, RECLAIM_METHODS, STACKING_LABELS, STACKING_METHODS,
-  blendingRegime, configFor, dumpsFor, simulate,
+  blendingRegime, configFor, defaultVariant, dumpsFor, simulate,
 } from '../engine';
 import type { ReclaimMethod, StackingMethod } from '../engine';
 import { PileView3D, type Scalar } from '../viz/PileView3D';
-import { Ctl } from '../viz/Panels';
+import { Ctl, VariantBar } from '../viz/Panels';
 
 /**
  * ADR-0070 scenario focus view: one selected pile, full page, nothing competing with it.
@@ -33,6 +33,7 @@ export default function Focus() {
   const base = useMemo(() => CASES_BY_ID[caseId ?? ''] ?? CASES[0], [caseId]);
 
   const [advanced, setAdvanced] = useState(false);
+  const [variantId, setVariantId] = useState<string | null>(defaultVariant(base)?.id ?? null);
   const [stacking, setStacking] = useState<StackingMethod>(base.stacking);
   const [reclaim, setReclaim] = useState<ReclaimMethod>(base.reclaim);
   const [nPasses, setNPasses] = useState(base.nPasses);
@@ -48,6 +49,7 @@ export default function Focus() {
   const [seen, setSeen] = useState(base.id);
   if (seen !== base.id) {
     setSeen(base.id);
+    setVariantId(defaultVariant(base)?.id ?? null);
     setStacking(base.stacking);
     setReclaim(base.reclaim);
     setNPasses(base.nPasses);
@@ -57,14 +59,19 @@ export default function Focus() {
     setScrub(null);
   }
 
+  // the chip sets the regime, the rail refines it: the same composition as the App route
+  const variant = base.variants.find((v) => v.id === variantId) ?? null;
+  const effPasses = variant?.overrides.nPasses ?? nPasses;
+  const effSr = variant?.overrides.sr ?? sr;
+
   const run = useMemo(() => simulate(
     configFor(base, 42, {
-      stacking, reclaim, nPasses, sr, reclaimRate,
+      stacking, reclaim, nPasses: effPasses, sr: effSr, reclaimRate,
       pad: { nx: base.nx, ny: base.ny, cellM: base.cellM, reposeDeg: repose,
         reposeCoarseDeg: base.reposeCoarseDeg, bulkDensityTpm3: 1.9 },
     }),
     dumpsFor(base, 42),
-  ), [base, stacking, reclaim, nPasses, sr, reclaimRate, repose]);
+  ), [base, stacking, reclaim, effPasses, effSr, reclaimRate, repose]);
 
   // The focus view opened on the FINAL state, which is the pad AFTER the reclaimer drained it: a true
   // picture of the wrong moment. It opens at the fullest the pile ever was, and the rail scrubs.
@@ -181,10 +188,18 @@ export default function Focus() {
           </select>
         </label>
 
-        <Ctl label={es ? 'Pasadas (capas)' : 'Passes (layers)'} value={nPasses}
-          min={4} max={80} step={1} onChange={setNPasses} />
-        <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={sr}
-          min={0} max={8} step={0.1} onChange={setSr} fmt={(v) => v.toFixed(1)} />
+        <VariantBar
+          variants={base.variants}
+          active={variantId}
+          onPick={setVariantId}
+          es={es}
+        />
+
+        <Ctl label={es ? 'Pasadas (capas)' : 'Passes (layers)'} value={effPasses}
+          min={4} max={80} step={1}
+          onChange={(v) => { setVariantId(null); setNPasses(v); }} />
+        <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={effSr}
+          min={0} max={8} step={0.1} onChange={(v) => { setVariantId(null); setSr(v); }} fmt={(v) => v.toFixed(1)} />
 
         {advanced && (
           <>

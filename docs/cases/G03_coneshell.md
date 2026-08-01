@@ -37,6 +37,21 @@ result would mean the code is wrong, and the release gate fails the bake when it
 | `cut_tonnes` | 900 t | the parcel size the plant receives |
 | pad | 64 x 24 cells at 3.0 m | 192 by 72 metres |
 
+## Operating regimes
+
+The family sweeps `n_passes`, the parameter this case's category actually turns on. Selecting
+a regime in the app re-runs the engine in the browser rather than loading a pre-baked frame,
+so the sweep is continuous with the rail's own controls.
+
+| regime | `n_passes` | what it shows |
+|---|---|---|
+| 6 passes | `6` | Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one. |
+| 12 passes | `12` | The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide. |
+| 24 passes | `24` | The reference regime, and the default the other axes are compared at. |
+| 36 passes | `36` | Common on a long yard. The returns are still real, but the curve is already bending away from the 1/N line rather than tracking it. |
+| 48 passes | `48` | Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the count, is what limits the result. |
+| 64 passes | `64` | Past the useful end. Compare the achieved ratio against the 1/N line to see how little the last twenty passes bought. |
+
 ## Reproduce it
 
 ```bash

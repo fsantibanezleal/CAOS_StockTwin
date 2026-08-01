@@ -10,6 +10,25 @@
 
 import type { ReclaimMethod, StackingMethod, StreamStructure } from './types';
 
+/**
+ * One named operating regime of a case: a parameter override plus what it exists to show.
+ *
+ * A variant is not a different case. It is the same experiment at a different point on the one knob
+ * that decides its category's answer, so the case's reason, expected band and kill criterion all
+ * still apply, which is why a variant carries a note rather than its own kill criterion.
+ *
+ * The overrides are applied to the LIVE lane, so selecting a regime recomputes the real engine in the
+ * browser rather than loading a pre-baked picture of it.
+ */
+export interface VariantDef {
+  id: string;
+  labelEn: string;
+  labelEs: string;
+  noteEn: string;
+  noteEs: string;
+  overrides: Partial<Pick<CaseDef, 'nPasses' | 'cutTonnes' | 'rangeT' | 'sr'>>;
+}
+
 export interface CaseDef {
   id: string;
   category: string;
@@ -35,6 +54,12 @@ export interface CaseDef {
   ny: number;
   cellM: number;
   tags: string[];
+  /**
+   * The case's operating regimes. EMPTY for a control, and that is deliberate: a control is one
+   * point carrying a numerical kill criterion, and sweeping it would destroy the property that makes
+   * it a control. Padding the list to reach a chip count would be fabricating regimes.
+   */
+  variants: VariantDef[];
 }
 
 export const CATEGORY_LABELS: Record<string, string> = {
@@ -73,6 +98,68 @@ export const CASES: CaseDef[] = [
     "tags": [
       "reference",
       "fullface-reference"
+    ],
+    "variants": [
+      {
+        "id": "p6",
+        "labelEn": "6 passes",
+        "labelEs": "6 pasadas",
+        "noteEn": "Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one.",
+        "noteEs": "Muy pocas capas para mezclar. La cama es un acopio con forma y la razón se queda cerca de uno.",
+        "overrides": {
+          "nPasses": 6
+        }
+      },
+      {
+        "id": "p12",
+        "labelEn": "12 passes",
+        "labelEs": "12 pasadas",
+        "noteEn": "The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide.",
+        "noteEs": "El extremo bajo de la práctica real. La razón empieza a moverse y la brecha con la cota ideal es amplia.",
+        "overrides": {
+          "nPasses": 12
+        }
+      },
+      {
+        "id": "p24",
+        "labelEn": "24 passes",
+        "labelEs": "24 pasadas",
+        "noteEn": "The reference regime, and the default the other axes are compared at.",
+        "noteEs": "El régimen de referencia, y el valor con el que se comparan los otros ejes.",
+        "overrides": {
+          "nPasses": 24
+        }
+      },
+      {
+        "id": "p36",
+        "labelEn": "36 passes",
+        "labelEs": "36 pasadas",
+        "noteEn": "Common on a long yard. The returns are still real, but the curve is already bending away from the 1/N line rather than tracking it.",
+        "noteEs": "Habitual en una cancha larga. El retorno sigue siendo real, pero la curva ya se aleja de la línea 1/N en vez de seguirla.",
+        "overrides": {
+          "nPasses": 36
+        }
+      },
+      {
+        "id": "p48",
+        "labelEn": "48 passes",
+        "labelEs": "48 pasadas",
+        "noteEn": "Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the count, is what limits the result.",
+        "noteEs": "Retornos decrecientes: las capas son tan delgadas que lo que limita el resultado es la autocorrelación del flujo, no el conteo.",
+        "overrides": {
+          "nPasses": 48
+        }
+      },
+      {
+        "id": "p64",
+        "labelEn": "64 passes",
+        "labelEs": "64 pasadas",
+        "noteEn": "Past the useful end. Compare the achieved ratio against the 1/N line to see how little the last twenty passes bought.",
+        "noteEs": "Más allá del punto útil. Comparar la razón lograda contra la línea 1/N muestra lo poco que aportaron las últimas veinte pasadas.",
+        "overrides": {
+          "nPasses": 64
+        }
+      }
     ]
   },
   {
@@ -99,7 +186,69 @@ export const CASES: CaseDef[] = [
     "nx": 64,
     "ny": 24,
     "cellM": 3.0,
-    "tags": []
+    "tags": [],
+    "variants": [
+      {
+        "id": "p6",
+        "labelEn": "6 passes",
+        "labelEs": "6 pasadas",
+        "noteEn": "Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one.",
+        "noteEs": "Muy pocas capas para mezclar. La cama es un acopio con forma y la razón se queda cerca de uno.",
+        "overrides": {
+          "nPasses": 6
+        }
+      },
+      {
+        "id": "p12",
+        "labelEn": "12 passes",
+        "labelEs": "12 pasadas",
+        "noteEn": "The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide.",
+        "noteEs": "El extremo bajo de la práctica real. La razón empieza a moverse y la brecha con la cota ideal es amplia.",
+        "overrides": {
+          "nPasses": 12
+        }
+      },
+      {
+        "id": "p24",
+        "labelEn": "24 passes",
+        "labelEs": "24 pasadas",
+        "noteEn": "The reference regime, and the default the other axes are compared at.",
+        "noteEs": "El régimen de referencia, y el valor con el que se comparan los otros ejes.",
+        "overrides": {
+          "nPasses": 24
+        }
+      },
+      {
+        "id": "p36",
+        "labelEn": "36 passes",
+        "labelEs": "36 pasadas",
+        "noteEn": "Common on a long yard. The returns are still real, but the curve is already bending away from the 1/N line rather than tracking it.",
+        "noteEs": "Habitual en una cancha larga. El retorno sigue siendo real, pero la curva ya se aleja de la línea 1/N en vez de seguirla.",
+        "overrides": {
+          "nPasses": 36
+        }
+      },
+      {
+        "id": "p48",
+        "labelEn": "48 passes",
+        "labelEs": "48 pasadas",
+        "noteEn": "Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the count, is what limits the result.",
+        "noteEs": "Retornos decrecientes: las capas son tan delgadas que lo que limita el resultado es la autocorrelación del flujo, no el conteo.",
+        "overrides": {
+          "nPasses": 48
+        }
+      },
+      {
+        "id": "p64",
+        "labelEn": "64 passes",
+        "labelEs": "64 pasadas",
+        "noteEn": "Past the useful end. Compare the achieved ratio against the 1/N line to see how little the last twenty passes bought.",
+        "noteEs": "Más allá del punto útil. Comparar la razón lograda contra la línea 1/N muestra lo poco que aportaron las últimas veinte pasadas.",
+        "overrides": {
+          "nPasses": 64
+        }
+      }
+    ]
   },
   {
     "id": "G03_coneshell",
@@ -127,6 +276,68 @@ export const CASES: CaseDef[] = [
     "cellM": 3.0,
     "tags": [
       "anchored"
+    ],
+    "variants": [
+      {
+        "id": "p6",
+        "labelEn": "6 passes",
+        "labelEs": "6 pasadas",
+        "noteEn": "Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one.",
+        "noteEs": "Muy pocas capas para mezclar. La cama es un acopio con forma y la razón se queda cerca de uno.",
+        "overrides": {
+          "nPasses": 6
+        }
+      },
+      {
+        "id": "p12",
+        "labelEn": "12 passes",
+        "labelEs": "12 pasadas",
+        "noteEn": "The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide.",
+        "noteEs": "El extremo bajo de la práctica real. La razón empieza a moverse y la brecha con la cota ideal es amplia.",
+        "overrides": {
+          "nPasses": 12
+        }
+      },
+      {
+        "id": "p24",
+        "labelEn": "24 passes",
+        "labelEs": "24 pasadas",
+        "noteEn": "The reference regime, and the default the other axes are compared at.",
+        "noteEs": "El régimen de referencia, y el valor con el que se comparan los otros ejes.",
+        "overrides": {
+          "nPasses": 24
+        }
+      },
+      {
+        "id": "p36",
+        "labelEn": "36 passes",
+        "labelEs": "36 pasadas",
+        "noteEn": "Common on a long yard. The returns are still real, but the curve is already bending away from the 1/N line rather than tracking it.",
+        "noteEs": "Habitual en una cancha larga. El retorno sigue siendo real, pero la curva ya se aleja de la línea 1/N en vez de seguirla.",
+        "overrides": {
+          "nPasses": 36
+        }
+      },
+      {
+        "id": "p48",
+        "labelEn": "48 passes",
+        "labelEs": "48 pasadas",
+        "noteEn": "Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the count, is what limits the result.",
+        "noteEs": "Retornos decrecientes: las capas son tan delgadas que lo que limita el resultado es la autocorrelación del flujo, no el conteo.",
+        "overrides": {
+          "nPasses": 48
+        }
+      },
+      {
+        "id": "p64",
+        "labelEn": "64 passes",
+        "labelEs": "64 pasadas",
+        "noteEn": "Past the useful end. Compare the achieved ratio against the 1/N line to see how little the last twenty passes bought.",
+        "noteEs": "Más allá del punto útil. Comparar la razón lograda contra la línea 1/N muestra lo poco que aportaron las últimas veinte pasadas.",
+        "overrides": {
+          "nPasses": 64
+        }
+      }
     ]
   },
   {
@@ -153,7 +364,69 @@ export const CASES: CaseDef[] = [
     "nx": 64,
     "ny": 24,
     "cellM": 3.0,
-    "tags": []
+    "tags": [],
+    "variants": [
+      {
+        "id": "p6",
+        "labelEn": "6 passes",
+        "labelEs": "6 pasadas",
+        "noteEn": "Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one.",
+        "noteEs": "Muy pocas capas para mezclar. La cama es un acopio con forma y la razón se queda cerca de uno.",
+        "overrides": {
+          "nPasses": 6
+        }
+      },
+      {
+        "id": "p12",
+        "labelEn": "12 passes",
+        "labelEs": "12 pasadas",
+        "noteEn": "The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide.",
+        "noteEs": "El extremo bajo de la práctica real. La razón empieza a moverse y la brecha con la cota ideal es amplia.",
+        "overrides": {
+          "nPasses": 12
+        }
+      },
+      {
+        "id": "p24",
+        "labelEn": "24 passes",
+        "labelEs": "24 pasadas",
+        "noteEn": "The reference regime, and the default the other axes are compared at.",
+        "noteEs": "El régimen de referencia, y el valor con el que se comparan los otros ejes.",
+        "overrides": {
+          "nPasses": 24
+        }
+      },
+      {
+        "id": "p36",
+        "labelEn": "36 passes",
+        "labelEs": "36 pasadas",
+        "noteEn": "Common on a long yard. The returns are still real, but the curve is already bending away from the 1/N line rather than tracking it.",
+        "noteEs": "Habitual en una cancha larga. El retorno sigue siendo real, pero la curva ya se aleja de la línea 1/N en vez de seguirla.",
+        "overrides": {
+          "nPasses": 36
+        }
+      },
+      {
+        "id": "p48",
+        "labelEn": "48 passes",
+        "labelEs": "48 pasadas",
+        "noteEn": "Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the count, is what limits the result.",
+        "noteEs": "Retornos decrecientes: las capas son tan delgadas que lo que limita el resultado es la autocorrelación del flujo, no el conteo.",
+        "overrides": {
+          "nPasses": 48
+        }
+      },
+      {
+        "id": "p64",
+        "labelEn": "64 passes",
+        "labelEs": "64 pasadas",
+        "noteEn": "Past the useful end. Compare the achieved ratio against the 1/N line to see how little the last twenty passes bought.",
+        "noteEs": "Más allá del punto útil. Comparar la razón lograda contra la línea 1/N muestra lo poco que aportaron las últimas veinte pasadas.",
+        "overrides": {
+          "nPasses": 64
+        }
+      }
+    ]
   },
   {
     "id": "G05_chevcon",
@@ -182,6 +455,68 @@ export const CASES: CaseDef[] = [
     "tags": [
       "anchored",
       "best"
+    ],
+    "variants": [
+      {
+        "id": "p6",
+        "labelEn": "6 passes",
+        "labelEs": "6 pasadas",
+        "noteEn": "Too few layers to blend. The bed is a stockpile with a shape, and the ratio stays near one.",
+        "noteEs": "Muy pocas capas para mezclar. La cama es un acopio con forma y la razón se queda cerca de uno.",
+        "overrides": {
+          "nPasses": 6
+        }
+      },
+      {
+        "id": "p12",
+        "labelEn": "12 passes",
+        "labelEs": "12 pasadas",
+        "noteEn": "The lower end of real practice. The ratio starts to move and the gap to the ideal bound is wide.",
+        "noteEs": "El extremo bajo de la práctica real. La razón empieza a moverse y la brecha con la cota ideal es amplia.",
+        "overrides": {
+          "nPasses": 12
+        }
+      },
+      {
+        "id": "p24",
+        "labelEn": "24 passes",
+        "labelEs": "24 pasadas",
+        "noteEn": "The reference regime, and the default the other axes are compared at.",
+        "noteEs": "El régimen de referencia, y el valor con el que se comparan los otros ejes.",
+        "overrides": {
+          "nPasses": 24
+        }
+      },
+      {
+        "id": "p36",
+        "labelEn": "36 passes",
+        "labelEs": "36 pasadas",
+        "noteEn": "Common on a long yard. The returns are still real, but the curve is already bending away from the 1/N line rather than tracking it.",
+        "noteEs": "Habitual en una cancha larga. El retorno sigue siendo real, pero la curva ya se aleja de la línea 1/N en vez de seguirla.",
+        "overrides": {
+          "nPasses": 36
+        }
+      },
+      {
+        "id": "p48",
+        "labelEn": "48 passes",
+        "labelEs": "48 pasadas",
+        "noteEn": "Diminishing returns: the layers are thin enough that the input's own autocorrelation, not the count, is what limits the result.",
+        "noteEs": "Retornos decrecientes: las capas son tan delgadas que lo que limita el resultado es la autocorrelación del flujo, no el conteo.",
+        "overrides": {
+          "nPasses": 48
+        }
+      },
+      {
+        "id": "p64",
+        "labelEn": "64 passes",
+        "labelEs": "64 pasadas",
+        "noteEn": "Past the useful end. Compare the achieved ratio against the 1/N line to see how little the last twenty passes bought.",
+        "noteEs": "Más allá del punto útil. Comparar la razón lograda contra la línea 1/N muestra lo poco que aportaron las últimas veinte pasadas.",
+        "overrides": {
+          "nPasses": 64
+        }
+      }
     ]
   },
   {
@@ -208,7 +543,69 @@ export const CASES: CaseDef[] = [
     "nx": 64,
     "ny": 24,
     "cellM": 3.0,
-    "tags": []
+    "tags": [],
+    "variants": [
+      {
+        "id": "c300",
+        "labelEn": "300 t",
+        "labelEs": "300 t",
+        "noteEn": "A small parcel. The reclaim geometry shows through most clearly here, because a small cut cannot integrate over enough of the face to hide it.",
+        "noteEs": "Un parcel pequeño. La geometría de recuperación se nota al máximo, porque un corte pequeño no alcanza a integrar suficiente frente como para disimularla.",
+        "overrides": {
+          "cutTonnes": 300.0
+        }
+      },
+      {
+        "id": "c600",
+        "labelEn": "600 t",
+        "labelEs": "600 t",
+        "noteEn": "A short fleet cycle: roughly three truck loads to the plant at a time. Still small enough that a shallow-reaching machine has to walk to fill it.",
+        "noteEs": "Un ciclo corto de flota: del orden de tres cargas de camión hacia la planta a la vez. Todavía pequeño como para que una máquina de poco alcance deba desplazarse para completarlo.",
+        "overrides": {
+          "cutTonnes": 600.0
+        }
+      },
+      {
+        "id": "c900",
+        "labelEn": "900 t",
+        "labelEs": "900 t",
+        "noteEn": "The reference parcel, and the default of the other axes.",
+        "noteEs": "El parcel de referencia, y el valor por defecto de los otros ejes.",
+        "overrides": {
+          "cutTonnes": 900.0
+        }
+      },
+      {
+        "id": "c1200",
+        "labelEn": "1200 t",
+        "labelEs": "1200 t",
+        "noteEn": "A larger draw. More of the face per cut, so the machines start to look alike.",
+        "noteEs": "Una saca mayor. Más frente por corte, así que las máquinas empiezan a parecerse.",
+        "overrides": {
+          "cutTonnes": 1200.0
+        }
+      },
+      {
+        "id": "c1800",
+        "labelEn": "1800 t",
+        "labelEs": "1800 t",
+        "noteEn": "A shift-scale parcel. The reclaim axis is now mostly averaged away.",
+        "noteEs": "Un parcel a escala de turno. El eje de recuperación queda casi promediado.",
+        "overrides": {
+          "cutTonnes": 1800.0
+        }
+      },
+      {
+        "id": "c2400",
+        "labelEn": "2400 t",
+        "labelEs": "2400 t",
+        "noteEn": "Large enough that the cut spans several stations, which is a different machine duty from the one the geometry describes; read the layer count rather than the ratio here.",
+        "noteEs": "Suficientemente grande para que el corte abarque varias estaciones, que es un servicio distinto del que describe la geometría; aquí conviene leer el conteo de capas y no la razón.",
+        "overrides": {
+          "cutTonnes": 2400.0
+        }
+      }
+    ]
   },
   {
     "id": "R03_end",
@@ -234,7 +631,69 @@ export const CASES: CaseDef[] = [
     "nx": 64,
     "ny": 24,
     "cellM": 3.0,
-    "tags": []
+    "tags": [],
+    "variants": [
+      {
+        "id": "c300",
+        "labelEn": "300 t",
+        "labelEs": "300 t",
+        "noteEn": "A small parcel. The reclaim geometry shows through most clearly here, because a small cut cannot integrate over enough of the face to hide it.",
+        "noteEs": "Un parcel pequeño. La geometría de recuperación se nota al máximo, porque un corte pequeño no alcanza a integrar suficiente frente como para disimularla.",
+        "overrides": {
+          "cutTonnes": 300.0
+        }
+      },
+      {
+        "id": "c600",
+        "labelEn": "600 t",
+        "labelEs": "600 t",
+        "noteEn": "A short fleet cycle: roughly three truck loads to the plant at a time. Still small enough that a shallow-reaching machine has to walk to fill it.",
+        "noteEs": "Un ciclo corto de flota: del orden de tres cargas de camión hacia la planta a la vez. Todavía pequeño como para que una máquina de poco alcance deba desplazarse para completarlo.",
+        "overrides": {
+          "cutTonnes": 600.0
+        }
+      },
+      {
+        "id": "c900",
+        "labelEn": "900 t",
+        "labelEs": "900 t",
+        "noteEn": "The reference parcel, and the default of the other axes.",
+        "noteEs": "El parcel de referencia, y el valor por defecto de los otros ejes.",
+        "overrides": {
+          "cutTonnes": 900.0
+        }
+      },
+      {
+        "id": "c1200",
+        "labelEn": "1200 t",
+        "labelEs": "1200 t",
+        "noteEn": "A larger draw. More of the face per cut, so the machines start to look alike.",
+        "noteEs": "Una saca mayor. Más frente por corte, así que las máquinas empiezan a parecerse.",
+        "overrides": {
+          "cutTonnes": 1200.0
+        }
+      },
+      {
+        "id": "c1800",
+        "labelEn": "1800 t",
+        "labelEs": "1800 t",
+        "noteEn": "A shift-scale parcel. The reclaim axis is now mostly averaged away.",
+        "noteEs": "Un parcel a escala de turno. El eje de recuperación queda casi promediado.",
+        "overrides": {
+          "cutTonnes": 1800.0
+        }
+      },
+      {
+        "id": "c2400",
+        "labelEn": "2400 t",
+        "labelEs": "2400 t",
+        "noteEn": "Large enough that the cut spans several stations, which is a different machine duty from the one the geometry describes; read the layer count rather than the ratio here.",
+        "noteEs": "Suficientemente grande para que el corte abarque varias estaciones, que es un servicio distinto del que describe la geometría; aquí conviene leer el conteo de capas y no la razón.",
+        "overrides": {
+          "cutTonnes": 2400.0
+        }
+      }
+    ]
   },
   {
     "id": "R04_loader",
@@ -260,7 +719,69 @@ export const CASES: CaseDef[] = [
     "nx": 64,
     "ny": 24,
     "cellM": 3.0,
-    "tags": []
+    "tags": [],
+    "variants": [
+      {
+        "id": "c300",
+        "labelEn": "300 t",
+        "labelEs": "300 t",
+        "noteEn": "A small parcel. The reclaim geometry shows through most clearly here, because a small cut cannot integrate over enough of the face to hide it.",
+        "noteEs": "Un parcel pequeño. La geometría de recuperación se nota al máximo, porque un corte pequeño no alcanza a integrar suficiente frente como para disimularla.",
+        "overrides": {
+          "cutTonnes": 300.0
+        }
+      },
+      {
+        "id": "c600",
+        "labelEn": "600 t",
+        "labelEs": "600 t",
+        "noteEn": "A short fleet cycle: roughly three truck loads to the plant at a time. Still small enough that a shallow-reaching machine has to walk to fill it.",
+        "noteEs": "Un ciclo corto de flota: del orden de tres cargas de camión hacia la planta a la vez. Todavía pequeño como para que una máquina de poco alcance deba desplazarse para completarlo.",
+        "overrides": {
+          "cutTonnes": 600.0
+        }
+      },
+      {
+        "id": "c900",
+        "labelEn": "900 t",
+        "labelEs": "900 t",
+        "noteEn": "The reference parcel, and the default of the other axes.",
+        "noteEs": "El parcel de referencia, y el valor por defecto de los otros ejes.",
+        "overrides": {
+          "cutTonnes": 900.0
+        }
+      },
+      {
+        "id": "c1200",
+        "labelEn": "1200 t",
+        "labelEs": "1200 t",
+        "noteEn": "A larger draw. More of the face per cut, so the machines start to look alike.",
+        "noteEs": "Una saca mayor. Más frente por corte, así que las máquinas empiezan a parecerse.",
+        "overrides": {
+          "cutTonnes": 1200.0
+        }
+      },
+      {
+        "id": "c1800",
+        "labelEn": "1800 t",
+        "labelEs": "1800 t",
+        "noteEn": "A shift-scale parcel. The reclaim axis is now mostly averaged away.",
+        "noteEs": "Un parcel a escala de turno. El eje de recuperación queda casi promediado.",
+        "overrides": {
+          "cutTonnes": 1800.0
+        }
+      },
+      {
+        "id": "c2400",
+        "labelEn": "2400 t",
+        "labelEs": "2400 t",
+        "noteEn": "Large enough that the cut spans several stations, which is a different machine duty from the one the geometry describes; read the layer count rather than the ratio here.",
+        "noteEs": "Suficientemente grande para que el corte abarque varias estaciones, que es un servicio distinto del que describe la geometría; aquí conviene leer el conteo de capas y no la razón.",
+        "overrides": {
+          "cutTonnes": 2400.0
+        }
+      }
+    ]
   },
   {
     "id": "V01_short_range",
@@ -286,7 +807,69 @@ export const CASES: CaseDef[] = [
     "nx": 64,
     "ny": 24,
     "cellM": 3.0,
-    "tags": []
+    "tags": [],
+    "variants": [
+      {
+        "id": "r200",
+        "labelEn": "200 t",
+        "labelEs": "200 t",
+        "noteEn": "Correlation shorter than a single truck. The layers are effectively independent and the achieved ratio can approach the 1/N bound.",
+        "noteEs": "Correlación más corta que un solo camión. Las capas son independientes en la práctica y la razón lograda puede acercarse a la cota 1/N.",
+        "overrides": {
+          "rangeT": 200.0
+        }
+      },
+      {
+        "id": "r1000",
+        "labelEn": "1 kt",
+        "labelEs": "1 kt",
+        "noteEn": "Still well inside one layer's tonnage, so consecutive layers are close to independent and the bed still recovers most of what the bound allows.",
+        "noteEs": "Todavía bien dentro del tonelaje de una capa, así que las capas consecutivas son casi independientes y la cama aún recupera la mayor parte de lo que permite la cota.",
+        "overrides": {
+          "rangeT": 1000.0
+        }
+      },
+      {
+        "id": "r4000",
+        "labelEn": "4 kt",
+        "labelEs": "4 kt",
+        "noteEn": "The reference structure, comparable to one layer's tonnage.",
+        "noteEs": "La estructura de referencia, comparable al tonelaje de una capa.",
+        "overrides": {
+          "rangeT": 4000.0
+        }
+      },
+      {
+        "id": "r10000",
+        "labelEn": "10 kt",
+        "labelEs": "10 kt",
+        "noteEn": "Longer than a layer. Consecutive layers now share grade and the bed recovers noticeably less than the bound promises.",
+        "noteEs": "Más larga que una capa. Las capas consecutivas comparten ley y la cama recupera bastante menos de lo que promete la cota.",
+        "overrides": {
+          "rangeT": 10000.0
+        }
+      },
+      {
+        "id": "r20000",
+        "labelEn": "20 kt",
+        "labelEs": "20 kt",
+        "noteEn": "Several layers per correlation length. The gap to the ideal is now the headline number.",
+        "noteEs": "Varias capas por longitud de correlación. La brecha con lo ideal pasa a ser el número principal.",
+        "overrides": {
+          "rangeT": 20000.0
+        }
+      },
+      {
+        "id": "r40000",
+        "labelEn": "40 kt",
+        "labelEs": "40 kt",
+        "noteEn": "Longer than the whole build. Every layer carries nearly the same grade, so the bed has almost nothing to average and the ratio approaches one.",
+        "noteEs": "Más larga que toda la construcción. Cada capa lleva casi la misma ley, la cama casi no tiene nada que promediar y la razón se acerca a uno.",
+        "overrides": {
+          "rangeT": 40000.0
+        }
+      }
+    ]
   },
   {
     "id": "V02_long_range",
@@ -314,6 +897,68 @@ export const CASES: CaseDef[] = [
     "cellM": 3.0,
     "tags": [
       "honest"
+    ],
+    "variants": [
+      {
+        "id": "r200",
+        "labelEn": "200 t",
+        "labelEs": "200 t",
+        "noteEn": "Correlation shorter than a single truck. The layers are effectively independent and the achieved ratio can approach the 1/N bound.",
+        "noteEs": "Correlación más corta que un solo camión. Las capas son independientes en la práctica y la razón lograda puede acercarse a la cota 1/N.",
+        "overrides": {
+          "rangeT": 200.0
+        }
+      },
+      {
+        "id": "r1000",
+        "labelEn": "1 kt",
+        "labelEs": "1 kt",
+        "noteEn": "Still well inside one layer's tonnage, so consecutive layers are close to independent and the bed still recovers most of what the bound allows.",
+        "noteEs": "Todavía bien dentro del tonelaje de una capa, así que las capas consecutivas son casi independientes y la cama aún recupera la mayor parte de lo que permite la cota.",
+        "overrides": {
+          "rangeT": 1000.0
+        }
+      },
+      {
+        "id": "r4000",
+        "labelEn": "4 kt",
+        "labelEs": "4 kt",
+        "noteEn": "The reference structure, comparable to one layer's tonnage.",
+        "noteEs": "La estructura de referencia, comparable al tonelaje de una capa.",
+        "overrides": {
+          "rangeT": 4000.0
+        }
+      },
+      {
+        "id": "r10000",
+        "labelEn": "10 kt",
+        "labelEs": "10 kt",
+        "noteEn": "Longer than a layer. Consecutive layers now share grade and the bed recovers noticeably less than the bound promises.",
+        "noteEs": "Más larga que una capa. Las capas consecutivas comparten ley y la cama recupera bastante menos de lo que promete la cota.",
+        "overrides": {
+          "rangeT": 10000.0
+        }
+      },
+      {
+        "id": "r20000",
+        "labelEn": "20 kt",
+        "labelEs": "20 kt",
+        "noteEn": "Several layers per correlation length. The gap to the ideal is now the headline number.",
+        "noteEs": "Varias capas por longitud de correlación. La brecha con lo ideal pasa a ser el número principal.",
+        "overrides": {
+          "rangeT": 20000.0
+        }
+      },
+      {
+        "id": "r40000",
+        "labelEn": "40 kt",
+        "labelEs": "40 kt",
+        "noteEn": "Longer than the whole build. Every layer carries nearly the same grade, so the bed has almost nothing to average and the ratio approaches one.",
+        "noteEs": "Más larga que toda la construcción. Cada capa lleva casi la misma ley, la cama casi no tiene nada que promediar y la razón se acerca a uno.",
+        "overrides": {
+          "rangeT": 40000.0
+        }
+      }
     ]
   },
   {
@@ -342,6 +987,68 @@ export const CASES: CaseDef[] = [
     "cellM": 3.0,
     "tags": [
       "honest"
+    ],
+    "variants": [
+      {
+        "id": "r200",
+        "labelEn": "200 t",
+        "labelEs": "200 t",
+        "noteEn": "Correlation shorter than a single truck. The layers are effectively independent and the achieved ratio can approach the 1/N bound.",
+        "noteEs": "Correlación más corta que un solo camión. Las capas son independientes en la práctica y la razón lograda puede acercarse a la cota 1/N.",
+        "overrides": {
+          "rangeT": 200.0
+        }
+      },
+      {
+        "id": "r1000",
+        "labelEn": "1 kt",
+        "labelEs": "1 kt",
+        "noteEn": "Still well inside one layer's tonnage, so consecutive layers are close to independent and the bed still recovers most of what the bound allows.",
+        "noteEs": "Todavía bien dentro del tonelaje de una capa, así que las capas consecutivas son casi independientes y la cama aún recupera la mayor parte de lo que permite la cota.",
+        "overrides": {
+          "rangeT": 1000.0
+        }
+      },
+      {
+        "id": "r4000",
+        "labelEn": "4 kt",
+        "labelEs": "4 kt",
+        "noteEn": "The reference structure, comparable to one layer's tonnage.",
+        "noteEs": "La estructura de referencia, comparable al tonelaje de una capa.",
+        "overrides": {
+          "rangeT": 4000.0
+        }
+      },
+      {
+        "id": "r10000",
+        "labelEn": "10 kt",
+        "labelEs": "10 kt",
+        "noteEn": "Longer than a layer. Consecutive layers now share grade and the bed recovers noticeably less than the bound promises.",
+        "noteEs": "Más larga que una capa. Las capas consecutivas comparten ley y la cama recupera bastante menos de lo que promete la cota.",
+        "overrides": {
+          "rangeT": 10000.0
+        }
+      },
+      {
+        "id": "r20000",
+        "labelEn": "20 kt",
+        "labelEs": "20 kt",
+        "noteEn": "Several layers per correlation length. The gap to the ideal is now the headline number.",
+        "noteEs": "Varias capas por longitud de correlación. La brecha con lo ideal pasa a ser el número principal.",
+        "overrides": {
+          "rangeT": 20000.0
+        }
+      },
+      {
+        "id": "r40000",
+        "labelEn": "40 kt",
+        "labelEs": "40 kt",
+        "noteEn": "Longer than the whole build. Every layer carries nearly the same grade, so the bed has almost nothing to average and the ratio approaches one.",
+        "noteEs": "Más larga que toda la construcción. Cada capa lleva casi la misma ley, la cama casi no tiene nada que promediar y la razón se acerca a uno.",
+        "overrides": {
+          "rangeT": 40000.0
+        }
+      }
     ]
   },
   {
@@ -370,6 +1077,68 @@ export const CASES: CaseDef[] = [
     "cellM": 3.0,
     "tags": [
       "honest"
+    ],
+    "variants": [
+      {
+        "id": "r200",
+        "labelEn": "200 t",
+        "labelEs": "200 t",
+        "noteEn": "Correlation shorter than a single truck. The layers are effectively independent and the achieved ratio can approach the 1/N bound.",
+        "noteEs": "Correlación más corta que un solo camión. Las capas son independientes en la práctica y la razón lograda puede acercarse a la cota 1/N.",
+        "overrides": {
+          "rangeT": 200.0
+        }
+      },
+      {
+        "id": "r1000",
+        "labelEn": "1 kt",
+        "labelEs": "1 kt",
+        "noteEn": "Still well inside one layer's tonnage, so consecutive layers are close to independent and the bed still recovers most of what the bound allows.",
+        "noteEs": "Todavía bien dentro del tonelaje de una capa, así que las capas consecutivas son casi independientes y la cama aún recupera la mayor parte de lo que permite la cota.",
+        "overrides": {
+          "rangeT": 1000.0
+        }
+      },
+      {
+        "id": "r4000",
+        "labelEn": "4 kt",
+        "labelEs": "4 kt",
+        "noteEn": "The reference structure, comparable to one layer's tonnage.",
+        "noteEs": "La estructura de referencia, comparable al tonelaje de una capa.",
+        "overrides": {
+          "rangeT": 4000.0
+        }
+      },
+      {
+        "id": "r10000",
+        "labelEn": "10 kt",
+        "labelEs": "10 kt",
+        "noteEn": "Longer than a layer. Consecutive layers now share grade and the bed recovers noticeably less than the bound promises.",
+        "noteEs": "Más larga que una capa. Las capas consecutivas comparten ley y la cama recupera bastante menos de lo que promete la cota.",
+        "overrides": {
+          "rangeT": 10000.0
+        }
+      },
+      {
+        "id": "r20000",
+        "labelEn": "20 kt",
+        "labelEs": "20 kt",
+        "noteEn": "Several layers per correlation length. The gap to the ideal is now the headline number.",
+        "noteEs": "Varias capas por longitud de correlación. La brecha con lo ideal pasa a ser el número principal.",
+        "overrides": {
+          "rangeT": 20000.0
+        }
+      },
+      {
+        "id": "r40000",
+        "labelEn": "40 kt",
+        "labelEs": "40 kt",
+        "noteEn": "Longer than the whole build. Every layer carries nearly the same grade, so the bed has almost nothing to average and the ratio approaches one.",
+        "noteEs": "Más larga que toda la construcción. Cada capa lleva casi la misma ley, la cama casi no tiene nada que promediar y la razón se acerca a uno.",
+        "overrides": {
+          "rangeT": 40000.0
+        }
+      }
     ]
   },
   {
@@ -398,6 +1167,68 @@ export const CASES: CaseDef[] = [
     "cellM": 3.0,
     "tags": [
       "segregation"
+    ],
+    "variants": [
+      {
+        "id": "s00",
+        "labelEn": "Sr = 0",
+        "labelEs": "Sr = 0",
+        "noteEn": "Kinetic sieving switched off. The size split rides with the material untouched, which is the negative control: any sorting visible here would be a solver artefact.",
+        "noteEs": "Tamizado cinético apagado. La separación por tamaño viaja con el material sin tocarse, que es el control negativo: cualquier clasificación visible aquí sería un artefacto del solver.",
+        "overrides": {
+          "sr": 0.0
+        }
+      },
+      {
+        "id": "s05",
+        "labelEn": "Sr = 0.5",
+        "labelEs": "Sr = 0.5",
+        "noteEn": "Weak sieving. The toe is measurably coarser than the apex but the effect is small.",
+        "noteEs": "Tamizado débil. El pie es medible más grueso que el ápice, pero el efecto es pequeño.",
+        "overrides": {
+          "sr": 0.5
+        }
+      },
+      {
+        "id": "s10",
+        "labelEn": "Sr = 1",
+        "labelEs": "Sr = 1",
+        "noteEn": "The reference regime, near the knee of the response.",
+        "noteEs": "El régimen de referencia, cerca del codo de la respuesta.",
+        "overrides": {
+          "sr": 1.0
+        }
+      },
+      {
+        "id": "s20",
+        "labelEn": "Sr = 2",
+        "labelEs": "Sr = 2",
+        "noteEn": "Strong sieving, already close to saturated: the flowing layer separates almost completely within the first few bands of the avalanche.",
+        "noteEs": "Tamizado fuerte, ya cerca de la saturación: la capa fluyente se separa casi por completo dentro de las primeras bandas de la avalancha.",
+        "overrides": {
+          "sr": 2.0
+        }
+      },
+      {
+        "id": "s40",
+        "labelEn": "Sr = 4",
+        "labelEs": "Sr = 4",
+        "noteEn": "Saturated. The segregation index barely moves from Sr = 2, which is the model's own prediction and not a numerical limit.",
+        "noteEs": "Saturado. El índice de segregación casi no se mueve respecto de Sr = 2, que es la predicción del propio modelo y no un límite numérico.",
+        "overrides": {
+          "sr": 4.0
+        }
+      },
+      {
+        "id": "s80",
+        "labelEn": "Sr = 8",
+        "labelEs": "Sr = 8",
+        "noteEn": "Past saturation, kept so the flat top of the curve is visible rather than asserted.",
+        "noteEs": "Pasada la saturación, incluido para que la parte plana de la curva se vea en vez de afirmarse.",
+        "overrides": {
+          "sr": 8.0
+        }
+      }
     ]
   },
   {
@@ -427,6 +1258,68 @@ export const CASES: CaseDef[] = [
     "tags": [
       "segregation",
       "makse"
+    ],
+    "variants": [
+      {
+        "id": "s00",
+        "labelEn": "Sr = 0",
+        "labelEs": "Sr = 0",
+        "noteEn": "Kinetic sieving switched off. The size split rides with the material untouched, which is the negative control: any sorting visible here would be a solver artefact.",
+        "noteEs": "Tamizado cinético apagado. La separación por tamaño viaja con el material sin tocarse, que es el control negativo: cualquier clasificación visible aquí sería un artefacto del solver.",
+        "overrides": {
+          "sr": 0.0
+        }
+      },
+      {
+        "id": "s05",
+        "labelEn": "Sr = 0.5",
+        "labelEs": "Sr = 0.5",
+        "noteEn": "Weak sieving. The toe is measurably coarser than the apex but the effect is small.",
+        "noteEs": "Tamizado débil. El pie es medible más grueso que el ápice, pero el efecto es pequeño.",
+        "overrides": {
+          "sr": 0.5
+        }
+      },
+      {
+        "id": "s10",
+        "labelEn": "Sr = 1",
+        "labelEs": "Sr = 1",
+        "noteEn": "The reference regime, near the knee of the response.",
+        "noteEs": "El régimen de referencia, cerca del codo de la respuesta.",
+        "overrides": {
+          "sr": 1.0
+        }
+      },
+      {
+        "id": "s20",
+        "labelEn": "Sr = 2",
+        "labelEs": "Sr = 2",
+        "noteEn": "Strong sieving, already close to saturated: the flowing layer separates almost completely within the first few bands of the avalanche.",
+        "noteEs": "Tamizado fuerte, ya cerca de la saturación: la capa fluyente se separa casi por completo dentro de las primeras bandas de la avalancha.",
+        "overrides": {
+          "sr": 2.0
+        }
+      },
+      {
+        "id": "s40",
+        "labelEn": "Sr = 4",
+        "labelEs": "Sr = 4",
+        "noteEn": "Saturated. The segregation index barely moves from Sr = 2, which is the model's own prediction and not a numerical limit.",
+        "noteEs": "Saturado. El índice de segregación casi no se mueve respecto de Sr = 2, que es la predicción del propio modelo y no un límite numérico.",
+        "overrides": {
+          "sr": 4.0
+        }
+      },
+      {
+        "id": "s80",
+        "labelEn": "Sr = 8",
+        "labelEs": "Sr = 8",
+        "noteEn": "Past saturation, kept so the flat top of the curve is visible rather than asserted.",
+        "noteEs": "Pasada la saturación, incluido para que la parte plana de la curva se vea en vez de afirmarse.",
+        "overrides": {
+          "sr": 8.0
+        }
+      }
     ]
   },
   {
@@ -455,7 +1348,8 @@ export const CASES: CaseDef[] = [
     "cellM": 40.0,
     "tags": [
       "control"
-    ]
+    ],
+    "variants": []
   },
   {
     "id": "C02_no_segregation",
@@ -483,7 +1377,8 @@ export const CASES: CaseDef[] = [
     "cellM": 3.0,
     "tags": [
       "control"
-    ]
+    ],
+    "variants": []
   },
   {
     "id": "C03_starvation",
@@ -512,7 +1407,8 @@ export const CASES: CaseDef[] = [
     "tags": [
       "control",
       "edge"
-    ]
+    ],
+    "variants": []
   }
 ];
 
@@ -525,4 +1421,15 @@ export function casesByCategory(): Array<{ category: string; label: string; case
     label: CATEGORY_LABELS[category],
     cases: CASES.filter((c) => c.category === category),
   })).filter((g) => g.cases.length > 0);
+}
+
+/** The variant of `c` with this id, or null for "the case as declared". */
+export function variantOf(c: CaseDef, id: string | null): VariantDef | null {
+  if (!id) return null;
+  return c.variants.find((v) => v.id === id) ?? null;
+}
+
+/** The default regime of a case: its middle variant, or the case itself when it has none. */
+export function defaultVariant(c: CaseDef): VariantDef | null {
+  return c.variants.length ? c.variants[Math.floor(c.variants.length / 2)] : null;
 }

@@ -217,3 +217,44 @@ test('the generated case registry carries everything the acceptance contract req
   assert.equal(groups.length, 5);
   assert.equal(groups.find((g) => g.category === 'control')!.cases.length, 3);
 });
+
+test('every parametric case carries at least six operating regimes, and controls carry none', () => {
+  // ADR-0016 section 9A and the instantiate guide step 5. The second half of the assertion matters as
+  // much as the first: a control is a single deliberate point with a numerical kill criterion, and
+  // padding it with regimes to reach a chip count would be fabricating experiments.
+  for (const c of CASES) {
+    if (c.category === 'control') {
+      assert.equal(c.variants.length, 0, `${c.id} is a control and must carry no variants`);
+      continue;
+    }
+    assert.ok(c.variants.length >= 6, `${c.id} has ${c.variants.length} variants, needs at least 6`);
+    const ids = new Set(c.variants.map((v) => v.id));
+    assert.equal(ids.size, c.variants.length, `${c.id} has duplicate variant ids`);
+    for (const v of c.variants) {
+      assert.ok(v.labelEn && v.labelEs, `${c.id}/${v.id} is missing a label`);
+      assert.ok(v.noteEn.length > 30 && v.noteEs.length > 30,
+        `${c.id}/${v.id} has no real note saying what the regime shows`);
+      assert.equal(Object.keys(v.overrides).length, 1,
+        `${c.id}/${v.id} overrides ${Object.keys(v.overrides).length} knobs; a family sweeps exactly one`);
+    }
+    // the family must actually sweep: six chips that all run the same numbers are decoration
+    const knob = Object.keys(c.variants[0].overrides)[0] as keyof typeof c.variants[0]['overrides'];
+    const values = new Set(c.variants.map((v) => v.overrides[knob]));
+    assert.equal(values.size, c.variants.length, `${c.id} repeats a value of ${String(knob)}`);
+  }
+});
+
+test('a variant actually changes the result it claims to change', () => {
+  // a chip that does not move the output is the no-op control ADR-0017 clause 3.1 forbids
+  const c = CASES_BY_ID.G01_chevron;
+  const runs = c.variants.map((v) => {
+    const cfg = configFor(c, 11, { nPasses: v.overrides.nPasses ?? c.nPasses });
+    return simulate(cfg, dumpsFor(c, 11));
+  });
+  const vrrs = runs.map((r) => r.metrics.vrr);
+  assert.equal(new Set(vrrs.map((x) => x.toFixed(6))).size, vrrs.length,
+    `two regimes of G01 produced the same variance reduction: ${vrrs.join(', ')}`);
+  // and it must move in the direction the physics predicts: more layers, more averaging
+  assert.ok(vrrs[0] > vrrs[vrrs.length - 1],
+    `6 passes (${vrrs[0].toFixed(4)}) should blend WORSE than 64 (${vrrs[vrrs.length - 1].toFixed(4)})`);
+});
