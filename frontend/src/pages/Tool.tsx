@@ -25,6 +25,7 @@ import type { CaseDef } from '@fasl-work/caos-app-shell';
 import {
   type Index,
   type Scenario,
+  expandFrame,
   loadIndex,
   loadScenario,
   segregationSummary,
@@ -93,6 +94,7 @@ export default function Tool() {
   const [showPaths, setShowPaths] = useState(true);
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const [frame, setFrame] = useState(-1); // -1 means the finished pile
   const [err, setErr] = useState<string | null>(null);
 
@@ -124,11 +126,17 @@ export default function Tool() {
 
   const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
 
-  // The surface being drawn: a build frame while scrubbing, the finished pile otherwise.
-  const surface = useMemo(() => {
+  // The surface being drawn, and the load being worked: a build frame while scrubbing, the
+  // finished pile otherwise.
+  const cur = useMemo(() => {
     if (!sc?.frames || frame < 0) return null;
-    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)]?.z ?? null;
+    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)] ?? null;
   }, [sc, frame]);
+  const surface = useMemo(
+    () => (sc?.frames && frame >= 0 ? expandFrame(sc.frames, Math.min(frame, sc.frames.frames.length - 1)) : null),
+    [sc, frame],
+  );
+  const activeSeq = showHistory ? null : (cur?.seq ?? null);
 
   if (err) {
     return (
@@ -141,54 +149,21 @@ export default function Tool() {
   const site = (
     <div className="st-stagefill">
       <div className="st-canvashost" ref={stageRef}>
-      {sc && (
-        <SiteView3D
-          field={sc.field}
-          surface={surface}
-          plan={sc.plan}
-          loads={sc.loads}
-          colourBy={colour}
-          showPaths={showPaths}
-          showCrest={showCrest}
-          showPlan={showPlan}
-          dark={dark}
-          height={stageH}
-        />
-      )}
-
-      {/* ADR-0070: the readouts are overlaid on the stage, never stacked as cards beneath it. */}
-      {sc && v && seg && (
-        <div className="st-hud">
-          <div>
-            <b>{v.vrr.toFixed(3)}</b>
-            <span>{t('variance reduction', 'reducción de varianza')}</span>
-          </div>
-          <div className={v.boundReliable ? '' : 'muted'}>
-            <b>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</b>
-            <span>
-              {v.boundReliable
-                ? t('ideal 1/N bound', 'cota ideal 1/N')
-                : t('bound not reliable here', 'cota no confiable aquí')}
-            </span>
-          </div>
-          <div>
-            <b>{sc.manifest.build.loads_placed}</b>
-            <span>{t('loads placed', 'cargas colocadas')}</span>
-          </div>
-          <div>
-            <b>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</b>
-            <span>{t('tips refused', 'puntos rechazados')}</span>
-          </div>
-          <div>
-            <b>{sc.manifest.build.peak_m.toFixed(1)} m</b>
-            <span>{t('peak height', 'altura máxima')}</span>
-          </div>
-          <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
-            <b>{sc.manifest.gate.pairs_over_repose}</b>
-            <span>{t('pairs over repose', 'pares sobre reposo')}</span>
-          </div>
-        </div>
-      )}
+        {sc && (
+          <SiteView3D
+            field={sc.field}
+            surface={surface}
+            plan={sc.plan}
+            loads={sc.loads}
+            colourBy={colour}
+            showPaths={showPaths}
+            showCrest={showCrest}
+            showPlan={showPlan}
+            activeSeq={activeSeq}
+            dark={dark}
+            height={stageH}
+          />
+        )}
       </div>
 
       <div className="st-controls">
@@ -212,6 +187,19 @@ export default function Tool() {
           <label>
             <input type="checkbox" checked={showPlan} onChange={(e) => setShowPlan(e.target.checked)} />
             {t('areas', 'áreas')}
+          </label>
+          <label
+            title={t(
+              'Off: only the truck working at this frame. On: the recent history, which shows how the campaign reached the whole area.',
+              'Apagado: solo el camion que trabaja en este cuadro. Encendido: el historial reciente, que muestra como la campana alcanzo toda el area.',
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={showHistory}
+              onChange={(e) => setShowHistory(e.target.checked)}
+            />
+            {t('path history', 'historial de rutas')}
           </label>
         </div>
         <span
@@ -274,8 +262,10 @@ export default function Tool() {
 
   return (
     <div className="page-body st-layout">
-      {/* The scenario deck and the focus entry on ONE surface, per ADR-0070. */}
-      <div className="st-deck">
+      {/* THE LEFT RAIL: pick the case here, read the answer here. Both belong on one surface,
+          because choosing a scenario and seeing what it produced is a single act. The focus entry
+          sits with them, per ADR-0070. */}
+      <aside className="st-rail">
         <CaseSelector
           cases={cases}
           selectedId={sid}
@@ -284,15 +274,64 @@ export default function Tool() {
           deepLink
           ariaLabel={t('Scenario', 'Escenario')}
         />
+
         <button type="button" className="st-focus" onClick={toFocus}>
           <Maximize2 size={14} aria-hidden />
           <span>{t('Focus view', 'Vista enfocada')}</span>
         </button>
+
+        {sc && v && seg && (
+          <dl className="st-kpis">
+            <div>
+              <dt>{t('variance reduction', 'reducción de varianza')}</dt>
+              <dd>{v.vrr.toFixed(3)}</dd>
+            </div>
+            <div className={v.boundReliable ? undefined : 'muted'}>
+              <dt>{v.boundReliable ? t('ideal 1/N bound', 'cota ideal 1/N') : t('bound not reliable', 'cota no confiable')}</dt>
+              <dd>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</dd>
+            </div>
+            <div>
+              <dt>{t('loads placed', 'cargas colocadas')}</dt>
+              <dd>{sc.manifest.build.loads_placed}</dd>
+            </div>
+            <div>
+              <dt>{t('tips refused', 'puntos rechazados')}</dt>
+              <dd>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</dd>
+            </div>
+            <div>
+              <dt>{t('peak height', 'altura máxima')}</dt>
+              <dd>{sc.manifest.build.peak_m.toFixed(1)} m</dd>
+            </div>
+            <div>
+              <dt>{t('material placed', 'material colocado')}</dt>
+              <dd>{Math.round(sc.manifest.build.volume_m3).toLocaleString()} m3</dd>
+            </div>
+            <div>
+              <dt>{t('dozer displacement', 'desplazamiento del bulldozer')}</dt>
+              <dd>{sc.manifest.build.mean_displacement_m.toFixed(1)} m</dd>
+            </div>
+            <div>
+              <dt>{t('stream range, measured', 'rango del flujo, medido')}</dt>
+              <dd>{sc.manifest.stream.measured_range_t.toFixed(0)} t</dd>
+            </div>
+            <div>
+              <dt>{t('loads sorted on a face', 'cargas clasificadas en cara')}</dt>
+              <dd>{seg.nSorted}</dd>
+            </div>
+            <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
+              <dt>{t('pairs over repose', 'pares sobre reposo')}</dt>
+              <dd>{sc.manifest.gate.pairs_over_repose}</dd>
+            </div>
+          </dl>
+        )}
+      </aside>
+
+      <div className="st-main">
+        {!sc && (
+          <p className="st-note">{t('Loading the scenario ...', 'Cargando el escenario ...')}</p>
+        )}
+        <Tabs tabs={tabs} initial="site" ariaLabel={t('Views', 'Vistas')} />
       </div>
-
-      {!sc && <p className="st-note">{t('Loading the scenario ...', 'Cargando el escenario ...')}</p>}
-
-      <Tabs tabs={tabs} initial="site" ariaLabel={t('Views', 'Vistas')} />
     </div>
   );
 }

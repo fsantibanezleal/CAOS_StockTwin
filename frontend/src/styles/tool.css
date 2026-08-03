@@ -11,18 +11,71 @@
  * playback bar, and the tables and legends inside a panel.
  */
 
-/* The scenario deck and the focus entry share one surface, per ADR-0070. */
-.st-deck {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+/* THE LEFT RAIL: the scenario deck, the focus entry and the readouts on one surface, per ADR-0070.
+ *
+ * An earlier version put the deck in a row across the top and the readouts in a HUD over the stage,
+ * to buy height for the instrument. That was the wrong trade. Choosing a case and reading what it
+ * produced is one act, and a HUD that floats over the geometry can only carry three or four numbers
+ * before it covers the pile. The rail carries all ten, always visible, next to the control that
+ * changes them; it costs width, which a 3-D stage has to spare, rather than height, which it does
+ * not. */
+.st-rail {
+  flex: 0 0 15.5rem;
+  width: 15.5rem;
   min-width: 0;
-  margin-bottom: 0.5rem;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+  padding-right: 0.7rem;
+  border-right: 1px solid color-mix(in srgb, currentColor 14%, transparent);
 }
 
-.st-deck > :first-child {
+.st-main {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The readouts. A definition list, because that is what they are: a name and a measured value. */
+.st-kpis {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-kpis > div {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.st-kpis dt {
+  font-size: 0.66rem;
+  opacity: 0.7;
+  line-height: 1.15;
+}
+
+.st-kpis dd {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.st-kpis .muted dd {
+  opacity: 0.5;
+}
+
+.st-kpis .ok dd {
+  color: #2f9e59;
+}
+
+.st-kpis .bad dd {
+  color: #d1495b;
 }
 
 .st-focus {
@@ -390,15 +443,16 @@
    `height: 100%` resolves against nothing and the stage collapses to a quarter of the screen, while
    the aspect-ratio canvases run hundreds of pixels past the footer. */
 
-/* The workbench stacks: deck on top, tabs below. `.page-body.st-layout` is a flex ROW in the shared
-   sheet, which turned the three-chip scenario deck into a 338px left rail and left the 3-D stage at
-   47.7 percent against the ADR-0071 floor of 50. Measured, not guessed. */
+/* Rail beside instrument. The rail is a fixed narrow column, so the stage keeps essentially all the
+   width; what it costs is a fifth of the line length, not a fifth of the picture. */
 .page-body.st-layout {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 1rem;
+  min-height: 0;
 }
 
-.page-body.st-layout > .tabs {
+.page-body.st-layout > .st-main > .tabs {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -406,11 +460,11 @@
   flex: 1 1 auto;
 }
 
-.page-body.st-layout > .tabs > .tablist {
+.page-body.st-layout > .st-main > .tabs > .tablist {
   flex: 0 0 auto;
 }
 
-.page-body.st-layout > .tabs > .tabpanel {
+.page-body.st-layout > .st-main > .tabs > .tabpanel {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
@@ -471,54 +525,44 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
 
 /* Trimming chrome, not content: the instrument was landing just under the ADR-0071 half-screen floor
    and every row of padding around it is height it does not get. */
-.page-body.st-layout > .tabs > .tablist {
+.page-body.st-layout > .st-main > .tabs > .tablist {
   padding-block: 0.15rem;
-}
-
-.page-body.st-layout .st-deck {
-  margin-bottom: 0.25rem;
 }
 
 .page-body.st-layout .st-controls {
   padding: 0.15rem 0 0;
 }
 
-/* THE SCENARIO DECK IS A ROW, NOT A RAIL.
- *
- * The shell's CaseSelector stacks its groups vertically, which is right for a deck of eleven cases in
- * four categories. This product has THREE. As a rail it cost 330px of width permanently and 658px of
- * height, and the 3-D stage came out at 47.7 percent against the ADR-0071 floor of 50. ADR-0071
- * clause 7 is explicit that the control should fit the job. Laying the same primitive out
- * horizontally keeps its behaviour, its chips, its deep link and its accessibility, and gives the
- * width back to the instrument. Nothing about the component is redefined; only its flow direction.
- */
-.page-body.st-layout .st-deck .cs {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 1.1rem;
-  min-width: 0;
+/* The selector runs vertically in the rail, which is its native layout, so nothing is redefined.
+   Only the chips are made full width, because a narrow column reads better as a list than as a
+   ragged wrap, and the anchor line is dropped to two lines so six cases fit above the readouts. */
+.page-body.st-layout .st-rail .cs-chip {
+  width: 100%;
+  text-align: left;
 }
 
-.page-body.st-layout .st-deck .cs-group {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
+.page-body.st-layout .st-rail .cs-chips {
+  display: grid;
+  gap: 0.25rem;
 }
 
-.page-body.st-layout .st-deck .cs-group-label {
-  font-size: 0.66rem;
-  opacity: 0.6;
-  white-space: nowrap;
+/* The rail is chrome, so it is set smaller than body copy. */
+.page-body.st-layout .st-rail {
+  font-size: 0.8rem;
 }
 
-.page-body.st-layout .st-deck .cs-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-}
-
-.page-body.st-layout .st-deck .cs-chip {
-  white-space: nowrap;
+@media (max-width: 900px) {
+  /* Too narrow for two columns: the rail goes back on top and scrolls with the page. */
+  .page-body.st-layout {
+    flex-direction: column;
+  }
+  .st-rail {
+    flex: 0 0 auto;
+    width: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    padding-right: 0;
+    padding-bottom: 0.5rem;
+  }
 }

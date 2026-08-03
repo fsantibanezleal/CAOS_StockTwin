@@ -97,7 +97,13 @@ export interface Frames {
   ny: number;
   cell_m: number;
   z0: number[];
-  frames: { placed: number; z: number[] }[];
+  /** `nx` and `ny` are the FULL terrain grid. The `z` arrays are sampled every `step` cells in each
+   *  direction, so each one holds `ceil(nx/step) * ceil(ny/step)` values and has to be expanded
+   *  before it can be drawn against the field. `seq` is the sequence number of the load just placed,
+   *  which is what lets a player show the truck working right now instead of every path ever
+   *  driven. */
+  step?: number;
+  frames: { seq: number; placed: number; z: number[] }[];
 }
 
 export interface Cut {
@@ -422,4 +428,50 @@ export function thickness(f: Field): number[] {
 
 export function extent(f: Field): { w: number; h: number } {
   return { w: f.nx * f.cell_m, h: f.ny * f.cell_m };
+}
+
+
+/** Expand one playback frame back onto the full terrain grid.
+ *
+ * Frames are stored at half resolution because a hundred and forty of them at full resolution is
+ * megabytes for something that is watched rather than measured. THE EXPANSION IS NOT OPTIONAL: the
+ * renderer indexes the surface as `z[j * nx + i]`, so a half-length array does not merely look
+ * coarse, it reads the wrong cells entirely. An earlier version guarded with a length check and fell
+ * back to the finished pile, which meant the player appeared to work while showing the same surface
+ * for every frame.
+ *
+ * Bilinear, not nearest: over a two-cell stride nearest gives a blocky staircase that reads as a
+ * rendering fault. It rounds the crest by a fraction of a cell while playing; the final state is
+ * drawn from the real field, so nothing measured is affected.
+ */
+export function expandFrame(f: Frames, index: number): number[] | null {
+  const fr = f.frames[index];
+  if (!fr) return null;
+  const step = f.step ?? 1;
+  if (step === 1) return fr.z;
+
+  const { nx, ny } = f;
+  const hnx = Math.ceil(nx / step);
+  const hny = Math.ceil(ny / step);
+  if (fr.z.length !== hnx * hny) return null;
+
+  const out = new Array<number>(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const v = j / step;
+    const j0 = Math.min(Math.floor(v), hny - 1);
+    const j1 = Math.min(j0 + 1, hny - 1);
+    const tj = v - j0;
+    for (let i = 0; i < nx; i++) {
+      const u = i / step;
+      const i0 = Math.min(Math.floor(u), hnx - 1);
+      const i1 = Math.min(i0 + 1, hnx - 1);
+      const ti = u - i0;
+      const a = fr.z[j0 * hnx + i0];
+      const b = fr.z[j0 * hnx + i1];
+      const c = fr.z[j1 * hnx + i0];
+      const d = fr.z[j1 * hnx + i1];
+      out[j * nx + i] = (a + (b - a) * ti) * (1 - tj) + (c + (d - c) * ti) * tj;
+    }
+  }
+  return out;
 }

@@ -2,87 +2,6 @@
   "scenarios": [
     {
       "build": {
-        "dozer_passes": 32,
-        "loads_placed": 298,
-        "mean_displacement_m": 25.35,
-        "peak_m": 10.8,
-        "profiles": {
-          "comet": 37,
-          "oval": 70,
-          "paddock": 161,
-          "rectangular": 29,
-          "sloughed_heap": 1
-        },
-        "refusal_rate": 0.4269,
-        "volume_m3": 33644.0
-      },
-      "gate": {
-        "kill_criterion": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
-        "ledger_agrees_with_terrain": true,
-        "loads_offered": 520,
-        "loads_placed": 298,
-        "mass_residual_rel": 0.0,
-        "pairs_over_repose": 0,
-        "refusal_rate": 0.4269,
-        "worst_local_slope_deg": 37.0
-      },
-      "id": "single",
-      "summary": {
-        "en": "A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.",
-        "es": "Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."
-      },
-      "tags": [
-        "basic",
-        "physics"
-      ],
-      "title": {
-        "en": "One working stock",
-        "es": "Un acopio en operacion"
-      }
-    },
-    {
-      "build": {
-        "dozer_passes": 52,
-        "loads_placed": 419,
-        "mean_displacement_m": 30.32,
-        "peak_m": 11.09,
-        "profiles": {
-          "comet": 35,
-          "oval": 66,
-          "paddock": 287,
-          "rectangular": 27,
-          "sloughed_heap": 4
-        },
-        "refusal_rate": 0.581,
-        "volume_m3": 48642.3
-      },
-      "gate": {
-        "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
-        "ledger_agrees_with_terrain": true,
-        "loads_offered": 1000,
-        "loads_placed": 419,
-        "mass_residual_rel": 0.0,
-        "pairs_over_repose": 0,
-        "refusal_rate": 0.581,
-        "worst_local_slope_deg": 37.0
-      },
-      "id": "yard",
-      "summary": {
-        "en": "The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.",
-        "es": "La aplicacion completa. Tres areas nombradas contienen material de clases declaradas distintas, las cargas se enrutan a un area segun su estimacion de control de leyes, y varias areas se construyen a la vez. Aqui la vista por sector se justifica: cada area reporta una ley, el campo crudo debajo muestra cuan estratificada esta en realidad, y la secuencia de recuperacion decide cual de las dos recibe la planta."
-      },
-      "tags": [
-        "core",
-        "sectors",
-        "routing"
-      ],
-      "title": {
-        "en": "Multi-area stockyard",
-        "es": "Patio de acopios multi-area"
-      }
-    },
-    {
-      "build": {
         "dozer_passes": 35,
         "loads_placed": 326,
         "mean_displacement_m": 20.05,
@@ -94,17 +13,17 @@
           "rectangular": 32,
           "sloughed_heap": 9
         },
-        "refusal_rate": 0.3731,
+        "refusal_rate": 0.4179,
         "volume_m3": 34076.3
       },
       "gate": {
         "kill_criterion": "No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.",
         "ledger_agrees_with_terrain": true,
-        "loads_offered": 520,
+        "loads_offered": 560,
         "loads_placed": 326,
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
-        "refusal_rate": 0.3731,
+        "refusal_rate": 0.4179,
         "worst_local_slope_deg": 37.0
       },
       "id": "sidehill",

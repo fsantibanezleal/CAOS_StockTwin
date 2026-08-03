@@ -11,7 +11,7 @@
       "rectangular": 29,
       "sloughed_heap": 1
     },
-    "refusal_rate": 0.4269,
+    "refusal_rate": 0.4679,
     "volume_m3": 33644.0
   },
   "engine": "bedblend",
@@ -23,15 +23,15 @@
     "cuts.json",
     "frames.json"
   ],
-  "frames": 15,
+  "frames": 299,
   "gate": {
     "kill_criterion": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 520,
+    "loads_offered": 560,
     "loads_placed": 298,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.4269,
+    "refusal_rate": 0.4679,
     "worst_local_slope_deg": 37.0
   },
   "id": "single",
@@ -52,8 +52,8 @@
   "seed": 20260802,
   "stream": {
     "loads_per_block": 20,
-    "measured_range_t": 6327.3,
-    "n_loads": 520,
+    "measured_range_t": 5956.2,
+    "n_loads": 560,
     "var_in": 0.03059345
   },
   "summary": {

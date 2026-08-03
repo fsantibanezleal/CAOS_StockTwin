@@ -15,6 +15,12 @@
  * THE EMPTY PAD IS PAD. A cell with no material is drawn as ground, not as material at grade zero.
  * That exact confusion shipped once: an empty pad coloured as material read as a full pile through a
  * completely green gate, and it was caught by looking at the deployed site rather than by any test.
+ *
+ * TWO EFFECTS, NOT ONE, AND THAT IS THE WHOLE PERFORMANCE STORY. The first builds the renderer, the
+ * camera and the two surface meshes once per scenario. The second rewrites what is on them. When
+ * everything lived in one effect, changing a single frame tore down the WebGL context and built a new
+ * one; at one frame per truck and fifteen trucks a second that is fifteen contexts a second, which no
+ * browser will give you, and it reset the camera every time a checkbox moved.
  */
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
@@ -34,8 +40,13 @@ interface Props {
   plan: Plan;
   loads: Load[];
   colourBy: ColourBy;
-  /** 0 to 1 through the load sequence. Paths are drawn for loads at or before this point. */
-  through?: number;
+  /** Sequence number of the load being worked right now, or null for the finished pile.
+   *
+   *  WHEN SOMETHING IS PLAYING, ONLY THE ACTIVE TRUCK IS DRAWN. Showing every path driven so far
+   *  turns the site into a ball of string and hides the one thing the reader is watching: where this
+   *  load came from and where it went. The full history is still available, as a deliberate toggle,
+   *  for reading the access pattern of the whole campaign. */
+  activeSeq?: number | null;
   showPaths: boolean;
   showCrest: boolean;
   showPlan: boolean;
@@ -70,13 +81,39 @@ function ramp(t: number): [number, number, number] {
 
 const EMPTY = 1e-4;
 
+/** Min and max of the finite entries, without spreading an array of ten thousand into a call. */
+function span(vals: ArrayLike<number | null>): [number, number] {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (let i = 0; i < vals.length; i++) {
+    const v = vals[i];
+    if (v === null || !Number.isFinite(v)) continue;
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  return lo === Infinity ? [0, 1] : [lo, hi];
+}
+
+interface Live {
+  renderer: THREE.WebGLRenderer;
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  /** The material skin: its geometry is written in place, never rebuilt. */
+  mGeo: THREE.PlaneGeometry;
+  /** Everything that is drawn as marks rather than as surface: crest, plan, paths, shovel. */
+  content: THREE.Group;
+  render: () => void;
+  /** Working buffer for material thickness, reused so playback does not allocate per frame. */
+  thick: Float32Array;
+}
+
 export default function SiteView3D({
   field,
   surface = null,
   plan,
   loads,
   colourBy,
-  through = 1,
+  activeSeq = null,
   showPaths,
   showCrest,
   showPlan,
@@ -84,20 +121,14 @@ export default function SiteView3D({
   height = 460,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
-  const state = useRef<{
-    renderer?: THREE.WebGLRenderer;
-    scene?: THREE.Scene;
-    camera?: THREE.PerspectiveCamera;
-    frame?: number;
-  }>({});
+  const live = useRef<Live | null>(null);
 
+  // -- the stage: built once per scenario, per theme, per size ---------------------------------
   useEffect(() => {
     const el = host.current;
     if (!el) return;
 
     const { nx, ny, cell_m: cm } = field;
-    // One accessor for the surface being drawn, so playback and the final state cannot diverge.
-    const Z = surface && surface.length === nx * ny ? surface : field.z;
     const W = nx * cm;
     const H = ny * cm;
 
@@ -128,11 +159,7 @@ export default function SiteView3D({
     gGeo.rotateX(-Math.PI / 2);
     {
       const pos = gGeo.attributes.position as THREE.BufferAttribute;
-      for (let j = 0; j < ny; j++) {
-        for (let i = 0; i < nx; i++) {
-          pos.setY(j * nx + i, field.z0[j * nx + i]);
-        }
-      }
+      for (let k = 0; k < nx * ny; k++) pos.setY(k, field.z0[k]);
       pos.needsUpdate = true;
       gGeo.computeVertexNormals();
     }
@@ -146,47 +173,10 @@ export default function SiteView3D({
       ),
     );
 
-    // -- the material -----------------------------------------------------------------------
+    // -- the material skin, allocated once and written in place -------------------------------
     const mGeo = new THREE.PlaneGeometry(W, H, nx - 1, ny - 1);
     mGeo.rotateX(-Math.PI / 2);
-    {
-      const pos = mGeo.attributes.position as THREE.BufferAttribute;
-      const col = new Float32Array(nx * ny * 3);
-
-      const thick = Z.map((v, i) => v - field.z0[i]);
-      const maxT = Math.max(...thick, 1e-6);
-      const vals =
-        colourBy === 'grade'
-          ? field.grade
-          : colourBy === 'coarse'
-            ? field.coarse
-            : thick.map((t) => (t > EMPTY ? t : null));
-      const present = vals.filter((v): v is number => v !== null && Number.isFinite(v));
-      const lo = present.length ? Math.min(...present) : 0;
-      const hi = present.length ? Math.max(...present) : 1;
-
-      for (let k = 0; k < nx * ny; k++) {
-        pos.setY(k, Z[k]);
-        const t = thick[k];
-        let c: [number, number, number];
-        if (t <= EMPTY) {
-          // No material. Draw the ground colour, never a ramp value: a zero-height cell coloured as
-          // material at grade zero is how an empty pad came to read as a full pile in production.
-          c = dark ? [42, 50, 61] : [201, 207, 216];
-        } else if (colourBy === 'thickness') {
-          c = ramp(t / maxT);
-        } else {
-          const v = vals[k];
-          c = v === null || !Number.isFinite(v) ? [140, 140, 140] : ramp((v - lo) / (hi - lo || 1));
-        }
-        col[k * 3] = c[0] / 255;
-        col[k * 3 + 1] = c[1] / 255;
-        col[k * 3 + 2] = c[2] / 255;
-      }
-      pos.needsUpdate = true;
-      mGeo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-      mGeo.computeVertexNormals();
-    }
+    mGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nx * ny * 3), 3));
     scene.add(
       new THREE.Mesh(
         mGeo,
@@ -194,106 +184,12 @@ export default function SiteView3D({
       ),
     );
 
-    const at = (i: number, j: number) => ({
-      x: (i + 0.5) * cm - W / 2,
-      z: (j + 0.5) * cm - H / 2,
-    });
-
-    // -- the crest --------------------------------------------------------------------------
-    // Every edge dump was aimed perpendicular to this line. Without it on screen, the direction of
-    // each deposit looks arbitrary rather than determined.
-    if (showCrest) {
-      const pts: number[] = [];
-      for (let j = 1; j < ny - 1; j++) {
-        for (let i = 1; i < nx - 1; i++) {
-          const k = j * nx + i;
-          if (Z[k] - field.z0[k] <= EMPTY) continue;
-          let drop = 0;
-          for (const [di, dj] of [
-            [1, 0],
-            [-1, 0],
-            [0, 1],
-            [0, -1],
-          ]) {
-            drop = Math.max(drop, Z[k] - Z[(j + dj) * nx + (i + di)]);
-          }
-          if (drop >= 1.0) {
-            const p = at(i, j);
-            pts.push(p.x, Z[k] + 0.35, p.z);
-          }
-        }
-      }
-      if (pts.length) {
-        const g = new THREE.BufferGeometry();
-        g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-        scene.add(
-          new THREE.Points(
-            g,
-            new THREE.PointsMaterial({ color: dark ? 0xffc75a : 0xb35c00, size: 2.2 }),
-          ),
-        );
-      }
-    }
-
-    // -- the plan ---------------------------------------------------------------------------
-    if (showPlan) {
-      for (const a of plan.areas) {
-        const y = 0.4;
-        const box = [
-          [a.x0, a.y0],
-          [a.x1, a.y0],
-          [a.x1, a.y1],
-          [a.x0, a.y1],
-          [a.x0, a.y0],
-        ];
-        const g = new THREE.BufferGeometry().setFromPoints(
-          box.map(([x, z]) => new THREE.Vector3(x - W / 2, y, z - H / 2)),
-        );
-        scene.add(
-          new THREE.Line(g, new THREE.LineBasicMaterial({ color: dark ? 0x7fd7ff : 0x0a6ea8 })),
-        );
-      }
-    }
-
-    // -- the truck paths --------------------------------------------------------------------
-    // Approach and departure, drawn separately, because "it does not appear from nothing" is the
-    // whole point: a load arrived on a machine that had to get there and then leave.
-    if (showPaths) {
-      const cutoff = Math.floor(loads.length * Math.min(Math.max(through, 0), 1));
-      const recent = loads
-        .filter((l) => l.placed && l.seq <= cutoff)
-        .slice(-40); // the last few dozen, so the picture stays legible
-      const mk = (pts: [number, number][], colour: number, lift: number) => {
-        if (pts.length < 2) return;
-        const g = new THREE.BufferGeometry().setFromPoints(
-          pts.map(([x, z]) => {
-            const i = Math.min(Math.max(Math.floor(x / cm), 0), nx - 1);
-            const j = Math.min(Math.max(Math.floor(z / cm), 0), ny - 1);
-            return new THREE.Vector3(x - W / 2, Z[j * nx + i] + lift, z - H / 2);
-          }),
-        );
-        scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: colour })));
-      };
-      for (const l of recent) {
-        mk(l.approach ?? [], dark ? 0x62e08a : 0x0f7a3d, 1.2);
-        mk(l.departure ?? [], dark ? 0xff8f6b : 0xb2401b, 0.8);
-      }
-    }
-
-    // -- the shovel ---------------------------------------------------------------------------
-    {
-      const [sx, sy] = plan.shovel;
-      const i = Math.min(Math.max(Math.floor(sx / cm), 0), nx - 1);
-      const j = Math.min(Math.max(Math.floor(sy / cm), 0), ny - 1);
-      const m = new THREE.Mesh(
-        new THREE.ConeGeometry(6, 14, 12),
-        new THREE.MeshLambertMaterial({ color: dark ? 0xd8dee9 : 0x33475b }),
-      );
-      m.position.set(sx - W / 2, Z[j * nx + i] + 7, sy - H / 2);
-      scene.add(m);
-    }
+    const content = new THREE.Group();
+    scene.add(content);
 
     // -- camera and interaction ---------------------------------------------------------------
+    // These live HERE, not in the content effect, so that scrubbing the build or ticking a checkbox
+    // leaves the reader looking at the same thing from the same place.
     const R = Math.max(W, H);
     let az = -0.7;
     let el2 = 0.62;
@@ -308,6 +204,7 @@ export default function SiteView3D({
       );
       camera.lookAt(target);
     };
+    const render = () => renderer.render(scene, camera);
 
     let drag = false;
     let panning = false;
@@ -347,6 +244,7 @@ export default function SiteView3D({
       lx = e.clientX;
       ly = e.clientY;
       place();
+      render();
     };
     const up = (e: PointerEvent) => {
       drag = false;
@@ -357,6 +255,7 @@ export default function SiteView3D({
       e.preventDefault();
       dist = Math.min(Math.max(dist * (1 + Math.sign(e.deltaY) * 0.12), R * 0.35), R * 2.6);
       place();
+      render();
     };
     // Right-drag pans, so the context menu must not eat it.
     const noMenu = (e: Event) => e.preventDefault();
@@ -372,32 +271,36 @@ export default function SiteView3D({
       dist = R * 1.15;
       target.set(0, 0, 0);
       place();
-      renderer.render(scene, camera);
+      render();
     };
     dom.addEventListener('dblclick', recentre);
 
     const resize = () => {
       const w = el.clientWidth || 600;
-      const h = height;
-      renderer.setSize(w, h, false);
-      camera.aspect = w / h;
+      renderer.setSize(w, height, false);
+      camera.aspect = w / height;
       camera.updateProjectionMatrix();
       place();
-      renderer.render(scene, camera);
+      render();
     };
     const ro = new ResizeObserver(resize);
     ro.observe(el);
     resize();
 
-    // NO ANIMATION LOOP. The scene is static until the reader moves it, so there is no runaway
-    // requestAnimationFrame burning a core in a background tab. Every interaction renders once.
-    const render = () => renderer.render(scene, camera);
-    dom.addEventListener('pointermove', render);
-    dom.addEventListener('wheel', render);
-
-    state.current = { renderer, scene, camera };
+    // NO ANIMATION LOOP. The scene is static until the reader moves it or the player advances a
+    // frame, so there is no runaway requestAnimationFrame burning a core in a background tab.
+    live.current = {
+      renderer,
+      scene,
+      camera,
+      mGeo,
+      content,
+      render,
+      thick: new Float32Array(nx * ny),
+    };
 
     return () => {
+      live.current = null;
       ro.disconnect();
       dom.removeEventListener('contextmenu', noMenu);
       dom.removeEventListener('pointerdown', down);
@@ -405,16 +308,197 @@ export default function SiteView3D({
       dom.removeEventListener('pointerup', up);
       dom.removeEventListener('wheel', wheel);
       dom.removeEventListener('dblclick', recentre);
-      dom.removeEventListener('pointermove', render);
-      dom.removeEventListener('wheel', render);
-      renderer.dispose();
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.geometry) m.geometry.dispose();
       });
+      renderer.dispose();
       el.innerHTML = '';
     };
-  }, [field, surface, plan, loads, colourBy, through, showPaths, showCrest, showPlan, dark, height]);
+  }, [field, dark, height]);
+
+  // -- what is on the stage: rewritten whenever the data or the switches move -------------------
+  useEffect(() => {
+    const L = live.current;
+    if (!L) return;
+
+    const { nx, ny, cell_m: cm } = field;
+    const W = nx * cm;
+    const H = ny * cm;
+    const n = nx * ny;
+
+    // One accessor for the surface being drawn, so playback and the final state cannot diverge.
+    // A playback frame is stored coarse and expanded before it gets here; a wrong length means the
+    // expansion failed, and drawing the finished pile instead would make the player look like it
+    // worked while showing the same surface for every frame.
+    const Z = surface && surface.length === n ? surface : field.z;
+
+    // -- the material skin ---------------------------------------------------------------------
+    {
+      const pos = L.mGeo.attributes.position as THREE.BufferAttribute;
+      const colAttr = L.mGeo.attributes.color as THREE.BufferAttribute;
+      const col = colAttr.array as Float32Array;
+      const thick = L.thick;
+
+      let maxT = 1e-6;
+      for (let k = 0; k < n; k++) {
+        const t = Z[k] - field.z0[k];
+        thick[k] = t;
+        if (t > maxT) maxT = t;
+      }
+
+      const vals: ArrayLike<number | null> =
+        colourBy === 'grade' ? field.grade : colourBy === 'coarse' ? field.coarse : thick;
+      const [lo, hi] = colourBy === 'thickness' ? [0, maxT] : span(vals);
+
+      const bare: [number, number, number] = dark ? [42, 50, 61] : [201, 207, 216];
+      for (let k = 0; k < n; k++) {
+        pos.setY(k, Z[k]);
+        const t = thick[k];
+        let c: [number, number, number];
+        if (t <= EMPTY) {
+          // No material. Draw the ground colour, never a ramp value: a zero-height cell coloured as
+          // material at grade zero is how an empty pad came to read as a full pile in production.
+          c = bare;
+        } else if (colourBy === 'thickness') {
+          c = ramp(t / maxT);
+        } else {
+          const v = vals[k];
+          c = v === null || !Number.isFinite(v) ? [140, 140, 140] : ramp((v - lo) / (hi - lo || 1));
+        }
+        col[k * 3] = c[0] / 255;
+        col[k * 3 + 1] = c[1] / 255;
+        col[k * 3 + 2] = c[2] / 255;
+      }
+      pos.needsUpdate = true;
+      colAttr.needsUpdate = true;
+      L.mGeo.computeVertexNormals();
+    }
+
+    // -- the marks -------------------------------------------------------------------------------
+    for (const o of L.content.children) {
+      const m = o as THREE.Mesh;
+      if (m.geometry) m.geometry.dispose();
+      const mat = m.material as THREE.Material | undefined;
+      if (mat && !Array.isArray(mat)) mat.dispose();
+    }
+    L.content.clear();
+
+    const at = (i: number, j: number) => ({
+      x: (i + 0.5) * cm - W / 2,
+      z: (j + 0.5) * cm - H / 2,
+    });
+
+    // The crest. Every edge dump was aimed perpendicular to this line. Without it on screen, the
+    // direction of each deposit looks arbitrary rather than determined.
+    if (showCrest) {
+      const pts: number[] = [];
+      for (let j = 1; j < ny - 1; j++) {
+        for (let i = 1; i < nx - 1; i++) {
+          const k = j * nx + i;
+          if (Z[k] - field.z0[k] <= EMPTY) continue;
+          let drop = 0;
+          for (const [di, dj] of [
+            [1, 0],
+            [-1, 0],
+            [0, 1],
+            [0, -1],
+          ]) {
+            drop = Math.max(drop, Z[k] - Z[(j + dj) * nx + (i + di)]);
+          }
+          if (drop >= 1.0) {
+            const p = at(i, j);
+            pts.push(p.x, Z[k] + 0.35, p.z);
+          }
+        }
+      }
+      if (pts.length) {
+        const g = new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+        L.content.add(
+          new THREE.Points(
+            g,
+            new THREE.PointsMaterial({ color: dark ? 0xffc75a : 0xb35c00, size: 2.2 }),
+          ),
+        );
+      }
+    }
+
+    // The plan.
+    if (showPlan) {
+      for (const a of plan.areas) {
+        const box = [
+          [a.x0, a.y0],
+          [a.x1, a.y0],
+          [a.x1, a.y1],
+          [a.x0, a.y1],
+          [a.x0, a.y0],
+        ];
+        const g = new THREE.BufferGeometry().setFromPoints(
+          box.map(([x, z]) => new THREE.Vector3(x - W / 2, 0.4, z - H / 2)),
+        );
+        L.content.add(
+          new THREE.Line(g, new THREE.LineBasicMaterial({ color: dark ? 0x7fd7ff : 0x0a6ea8 })),
+        );
+      }
+    }
+
+    // The truck paths. Approach and departure, drawn separately, because "it does not appear from
+    // nothing" is the whole point: a load arrived on a machine that had to get there and then leave.
+    if (showPaths) {
+      // Playing: the truck working right now, and nothing else. Parked: the recent history, which
+      // is what shows how the campaign reached the whole area.
+      const recent =
+        activeSeq === null
+          ? loads.filter((l) => l.placed).slice(-40)
+          : loads.filter((l) => l.placed && l.seq <= activeSeq).slice(-1);
+      // The active truck gets a heavier line, because on its own it has to carry the frame.
+      const solo = activeSeq !== null;
+      const mk = (pts: [number, number][], colour: number, lift: number) => {
+        if (pts.length < 2) return;
+        const g = new THREE.BufferGeometry().setFromPoints(
+          pts.map(([x, z]) => {
+            const i = Math.min(Math.max(Math.floor(x / cm), 0), nx - 1);
+            const j = Math.min(Math.max(Math.floor(z / cm), 0), ny - 1);
+            return new THREE.Vector3(x - W / 2, Z[j * nx + i] + lift, z - H / 2);
+          }),
+        );
+        L.content.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: colour })));
+      };
+      for (const l of recent) {
+        mk(l.approach ?? [], dark ? 0x62e08a : 0x0f7a3d, 1.2);
+        mk(l.departure ?? [], dark ? 0xff8f6b : 0xb2401b, 0.8);
+      }
+      // The truck itself, sitting where it tipped, so the reader can see WHAT is making the pile
+      // grow rather than only the line it drove along.
+      const l = solo ? recent[recent.length - 1] : undefined;
+      if (l && l.x !== undefined && l.y !== undefined) {
+        const i = Math.min(Math.max(Math.floor(l.x / cm), 0), nx - 1);
+        const j = Math.min(Math.max(Math.floor(l.y / cm), 0), ny - 1);
+        const box = new THREE.Mesh(
+          new THREE.BoxGeometry(9, 5, 13),
+          new THREE.MeshLambertMaterial({ color: dark ? 0xffd479 : 0xc27a00 }),
+        );
+        box.position.set(l.x - W / 2, Z[j * nx + i] + 3.2, l.y - H / 2);
+        L.content.add(box);
+      }
+    }
+
+    // The shovel.
+    {
+      const [sx, sy] = plan.shovel;
+      const i = Math.min(Math.max(Math.floor(sx / cm), 0), nx - 1);
+      const j = Math.min(Math.max(Math.floor(sy / cm), 0), ny - 1);
+      const m = new THREE.Mesh(
+        new THREE.ConeGeometry(6, 14, 12),
+        new THREE.MeshLambertMaterial({ color: dark ? 0xd8dee9 : 0x33475b }),
+      );
+      m.position.set(sx - W / 2, Z[j * nx + i] + 7, sy - H / 2);
+      L.content.add(m);
+    }
+
+    L.render();
+  }, [field, surface, plan, loads, colourBy, activeSeq, showPaths, showCrest, showPlan, dark, height]);
 
   return <div ref={host} style={{ width: '100%', height }} aria-label="Site in three dimensions" />;
 }

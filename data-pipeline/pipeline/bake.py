@@ -194,6 +194,22 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
     }
 
 
+def _stride(nx: int, ny: int) -> int:
+    """Cell stride for playback frames.
+
+    A frame is watched, not measured, so it is stored coarse and interpolated back up in the browser.
+    Two on a normal pad, three on a wide yard: the yard is three areas side by side, so at the same
+    stride its frames are more than twice the bytes for a picture the reader is watching go by.
+    """
+    return 3 if nx * ny > 8000 else 2
+
+
+def _half(z: list[float], nx: int, ny: int) -> list[float]:
+    """Every `_stride`-th cell in each direction."""
+    k = _stride(nx, ny)
+    return [_r(z[j * nx + i], 1) for j in range(0, ny, k) for i in range(0, nx, k)]
+
+
 def _plan_json(scn: Scenario) -> dict:
     plan = scn.plan()
     return {
@@ -315,17 +331,20 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         ),
         encoding="utf-8",
     )
-    # THE FRAMES. One surface per snapshot, so the app can play the build rather than only show its
-    # end state. Rounded hard: a frame is one float per cell and there are a couple of dozen of them.
+    # THE FRAMES. ONE PER PLACED LOAD, so the app plays the build truck by truck rather than jumping
+    # four loads at a time. Rounded to a decimetre and sampled at a coarse stride, which is what makes
+    # a few hundred of them affordable; the browser interpolates them back onto the full grid.
     (d / "frames.json").write_text(
         json.dumps(
             {
                 "nx": res.terrain.nx,
                 "ny": res.terrain.ny,
                 "cell_m": res.terrain.cell_m,
-                "z0": [_r(v, 2) for v in res.terrain.z0],
+                "step": _stride(res.terrain.nx, res.terrain.ny),
+                "z0": _half(res.terrain.z0, res.terrain.nx, res.terrain.ny),
                 "frames": [
-                    {"placed": n, "z": [_r(v, 2) for v in z]} for n, z in res.snapshots
+                    {"seq": sq, "placed": n, "z": _half(z, res.terrain.nx, res.terrain.ny)}
+                    for sq, n, z in res.snapshots
                 ],
             },
             separators=(",", ":"),

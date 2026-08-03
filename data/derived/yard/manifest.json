@@ -11,7 +11,7 @@
       "rectangular": 27,
       "sloughed_heap": 4
     },
-    "refusal_rate": 0.581,
+    "refusal_rate": 0.5344,
     "volume_m3": 48642.3
   },
   "engine": "bedblend",
@@ -23,15 +23,15 @@
     "cuts.json",
     "frames.json"
   ],
-  "frames": 11,
+  "frames": 420,
   "gate": {
     "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 1000,
+    "loads_offered": 900,
     "loads_placed": 419,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.581,
+    "refusal_rate": 0.5344,
     "worst_local_slope_deg": 37.0
   },
   "id": "yard",
@@ -52,8 +52,8 @@
   "seed": 20260802,
   "stream": {
     "loads_per_block": 20,
-    "measured_range_t": 5250.9,
-    "n_loads": 1000,
+    "measured_range_t": 5265.2,
+    "n_loads": 900,
     "var_in": 0.0403974
   },
   "summary": {

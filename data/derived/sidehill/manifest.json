@@ -11,7 +11,7 @@
       "rectangular": 32,
       "sloughed_heap": 9
     },
-    "refusal_rate": 0.3731,
+    "refusal_rate": 0.4179,
     "volume_m3": 34076.3
   },
   "engine": "bedblend",
@@ -23,15 +23,15 @@
     "cuts.json",
     "frames.json"
   ],
-  "frames": 16,
+  "frames": 327,
   "gate": {
     "kill_criterion": "No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 520,
+    "loads_offered": 560,
     "loads_placed": 326,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.3731,
+    "refusal_rate": 0.4179,
     "worst_local_slope_deg": 37.0
   },
   "id": "sidehill",
@@ -52,8 +52,8 @@
   "seed": 20260802,
   "stream": {
     "loads_per_block": 20,
-    "measured_range_t": 6327.3,
-    "n_loads": 520,
+    "measured_range_t": 5956.2,
+    "n_loads": 560,
     "var_in": 0.02987177
   },
   "summary": {

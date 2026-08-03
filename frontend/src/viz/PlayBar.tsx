@@ -27,7 +27,11 @@ interface Props {
 export default function PlayBar({ frames, index, onIndex, lang = 'en' }: Props) {
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const n = frames?.frames.length ?? 0;
-  const [speed, setSpeed] = useState(6); // frames per second
+  // Loads per second. NOT a multiplier: a frame is one truck, so the number on the control is the
+  // rate the pile is being built at and the reader can reason about it. Fifteen is about half a
+  // minute for a three-hundred-load campaign, which is long enough to watch the base layer go in and
+  // short enough that nobody waits for the crest.
+  const [speed, setSpeed] = useState(15);
 
   // The shell's frame signature is (dt, elapsed) and RETURNING FALSE ENDS THE PASS. So the player
   // maps elapsed time onto a frame index and reports completion at the last one: a build has an end,
@@ -112,12 +116,12 @@ export default function PlayBar({ frames, index, onIndex, lang = 'en' }: Props) 
       </span>
 
       <label className="st-play-speed">
-        <span>{t('speed', 'velocidad')}</span>
+        <span>{t('loads/s', 'cargas/s')}</span>
         <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
-          <option value={2}>0.3x</option>
-          <option value={6}>1x</option>
-          <option value={14}>2.5x</option>
-          <option value={30}>5x</option>
+          <option value={3}>3</option>
+          <option value={15}>15</option>
+          <option value={40}>40</option>
+          <option value={90}>90</option>
         </select>
       </label>
     </div>

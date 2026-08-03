@@ -56,6 +56,16 @@ class Scenario:
 
     # Yard
     n_areas: int = 1
+    # NARROW AND TALL, not broad and flat. A wide footprint spreads the same tonnage into a sheet:
+    # the crest barely rises, the cascade has no face worth the name, and the pile is dull to watch
+    # and weak to measure. A compact area with tall benches builds UPWARD, which is what a real ROM
+    # stockpile does and what makes the two construction phases legible.
+    # FOOTPRINT AND BENCH HEIGHT ARE COUPLED THROUGH THE RAMP, and the coupling is unforgiving. A
+    # lift of H metres needs roughly H/0.5 metres of ramp at the equipment gradient, and that ramp
+    # has to fit beside the pile inside the same footprint. Measured while trying to make the piles
+    # narrower and taller: 55 m with 22 m benches refused 79 percent of its tips and stalled at
+    # 7.8 m; 70 m with 14 m benches refused 69 percent and stalled at 6.7 m. 90 m with 18 m benches
+    # is what actually builds, and it is the configuration these numbers were verified on.
     area_width_m: float = 90.0
     area_length_m: float = 90.0
     gap_m: float = 20.0
@@ -95,9 +105,14 @@ class Scenario:
     cut_tonnes: float = 3000.0
     n_cuts: int = 24
 
-    # How many terrain snapshots the trace carries. Enough to animate the build, few enough that the
-    # artifact stays small: a snapshot is one float per cell.
-    n_snapshots: int = 24
+    # ONE FRAME PER PLACED LOAD. `snapshot_every=1` in the engine, and this is the cap rather than
+    # the target. A stockpile is built one truck at a time and that is the unit the reader is
+    # watching: with a frame every fourth load the pile jumps and the truck on screen is not the one
+    # that made the bump. Frames are stored at a coarse stride (see `_half`) precisely so that one
+    # per load is affordable.
+    # DETAIL. Two dozen frames is a slideshow and the pile jumps. Frames are stored at half grid
+    # resolution, ample for watching a surface grow, which keeps the artifact small.
+    n_snapshots: int = 4000
 
     # Ground. Only one of the five published fill types is a flat pad, so the site is a property of
     # the scenario rather than an assumption of the engine.
@@ -167,7 +182,7 @@ SINGLE = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=520,
+    n_loads=560,
     tags=("basic", "physics"),
 )
 
@@ -212,7 +227,7 @@ YARD = Scenario(
     # holding 0.32 and "low grade" on the pile holding 0.82, which the sector chart showed
     # immediately and no table would have.
     classes=("low grade", "mid grade", "high grade"),
-    n_loads=1000,
+    n_loads=900,
     block_sd=0.20,
     n_trucks=6,
     n_cuts=30,
@@ -256,7 +271,7 @@ SIDEHILL = Scenario(
     area_width_m=90.0,
     area_length_m=90.0,
     classes=("ROM",),
-    n_loads=520,
+    n_loads=560,
     fill=FillType.SIDEHILL,
     relief_m=18.0,
     roughness_m=0.5,
@@ -264,7 +279,108 @@ SIDEHILL = Scenario(
 )
 
 
-SCENARIOS: list[Scenario] = [SINGLE, YARD, SIDEHILL]
+VALLEY = Scenario(
+    id="valley",
+    title_en="Valley fill, confined on two sides",
+    title_es="Relleno de valle, confinado en dos lados",
+    summary_en=(
+        "The same campaign tipped into a valley. Confinement changes the answer: the ground holds "
+        "the material on two sides, so the same tonnage stands markedly higher than it does "
+        "free-standing on a pad, and the working face runs along the valley rather than out in "
+        "every direction."
+    ),
+    summary_es=(
+        "La misma campana descargada en un valle. El confinamiento cambia la respuesta: el terreno "
+        "sostiene el material por dos lados, de modo que el mismo tonelaje se para bastante mas "
+        "alto que libre sobre una plataforma, y la cara de trabajo corre a lo largo del valle."
+    ),
+    reason=(
+        "Confinement is why the fill taxonomy exists at all. A valley holds the same tonnage higher "
+        "and narrower than a pad does, which changes the drop height, and drop height is one of the "
+        "three drivers of size segregation. It is the cleanest contrast against the flat case."
+    ),
+    kill_criterion=(
+        "The pile must stand HIGHER than the flat-pad case built from the same load budget, because "
+        "that is what confinement means. If it does not, the ground is not constraining the "
+        "material and the topography is decoration."
+    ),
+    n_areas=1,
+    classes=("ROM",),
+    n_loads=560,
+    fill=FillType.VALLEY,
+    relief_m=26.0,
+    roughness_m=0.6,
+    tags=("topography", "valley"),
+)
+
+
+RIDGE = Scenario(
+    id="ridge",
+    title_en="Ridge crest fill, shedding both ways",
+    title_es="Relleno en cresta, vertiendo a ambos lados",
+    summary_en=(
+        "Built along a ridge, where the ground falls away on both sides. Every edge dump has two "
+        "faces to choose between, and material that overruns a toe is gone down a hillside rather "
+        "than sitting at the foot of the pile."
+    ),
+    summary_es=(
+        "Construido a lo largo de una cresta, donde el terreno cae por ambos lados. Cada descarga "
+        "de borde tiene dos caras entre las que elegir, y el material que pasa el pie se va ladera "
+        "abajo en vez de quedar al pie de la pila."
+    ),
+    reason=(
+        "The opposite of the valley: instead of holding material in, the ground sheds it. Access is "
+        "tightest here because the buildable ground is a strip, which makes it the clearest "
+        "demonstration that the plan has to follow the landform."
+    ),
+    kill_criterion=(
+        "Buildable ground before any load is placed must be measurably lower than on a flat pad, "
+        "and no cell may end below its original ground. A ridge that behaves like a pad has not "
+        "been modelled."
+    ),
+    n_areas=1,
+    classes=("ROM",),
+    n_loads=560,
+    fill=FillType.RIDGE_CREST,
+    relief_m=24.0,
+    roughness_m=0.5,
+    tags=("topography", "ridge"),
+)
+
+
+SHORT_DWELL = Scenario(
+    id="short_dwell",
+    title_en="Short shovel dwell, decorrelated feed",
+    title_es="Permanencia corta de la pala, alimentacion descorrelacionada",
+    summary_en=(
+        "The same stockpile fed by a shovel that moves between dig blocks every few loads instead "
+        "of every twenty. Nothing about the pile changes; only the ORDER the grades arrive in. That "
+        "is the whole control an operation has over how much a stockpile can help it."
+    ),
+    summary_es=(
+        "El mismo acopio alimentado por una pala que cambia de bloque cada pocas cargas en vez de "
+        "cada veinte. Nada de la pila cambia; solo el ORDEN en que llegan las leyes. Ese es todo el "
+        "control que una operacion tiene sobre cuanto puede ayudarle un acopio."
+    ),
+    reason=(
+        "The causal claim of the whole product, isolated. Grade autocorrelation is a consequence of "
+        "the dig sequence rather than a property of the ore, so changing ONLY the shovel dwell must "
+        "move the measured stream range and the blending result, everything else held fixed."
+    ),
+    kill_criterion=(
+        "The measured stream range must be substantially SHORTER than the reference case built with "
+        "the same seed and geometry. If the dwell does not move the range, the stream model is not "
+        "causal and the product is claiming something it does not do."
+    ),
+    n_areas=1,
+    classes=("ROM",),
+    n_loads=560,
+    loads_per_block=4,
+    tags=("stream", "contrast"),
+)
+
+
+SCENARIOS: list[Scenario] = [SINGLE, YARD, SIDEHILL, VALLEY, RIDGE, SHORT_DWELL]
 
 
 def by_id(scenario_id: str) -> Scenario:
