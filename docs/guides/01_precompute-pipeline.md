@@ -14,7 +14,7 @@ For the offline engines, add `-r requirements-precompute.txt`.
 ## A sandboxed run
 
 ```bash
-python data-pipeline/run.py G01_chevron --output build/smoke --band-seeds 3
+python data-pipeline/run.py single --output build/smoke
 ```
 
 `--output` is mandatory for anything that is not an intentional release bake. A pytest run in another

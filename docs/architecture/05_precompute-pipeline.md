@@ -12,8 +12,8 @@ segregation-number calibration is settled and its residual recorded.
 
 ```bash
 python data-pipeline/run.py                        # every case, canonical bake
-python data-pipeline/run.py G01_chevron --seed 7
-python data-pipeline/run.py G01_chevron --output build/smoke --band-seeds 3
+python data-pipeline/run.py single
+python data-pipeline/run.py single --output build/smoke
 python data-pipeline/run.py --validate-only
 ```
 

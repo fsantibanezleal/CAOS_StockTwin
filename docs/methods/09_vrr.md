@@ -7,7 +7,7 @@
     VRR = var_out / var_in            LOWER IS BETTER
 
 That is the definition in Loubser and de Korte, following Kumral, and their own results confirm the
-direction: cone shell 0.232 against chevcon 0.121, with the text concluding that chevcon delivers much
+direction, for CONVEYOR-STACKED beds: cone shell 0.232 against chevcon 0.121, with the text concluding that chevcon delivers much
 better consistency.
 
 The reciprocal convention also circulates in secondary sources, and this product's own plan was

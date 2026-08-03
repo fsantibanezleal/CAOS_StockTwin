@@ -16,7 +16,7 @@ places the pile on the scale process engineers already think in.
 ## The references are walked, not approximated
 
 A freshly built cone reclaimed from its face behaves close to last-in-first-out; a properly bedded
-chevron reclaimed full-face behaves close to first-in-first-out. Neither is exact, and the honest answer
+a layered bed reclaimed full-face behaves close to first-in-first-out. Neither is exact, and the honest answer
 is the SHAPE of the distribution rather than a label.
 
 Both references are computed for the SAME event sequence by walking an explicit inventory queue, so

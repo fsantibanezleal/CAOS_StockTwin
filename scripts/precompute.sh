@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run the offline pipeline (pass-through args). E.g.:  ./scripts/precompute.sh G01_chevron --band-seeds 5
+# Run the offline pipeline (pass-through args). E.g.:  ./scripts/precompute.sh single --output build/smoke
 #
 # Invoked BY PATH, not as `python -m <package>`: this product declares no package
 # (conventions/no-internal-packages.md). The pile engine is the separately published `bedblend`
