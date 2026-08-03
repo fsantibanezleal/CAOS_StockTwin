@@ -1,37 +1,36 @@
 #!/usr/bin/env python3
-"""Run the StockTwin offline pipeline for one case, or for the whole matrix.
+"""Bake the product's scenarios into the artifacts the app renders.
 
-This is the entry point BY PATH, not a console script and not `python -m <package>`. The product
-declares no package (`conventions/no-internal-packages.md`); the bed-blending physics it consumes is
-the separately published `bedblend` library, and everything under this folder is product-specific
-scripts.
+INVOKED BY PATH, never as a module. This repo declares no package of its own, because a product that
+declares a package advertises a library nobody can install. The engine is `bedblend`, published from
+its own repository and consumed pinned; everything under `data-pipeline/pipeline/` is product-specific
+plumbing invoked from here.
 
-    python data-pipeline/run.py                     # the whole case matrix, the canonical bake
-    python data-pipeline/run.py G01_chevron         # one case
-    python data-pipeline/run.py G01_chevron --output build/check --band-seeds 3
+    python data-pipeline/run.py all --output build/check
+    python data-pipeline/run.py yard --output build/check
 
-Omit `--output` only for an intentional canonical release bake. A run is a pure function of
-(parameters, seed), so two runs of the same case produce a byte-identical trace.
+Omit --output only for an intentional canonical bake into `frontend/public/data`. A test run that
+writes the committed artifacts is how a pytest run once clobbered a release, so the default is
+deliberately the one that hurts if you get it wrong, and CI always passes --output.
 """
 from __future__ import annotations
 
 import sys
 from pathlib import Path
 
-# the pipeline is a folder, so it is put on the path here rather than installed
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
 
 try:
     import bedblend  # noqa: F401
-except ModuleNotFoundError:  # pragma: no cover - the message IS the behaviour under test
+except ModuleNotFoundError:
     sys.exit(
-        "bedblend is not installed.\n"
-        "  The pile engine is a separate published library, not part of this repository.\n"
-        "  pip install -r requirements.txt\n"
-        "  (for local development against a working copy: pip install -e ../CAOS_BedBlend)"
+        "bedblend is not installed.\n\n"
+        "  The stockpile engine is a separate published package, not part of this repo.\n"
+        "  Install the pinned version:  pip install -r requirements.txt\n"
     )
 
-from pipeline.pipeline import main  # noqa: E402
+from pipeline.bake import main  # noqa: E402
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

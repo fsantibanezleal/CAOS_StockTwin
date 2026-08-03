@@ -1,0 +1,342 @@
+/* Workbench layout, written against ADR-0071.
+ *
+ * THE PAGE IS THE VIEWPORT. document.scrollHeight must equal innerHeight and scrollWidth must equal
+ * innerWidth. Scrolling belongs INSIDE the one container that owns long content, which here is the
+ * stage. Two defects the deployed predecessor had, both visible without any tooling:
+ *
+ *   the footer sat under the tab bar, because the page was taller than the viewport and the shell
+ *   footer was pushed into the chrome instead of following the content;
+ *   the readouts were stacked as cards below the fold, which ADR-0070 forbids outright.
+ *
+ * Every ancestor of a horizontally scrollable row carries min-width: 0, per clause 3. Without it a
+ * grid child refuses to shrink below its content and the whole document gains a sideways scroll that
+ * is very hard to trace back to its cause.
+ */
+
+/* A WORKBENCH IS NOT PROSE. ADR-0071 clause 2: an App route takes the full viewport, never a reading
+ * column. Measured on the first build, the page used the left half of a 1600px viewport and every
+ * view failed the 50 percent instrument floor for that one reason: the 3-D stage read 33 percent, the
+ * tables 5 percent. Capping an instrument at a reading width discards the screen the reader has. */
+.st-page {
+  /* FULL BLEED. Escaping the shell's centred reading column rather than trying to widen it, because
+     the workbench is not prose and the container it sits in belongs to the shell. 100vw with a
+     negative margin of half the difference re-centres on the viewport whatever the ancestor width
+     happens to be, which is stable across shell versions in a way that overriding max-width is not. */
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-inline: 1.1rem;
+  box-sizing: border-box;
+  display: grid;
+  /* header, tabs, stage. The stage takes everything left, so the instrument clears the 50 percent
+     floor without anyone computing a pixel height by hand. */
+  grid-template-rows: auto auto minmax(0, 1fr);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  gap: 0.5rem;
+}
+
+/* -- the one header row ---------------------------------------------------------------------- */
+
+.st-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.35rem 0;
+  scrollbar-width: thin;
+}
+
+.st-sel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  font-size: 0.82rem;
+}
+
+.st-sel > span {
+  opacity: 0.72;
+}
+
+.st-sel select {
+  font: inherit;
+  padding: 0.25rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid var(--st-line, #c8cfd8);
+  background: var(--st-panel, transparent);
+  color: inherit;
+  max-width: 16rem;
+}
+
+.st-toggles {
+  display: inline-flex;
+  gap: 0.75rem;
+  white-space: nowrap;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.st-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* The focus entry. On the SAME SURFACE as the scenario selector, and it looks like a control,
+   because ADR-0070 asks for "a visible, obvious entry control" and a sentence of prose is not one. */
+.st-focus {
+  margin-left: auto;
+  flex: 0 0 auto;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.st-focus:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+/* -- the one tab row ------------------------------------------------------------------------- */
+
+.st-tabs {
+  display: flex;
+  flex-wrap: nowrap;          /* a tab bar never wraps, clause 4 */
+  gap: 0.25rem;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  border-bottom: 1px solid var(--st-line, #d5dbe3);
+}
+
+.st-tabs button {
+  font: inherit;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  padding: 0.4rem 0.75rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: inherit;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.st-tabs button.on {
+  opacity: 1;
+  font-weight: 600;
+  border-bottom-color: currentColor;
+}
+
+/* -- the stage ------------------------------------------------------------------------------- */
+
+.st-stage {
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;           /* the ONLY scroller on the page */
+  overflow-x: hidden;
+  padding-bottom: 0.5rem;
+}
+
+.st-stagefill {
+  position: relative;         /* the HUD anchors to this, not to the document */
+  min-width: 0;
+}
+
+/* -- the HUD --------------------------------------------------------------------------------- */
+/* ADR-0070: readouts are overlaid on the stage. A vertical column at the edge, out of the way of
+   the geometry, never a row of cards under the picture. */
+
+.st-hud {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--st-bg, #0e1319) 72%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  pointer-events: none;       /* the reader is rotating the pile, not clicking the numbers */
+  font-variant-numeric: tabular-nums;
+  max-width: 42%;
+}
+
+.st-hud > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  line-height: 1.15;
+}
+
+.st-hud b {
+  font-size: 1.05rem;
+  min-width: 4.2rem;
+  text-align: right;
+}
+
+.st-hud span {
+  font-size: 0.7rem;
+  opacity: 0.78;
+  text-transform: lowercase;
+}
+
+.st-hud .ok b {
+  color: #2f9e59;
+}
+
+.st-hud .bad b {
+  color: #d1495b;
+}
+
+/* -- content inside the stage ---------------------------------------------------------------- */
+
+.st-note {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  opacity: 0.85;
+  max-width: 78ch;
+  margin: 0.6rem 0;
+}
+
+.st-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.76rem;
+  opacity: 0.85;
+  margin: 0.5rem 0;
+}
+
+.st-key {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  margin-right: 0.3rem;
+  vertical-align: -2px;
+}
+
+.st-scale {
+  display: inline-block;
+  width: 9rem;
+  height: 0.7rem;
+  border-radius: 3px;
+  background: linear-gradient(
+    to right,
+    rgb(38, 70, 120),
+    rgb(58, 140, 150),
+    rgb(120, 175, 110),
+    rgb(220, 180, 80),
+    rgb(200, 90, 60)
+  );
+}
+
+/* A wide table scrolls INSIDE its own container, so it never widens the document. Clause 3. */
+.st-tablewrap {
+  min-width: 0;
+  overflow-x: auto;
+  margin: 0.5rem 0 1rem;
+}
+
+.st-table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 34rem;
+}
+
+.st-table th,
+.st-table td {
+  text-align: right;
+  padding: 0.3rem 0.7rem;
+  border-bottom: 1px solid var(--st-line, #e0e5eb);
+  white-space: nowrap;
+}
+
+.st-table th:first-child,
+.st-table td:first-child {
+  text-align: left;
+}
+
+.st-table thead th {
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.st-table tr.st-ref td {
+  opacity: 0.72;
+  font-style: italic;
+}
+
+.st-compact th,
+.st-compact td {
+  padding: 0.2rem 0.6rem;
+}
+
+.st-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.55rem 1.2rem;
+  margin: 0.7rem 0 1rem;
+}
+
+.st-stats > div {
+  min-width: 0;
+}
+
+.st-stats dt {
+  font-size: 0.7rem;
+  opacity: 0.72;
+  text-transform: lowercase;
+}
+
+.st-stats dd {
+  margin: 0;
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-detail h4 {
+  margin: 1.1rem 0 0.3rem;
+  font-size: 0.9rem;
+}
+
+.st-ok {
+  color: #2f9e59;
+  font-weight: 600;
+}
+
+.st-bad {
+  color: #d1495b;
+  font-weight: 600;
+}
+
+.st-muted {
+  opacity: 0.65;
+  font-style: italic;
+  white-space: normal;
+}
+
+@media (max-width: 720px) {
+  .st-hud {
+    max-width: 62%;
+    font-size: 0.9em;
+  }
+  .st-focus {
+    margin-left: 0.5rem;
+  }
+}

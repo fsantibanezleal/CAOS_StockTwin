@@ -26,7 +26,53 @@ import math
 from dataclasses import dataclass, field
 from typing import Any
 
-from bedblend.schema import TruckDump
+
+@dataclass(frozen=True)
+class DumpRecord:
+    """One accepted dump, in the shape a real fleet-management export has.
+
+    Modelled on the published record rather than on whatever was convenient: an FMS dump event carries
+    a timestamp, the ore-control pattern the material came from, its assay, the NAME AND BENCH HEIGHT
+    OF THE DUMP LOCATION POLYGON, an easting and a northing, and a tonnage (Young and Rogers, Minerals
+    2021, 11, 636, table 1).
+
+    That fourth field is the one that matters and the one the previous schema had no equivalent of. A
+    load is located by a NAMED AREA at a LEVEL, not by a bare coordinate, which is exactly why a plan
+    exists and why feeding points are not arbitrary.
+    """
+
+    event_id: int
+    t_s: float
+    truck_id: str
+    source_id: str
+    tonnes: float
+    grade_cu_pct: float
+    grade_au_gpt: float
+    coarse_frac: float
+    moisture_pct: float
+    x_m: float
+    y_m: float
+    # The dump location polygon and the bench it was tipped on. Optional in an export that predates
+    # area-based dispatch, which is why they default rather than being required.
+    area: str = ""
+    bench: int = 0
+
+    def to_payload(self):
+        """Convert to the engine's own load type.
+
+        Grade uncertainty is attached here rather than left implicit: ore-control misclassification
+        runs 5 to 20 percent for base and precious metal mines before the truck moves, so a payload
+        that carried a crisp grade would be hiding a known error.
+        """
+        from bedblend.truck import Payload
+
+        return Payload(
+            tonnes=self.tonnes,
+            grade=self.grade_cu_pct,
+            source_block=abs(hash(self.source_id)) % 100000,
+            grade_uncertainty=0.12,
+        )
+
 
 REQUIRED_COLUMNS: tuple[str, ...] = ("timestamp", "tonnes", "grade_cu_pct")
 
@@ -55,7 +101,7 @@ DEFAULTS: dict[str, float] = {
 class ContractReport:
     """What the gate decided, in a form the manifest and the app can both render."""
 
-    accepted: list[TruckDump] = field(default_factory=list)
+    accepted: list[DumpRecord] = field(default_factory=list)
     rejected: list[dict[str, Any]] = field(default_factory=list)
     flagged: list[dict[str, Any]] = field(default_factory=list)
     defaulted: dict[str, int] = field(default_factory=dict)
@@ -174,7 +220,7 @@ def validate_rows(
                 "flag": (f"moisture_pct={vals['moisture_pct']:.1f} exceeds {MOISTURE_SOFT_PCT:g}; "
                          "the imposed angle of repose is not valid for wet handling"),
             })
-        rep.accepted.append(TruckDump(
+        rep.accepted.append(DumpRecord(
             event_id=eid,
             t_s=extra["t_s"],
             truck_id=str(row.get("truck_id", f"T{eid % 12 + 1:02d}")),
@@ -185,6 +231,8 @@ def validate_rows(
             coarse_frac=vals.get("coarse_frac", DEFAULTS["coarse_frac"]),
             moisture_pct=vals.get("moisture_pct", DEFAULTS["moisture_pct"]),
             x_m=extra["x"], y_m=extra["y"],
+            area=str(row.get("dump_area", "")),
+            bench=int(row.get("dump_bench", 0) or 0),
         ))
     return rep
 
@@ -205,4 +253,9 @@ def contract_doc() -> list[dict[str, str]]:
         rows.append({"column": name, "unit": unit, "rule": f"{req}, reject outside [{lo:g}, {hi:g}]"})
     rows.append({"column": "dump_easting / dump_northing", "unit": "m",
                  "rule": "optional; reject if outside the declared pad extent"})
+    rows.append({"column": "dump_area", "unit": "-",
+                 "rule": "optional; the NAME of the dump location polygon, as an FMS export carries it"})
+    rows.append({"column": "dump_bench", "unit": "level index",
+                 "rule": "optional; the bench height of that polygon. A load is located by a named "
+                         "area at a level, not by a bare coordinate"})
     return rows

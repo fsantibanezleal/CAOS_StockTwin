@@ -38,30 +38,32 @@ wet handling.
 | `moisture_pct` | percent by mass | optional, default 3.0, reject outside [0, 30] |
 | `size_p80_mm` | mm, 80 percent passing size | optional, default -, reject outside [1, 2000] |
 | `dump_easting / dump_northing` | m | optional; reject if outside the declared pad extent |
+| `dump_area` | - | optional; the NAME of the dump location polygon, as an FMS export carries it |
+| `dump_bench` | level index | optional; the bench height of that polygon. A load is located by a named area at a level, not by a bare coordinate |
+
+Note the last two rows. A real fleet-management dump event locates a load by the **name and bench
+height of a dump location polygon**, not by a bare coordinate. That is the operational reason a dump
+plan exists and why feeding points are not arbitrary, and the predecessor's schema had no equivalent
+field at all.
 
 ## Contract 2, artifact: pipeline to web
 
-The manifest is a PURE function of parameters and seed: no wall-clock, no host name, no absolute
-path. A manifest that changes on every re-bake makes the git history of the scientific evidence
-useless, because a real change stops being distinguishable from a re-run.
+The manifest is a PURE function of the scenario and its seed: no wall-clock, no host name, no absolute
+path. A manifest that changed on every re-bake would make the git history of the scientific evidence
+useless, because a real change would stop being distinguishable from a re-run.
 
-The trace carries the EVENTS and the geometry: the dumps, the cuts with their provenance fractions,
-a handful of height snapshots and the final field. It does NOT carry the verdicts. The variance
-reduction ratio, the variograms, the efficiency against the ideal bound, the residence-time character
-and the recommendation are all recomputed in the browser from those events. A trace that shipped a
-baked ratio would be a slide, and its number would be unfalsifiable.
+The trace carries the EVENTS and the GEOMETRY: the dump plan, every load with its approach and
+departure path, the surface, the block field and the reclaim cuts. It does NOT carry the verdicts. The
+variance reduction ratio, the variograms, the efficiency against the ideal bound, the sector rollups
+and their confidence intervals are all recomputed in the browser from those events. A trace that
+shipped a baked ratio would be a slide, and its number would be unfalsifiable.
 
-`frontend/src/lib/contract.types.ts` mirrors this schema in TypeScript, so a drift between the Python
-writer and the browser reader fails `tsc` rather than showing up as an empty panel in production.
+`frontend/src/lib/scenario.ts` mirrors this schema in TypeScript, so a drift between the Python writer
+and the browser reader fails `tsc` rather than showing up as an empty panel in production.
 
-## The reclaim geometry table
+## Why the simulation is baked rather than run live
 
-A reclaim geometry is two numbers: the fraction of the face width the machine engages, and how far
-down the column it reaches in one cut. Together they decide how many stacked layers land in the cut.
-
-| method | reach | rule | machine |
-|---|---|---|---|
-| `fullface` | 100 % | proportional across the whole column | bridge or harrow reclaimer, full cross-section |
-| `bucketwheel` | 55 % | from the top down | slewing bucket wheel, bench cut |
-| `end` | 30 % | from the top down | end reclaim, exposed end face |
-| `loader` | 12 % | from the top down | front-end loader, scattered bites |
+The engine routes every load over the trafficable surface, floods the pad for reachability, relaxes
+after every operation and sorts each cascading load by size. That is tens of seconds per few hundred
+loads. Running it in a page would mean either a frozen tab or a model simple enough to be wrong, and
+the previous version of this product chose the second.

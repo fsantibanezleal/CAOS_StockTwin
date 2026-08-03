@@ -1,0 +1,70 @@
+{
+  "build": {
+    "dozer_passes": 33,
+    "loads_placed": 391,
+    "mean_displacement_m": 27.64,
+    "peak_m": 5.61,
+    "profiles": {
+      "comet": 42,
+      "oval": 73,
+      "paddock": 244,
+      "rectangular": 31,
+      "sloughed_heap": 1
+    },
+    "refusal_rate": 0.069,
+    "volume_m3": 43961.9
+  },
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json"
+  ],
+  "gate": {
+    "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 420,
+    "loads_placed": 391,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.069,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "yard",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 136,
+    "ny": 80
+  },
+  "reason": "Routing by declared class is what an operation actually does, and it is the only configuration in which a sector rollup can be compared against anything. A single-area yard has one sector, so the raw-versus-sector comparison has nothing to say.",
+  "reclaim": {
+    "n_cuts": 30,
+    "tonnes": 6793.4
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 6534.1,
+    "n_loads": 420,
+    "var_in": 0.03593699
+  },
+  "summary": {
+    "en": "The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.",
+    "es": "La aplicacion completa. Tres areas nombradas contienen material de clases declaradas distintas, las cargas se enrutan a un area segun su estimacion de control de leyes, y varias areas se construyen a la vez. Aqui la vista por sector se justifica: cada area reporta una ley, el campo crudo debajo muestra cuan estratificada esta en realidad, y la secuencia de recuperacion decide cual de las dos recibe la planta."
+  },
+  "tags": [
+    "core",
+    "sectors",
+    "routing"
+  ],
+  "title": {
+    "en": "Multi-area stockyard",
+    "es": "Patio de acopios multi-area"
+  }
+}
