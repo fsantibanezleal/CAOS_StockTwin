@@ -63,7 +63,7 @@
   <text class="mono" x="604" y="214">lib/contract.types.ts</text>
   <text class="it" x="604" y="232">- a TypeScript mirror of the artifact</text>
   <text class="it" x="604" y="246">  schema, so a drift fails tsc</text>
-  <text class="mono" x="604" y="266">scripts/export_cases.py --check</text>
+  <text class="mono" x="604" y="266">scripts/check_artifacts.py</text>
   <text class="it" x="604" y="284">- the case registry is GENERATED,</text>
   <text class="it" x="604" y="298">  and CI fails when it is stale</text>
   <text class="hdr" x="14" y="340">WHAT THE BROWSER RECOMPUTES</text>

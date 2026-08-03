@@ -222,7 +222,7 @@ def web_flow() -> None:
     b += txt(604, 214, "lib/contract.types.ts", "mono")
     b += txt(604, 232, "- a TypeScript mirror of the artifact")
     b += txt(604, 246, "  schema, so a drift fails tsc")
-    b += txt(604, 266, "scripts/export_cases.py --check", "mono")
+    b += txt(604, 266, "scripts/check_artifacts.py", "mono")
     b += txt(604, 284, "- the case registry is GENERATED,")
     b += txt(604, 298, "  and CI fails when it is stale")
 
