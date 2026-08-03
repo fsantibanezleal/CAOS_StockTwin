@@ -38,5 +38,7 @@ ignore = ["E741"]
 # diagram text mid-line makes them harder to read, so the line-length rule is lifted here and nowhere
 # else.
 "scripts/make_arch_svgs.py" = ["E501"]
-"scripts/export_cases.py" = ["E501"]
+# gen_docs emits markdown TABLE ROWS from f-strings. Wrapping one puts a newline inside a table
+# cell, which breaks the rendered page in order to satisfy a rule about source width.
+"scripts/gen_docs.py" = ["E501"]
 "scripts/check_artifacts.py" = ["E501"]

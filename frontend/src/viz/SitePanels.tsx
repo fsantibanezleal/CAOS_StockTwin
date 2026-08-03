@@ -26,6 +26,16 @@ import {
 
 const EMPTY = 1e-4;
 
+/** Chart height that fills the stage.
+ *
+ *  ADR-0071 clause 8: the primary visualization takes at least 50 percent of the viewport. Measured
+ *  before this existed, the table-led views ran at 14 to 26 percent, which is the ADR's own
+ *  description of "showing chrome with a picture in it". A table is a readout, not an instrument, so
+ *  each of these views now LEADS with a chart and keeps its table underneath. */
+function stageChartHeight(): number {
+  return Math.max(300, Math.round(window.innerHeight * 0.58));
+}
+
 function ramp(t: number): string {
   const u = Math.min(Math.max(t, 0), 1);
   const stops: [number, [number, number, number]][] = [
@@ -243,13 +253,102 @@ export function FieldPanel({
 
 /* -------------------------------------------------------------- one dump in detail ---------- */
 
-export function DumpDetailPanel({ sc }: { sc: Scenario; dark?: boolean }) {
+function EnvelopeChart({
+  stats,
+  dark,
+}: {
+  stats: { profile: string; n: number; len: number; wid: number; thick: number }[];
+  dark: boolean;
+}) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv) return;
+    const draw = () => {
+      const cssW = cv.parentElement?.clientWidth ?? 600;
+      const cssH = stageChartHeight();
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      cv.width = cssW * dpr;
+      cv.height = cssH * dpr;
+      cv.style.width = cssW + 'px';
+      cv.style.height = cssH + 'px';
+      const g = cv.getContext('2d');
+      if (!g) return;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, cssW, cssH);
+
+      // What this build produced, plotted INSIDE the envelope measured across 28 real dumps. A point
+      // outside the shaded band is the operator drifting from the measurements it was fitted to,
+      // which is the kill criterion the plan states.
+      const padL = 62;
+      const padB = 46;
+      const padT = 28;
+      const X = (v: number) => padL + (v / 52) * (cssW - padL - 26);
+      const Y = (v: number) => cssH - padB - (v / 26) * (cssH - padB - padT);
+
+      g.fillStyle = dark ? 'rgba(98,224,138,0.10)' : 'rgba(15,122,61,0.09)';
+      const bx = X(MEASURED.length[0]);
+      const by = Y(MEASURED.width[1]);
+      const bw = X(MEASURED.length[1]) - bx;
+      const bh = Y(MEASURED.width[0]) - by;
+      g.fillRect(bx, by, bw, bh);
+      g.strokeStyle = dark ? 'rgba(98,224,138,0.55)' : 'rgba(15,122,61,0.5)';
+      g.setLineDash([4, 4]);
+      g.strokeRect(bx, by, bw, bh);
+      g.setLineDash([]);
+
+      g.strokeStyle = dark ? '#39424e' : '#c8cfd8';
+      g.beginPath();
+      g.moveTo(padL, padT);
+      g.lineTo(padL, cssH - padB);
+      g.lineTo(cssW - 24, cssH - padB);
+      g.stroke();
+
+      const colours: Record<string, string> = {
+        oval: dark ? '#7fd7ff' : '#0a6ea8',
+        comet: dark ? '#ffc75a' : '#b35c00',
+        rectangular: dark ? '#62e08a' : '#0f7a3d',
+        sloughed_heap: dark ? '#ff8f6b' : '#b2401b',
+        paddock: dark ? '#9fb0c3' : '#6a7788',
+      };
+      for (const r of stats) {
+        if (!r.len) continue;
+        g.fillStyle = colours[r.profile] ?? '#888888';
+        g.beginPath();
+        g.arc(X(r.len), Y(r.wid), 4 + Math.min(Math.sqrt(r.n), 9), 0, Math.PI * 2);
+        g.fill();
+        g.fillStyle = dark ? '#dbe4ee' : '#22303d';
+        g.font = '11px system-ui, sans-serif';
+        g.fillText(r.profile.replace('_', ' ') + ' (' + r.n + ')', X(r.len) + 15, Y(r.wid) + 4);
+      }
+
+      g.fillStyle = dark ? '#9fb0c3' : '#4a5866';
+      g.font = '11px system-ui, sans-serif';
+      g.fillText('length, m', cssW / 2 - 24, cssH - 14);
+      g.save();
+      g.translate(16, cssH / 2);
+      g.rotate(-Math.PI / 2);
+      g.fillText('width, m', -22, 0);
+      g.restore();
+      g.fillText('shaded: the envelope measured across 28 UAV-surveyed dumps', padL + 8, padT - 10);
+    };
+    draw();
+    const ro = new ResizeObserver(draw);
+    if (cv.parentElement) ro.observe(cv.parentElement);
+    return () => ro.disconnect();
+  }, [stats, dark]);
+  return <canvas ref={ref} style={{ display: 'block', width: '100%' }} />;
+}
+
+
+export function DumpDetailPanel({ sc, dark = false }: { sc: Scenario; dark?: boolean }) {
   const stats = useMemo(() => profileStats(sc), [sc]);
   const seg = useMemo(() => segregationSummary(sc), [sc]);
   const inBand = (v: number, [a, b]: readonly [number, number]) => v >= a && v <= b;
 
   return (
     <div className="st-detail">
+      <EnvelopeChart stats={stats} dark={dark} />
       <p className="st-note">
         A truck dump is not a disc. Twenty-eight real dumps surveyed by drone photogrammetry fall into
         four shapes, and which one forms is decided by how far the truck stood from the crest: far
@@ -353,9 +452,96 @@ export function DumpDetailPanel({ sc }: { sc: Scenario; dark?: boolean }) {
 
 /* ------------------------------------------------------------------- sectors ----------------- */
 
-export function SectorPanel({ sectors }: { sectors: Sector[]; dark?: boolean }) {
+export function SectorPanel({ sectors, dark = false }: { sectors: Sector[]; dark?: boolean }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const cv = ref.current;
+    if (!cv || !sectors.length) return;
+    const draw = () => {
+      const cssW = cv.parentElement?.clientWidth ?? 600;
+      const cssH = stageChartHeight();
+      const dpr = Math.min(window.devicePixelRatio, 2);
+      cv.width = cssW * dpr;
+      cv.height = cssH * dpr;
+      cv.style.width = cssW + 'px';
+      cv.style.height = cssH + 'px';
+      const g = cv.getContext('2d');
+      if (!g) return;
+      g.setTransform(dpr, 0, 0, dpr, 0, 0);
+      g.clearRect(0, 0, cssW, cssH);
+
+      // Every quadrant of every area, so a reader SEES the spread that one sector grade hides.
+      const rows: { label: string; grade: number; ci: number; whole: boolean }[] = [];
+      for (const s of sectors) {
+        rows.push({ label: s.name, grade: s.grade, ci: s.ci['0.95'] ?? 0, whole: true });
+        for (const q of s.quadrants) {
+          rows.push({
+            label: q.name.replace(s.name + ' ', ''),
+            grade: q.grade,
+            ci: q.ci['0.95'] ?? 0,
+            whole: false,
+          });
+        }
+      }
+      const lo = Math.min(...rows.map((r) => r.grade - r.ci));
+      const hi = Math.max(...rows.map((r) => r.grade + r.ci));
+      const padL = 130;
+      const padB = 34;
+      const X = (v: number) => padL + ((v - lo) / (hi - lo || 1)) * (cssW - padL - 30);
+      const band = (cssH - padB - 20) / rows.length;
+
+      g.strokeStyle = dark ? '#39424e' : '#c8cfd8';
+      g.beginPath();
+      g.moveTo(padL, 12);
+      g.lineTo(padL, cssH - padB);
+      g.lineTo(cssW - 24, cssH - padB);
+      g.stroke();
+
+      rows.forEach((r, i) => {
+        const y = 20 + band * (i + 0.5);
+        g.fillStyle = dark ? '#9fb0c3' : '#4a5866';
+        g.font = (r.whole ? '600 ' : '') + '11px system-ui, sans-serif';
+        g.textAlign = 'right';
+        g.fillText(r.label.slice(0, 20), padL - 8, y + 4);
+        g.textAlign = 'left';
+
+        const col = r.whole
+          ? (dark ? '#ffc75a' : '#b35c00')
+          : (dark ? '#7fd7ff' : '#0a6ea8');
+        // The interval on the mean as a bar, so overlap between two areas is visible rather than
+        // something a reader has to work out from two columns of digits.
+        g.strokeStyle = col;
+        g.lineWidth = r.whole ? 2.5 : 1.5;
+        g.beginPath();
+        g.moveTo(X(r.grade - r.ci), y);
+        g.lineTo(X(r.grade + r.ci), y);
+        g.stroke();
+        g.fillStyle = col;
+        g.beginPath();
+        g.arc(X(r.grade), y, r.whole ? 4 : 2.6, 0, Math.PI * 2);
+        g.fill();
+      });
+
+      g.fillStyle = dark ? '#9fb0c3' : '#4a5866';
+      g.font = '10px system-ui, sans-serif';
+      g.fillText(lo.toFixed(3), padL, cssH - 14);
+      g.fillText('grade, with the 95 percent interval on the mean', padL + 80, cssH - 14);
+      g.fillText(hi.toFixed(3), cssW - 66, cssH - 14);
+    };
+    draw();
+    const ro = new ResizeObserver(draw);
+    if (cv.parentElement) ro.observe(cv.parentElement);
+    return () => ro.disconnect();
+  }, [sectors, dark]);
+
   return (
     <div>
+      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <p className="st-legend">
+        <span className="st-key" style={{ background: '#b35c00' }} /> whole area
+        <span className="st-key" style={{ background: '#0a6ea8' }} /> its quadrants
+      </p>
       <p className="st-note">
         A sector reports one grade. The raw field underneath is stratified, and the reclaim sequence
         decides which of the two the plant actually experiences. The interval is on the mean, and the
@@ -436,7 +622,7 @@ export function ReclaimPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
     if (!cv) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = 240;
+      const cssH = stageChartHeight();
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;
@@ -554,7 +740,7 @@ export function VariogramPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
     if (!cv || !vg.centres.length) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = 210;
+      const cssH = Math.round(stageChartHeight() * 0.62);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;

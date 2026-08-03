@@ -13,7 +13,21 @@
  * is very hard to trace back to its cause.
  */
 
+/* A WORKBENCH IS NOT PROSE. ADR-0071 clause 2: an App route takes the full viewport, never a reading
+ * column. Measured on the first build, the page used the left half of a 1600px viewport and every
+ * view failed the 50 percent instrument floor for that one reason: the 3-D stage read 33 percent, the
+ * tables 5 percent. Capping an instrument at a reading width discards the screen the reader has. */
 .st-page {
+  /* FULL BLEED. Escaping the shell's centred reading column rather than trying to widen it, because
+     the workbench is not prose and the container it sits in belongs to the shell. 100vw with a
+     negative margin of half the difference re-centres on the viewport whatever the ancestor width
+     happens to be, which is stable across shell versions in a way that overriding max-width is not. */
+  width: 100vw;
+  max-width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-inline: 1.1rem;
+  box-sizing: border-box;
   display: grid;
   /* header, tabs, stage. The stage takes everything left, so the instrument clears the 50 percent
      floor without anyone computing a pixel height by hand. */

@@ -220,8 +220,12 @@ def _loads_json(res: BuildResult) -> list[dict]:
                     "drop": _r(r.drop_m, 2),
                     # THE PATHS. Kept so the app can draw the truck coming in and going away, which is
                     # the whole reason a load is an entity and not a coordinate.
-                    "approach": [[_r(x, 1), _r(y, 1)] for x, y in (r.approach.points if r.approach else [])],
-                    "departure": [[_r(x, 1), _r(y, 1)] for x, y in (r.departure.points if r.departure else [])],
+                    "approach": [
+                        [_r(x, 1), _r(y, 1)] for x, y in (r.approach.points if r.approach else [])
+                    ],
+                    "departure": [
+                        [_r(x, 1), _r(y, 1)] for x, y in (r.departure.points if r.departure else [])
+                    ],
                 }
             )
         else:
@@ -385,7 +389,10 @@ def main() -> None:
     args = ap.parse_args()
 
     root = Path(__file__).resolve().parents[2]
-    out = Path(args.output) if args.output else root / "frontend" / "public" / "data"
+    # The CANONICAL artifact tree. frontend/public/data is a build-time overlay produced by
+    # copy-data.mjs and is gitignored, so baking there would produce a site that works locally and
+    # ships empty.
+    out = Path(args.output) if args.output else root / "data" / "derived"
     out.mkdir(parents=True, exist_ok=True)
 
     from .scenarios import SCENARIOS

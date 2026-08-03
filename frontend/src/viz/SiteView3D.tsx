@@ -96,7 +96,14 @@ export default function SiteView3D({
     scene.background = new THREE.Color(dark ? 0x11161d : 0xeef1f5);
 
     const camera = new THREE.PerspectiveCamera(42, 1, 1, 6000);
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    // preserveDrawingBuffer so the visual gate can read pixels back and PROVE the stage painted.
+    // Without it readPixels returns a cleared buffer after presentation, and a blank-canvas check
+    // reports a false failure on a scene that rendered perfectly well.
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      alpha: false,
+      preserveDrawingBuffer: true,
+    });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     el.innerHTML = '';
     el.appendChild(renderer.domElement);

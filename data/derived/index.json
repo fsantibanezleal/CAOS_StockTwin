@@ -1,0 +1,156 @@
+{
+  "scenarios": [
+    {
+      "build": {
+        "dozer_passes": 18,
+        "loads_placed": 207,
+        "mean_displacement_m": 26.44,
+        "peak_m": 6.07,
+        "profiles": {
+          "comet": 30,
+          "oval": 52,
+          "paddock": 104,
+          "rectangular": 21
+        },
+        "refusal_rate": 0.1375,
+        "volume_m3": 19773.8
+      },
+      "gate": {
+        "kill_criterion": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 240,
+        "loads_placed": 207,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1375,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "single",
+      "summary": {
+        "en": "A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.",
+        "es": "Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."
+      },
+      "tags": [
+        "basic",
+        "physics"
+      ],
+      "title": {
+        "en": "One working stock",
+        "es": "Un acopio en operacion"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 33,
+        "loads_placed": 391,
+        "mean_displacement_m": 27.64,
+        "peak_m": 5.61,
+        "profiles": {
+          "comet": 42,
+          "oval": 73,
+          "paddock": 244,
+          "rectangular": 31,
+          "sloughed_heap": 1
+        },
+        "refusal_rate": 0.069,
+        "volume_m3": 43961.9
+      },
+      "gate": {
+        "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 420,
+        "loads_placed": 391,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.069,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "yard",
+      "summary": {
+        "en": "The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.",
+        "es": "La aplicacion completa. Tres areas nombradas contienen material de clases declaradas distintas, las cargas se enrutan a un area segun su estimacion de control de leyes, y varias areas se construyen a la vez. Aqui la vista por sector se justifica: cada area reporta una ley, el campo crudo debajo muestra cuan estratificada esta en realidad, y la secuencia de recuperacion decide cual de las dos recibe la planta."
+      },
+      "tags": [
+        "core",
+        "sectors",
+        "routing"
+      ],
+      "title": {
+        "en": "Multi-area stockyard",
+        "es": "Patio de acopios multi-area"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 18,
+        "loads_placed": 233,
+        "mean_displacement_m": 20.07,
+        "peak_m": 19.82,
+        "profiles": {
+          "comet": 31,
+          "oval": 50,
+          "paddock": 126,
+          "rectangular": 22,
+          "sloughed_heap": 4
+        },
+        "refusal_rate": 0.0292,
+        "volume_m3": 24091.6
+      },
+      "gate": {
+        "kill_criterion": "No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 240,
+        "loads_placed": 233,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.0292,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "sidehill",
+      "summary": {
+        "en": "The same stockpile built against a hillside instead of on a prepared pad. Only one of the five published stockpile fill types is flat ground; the rest are sidehill, valley, cross-valley and ridge-crest fill. Relief is not scenery here: it decides which ground equipment can occupy before a single load is placed, so the plan, the access and the shape of the finished pile all change.",
+        "es": "El mismo acopio construido contra una ladera en vez de sobre una plataforma preparada. Solo uno de los cinco tipos publicados de relleno de acopio es terreno plano; los demas son ladera, valle, valle transversal y cresta. El relieve no es decoracion: define que terreno puede ocupar el equipo antes de colocar una sola carga, de modo que el plan, los accesos y la forma final del acopio cambian."
+      },
+      "tags": [
+        "topography",
+        "sidehill"
+      ],
+      "title": {
+        "en": "Sidehill fill on real topography",
+        "es": "Acopio en ladera sobre topografia real"
+      }
+    }
+  ],
+  "topography": [
+    {
+      "buildable_fraction": 1.0,
+      "fill": "heaped",
+      "max_slope_deg": 0.0,
+      "relief_m": 0.0
+    },
+    {
+      "buildable_fraction": 1.0,
+      "fill": "sidehill",
+      "max_slope_deg": 13.6,
+      "relief_m": 29.6
+    },
+    {
+      "buildable_fraction": 0.719,
+      "fill": "valley",
+      "max_slope_deg": 30.5,
+      "relief_m": 29.2
+    },
+    {
+      "buildable_fraction": 1.0,
+      "fill": "cross_valley",
+      "max_slope_deg": 23.8,
+      "relief_m": 32.2
+    },
+    {
+      "buildable_fraction": 0.719,
+      "fill": "ridge_crest",
+      "max_slope_deg": 30.5,
+      "relief_m": 29.2
+    }
+  ]
+}

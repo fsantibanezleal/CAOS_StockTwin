@@ -196,7 +196,11 @@ YARD = Scenario(
     area_width_m=90.0,
     area_length_m=90.0,
     gap_m=25.0,
-    classes=("high grade", "mid grade", "low grade"),
+    # ORDERED LOW TO HIGH, because route_to_area walks the threshold ladder upward and sends
+    # the lowest grades to classes[0]. Listing them high-first put "high grade" on the pile
+    # holding 0.32 and "low grade" on the pile holding 0.82, which the sector chart showed
+    # immediately and no table would have.
+    classes=("low grade", "mid grade", "high grade"),
     n_loads=420,
     block_sd=0.20,
     n_trucks=6,
