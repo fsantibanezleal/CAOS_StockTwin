@@ -37,7 +37,7 @@ from bedblend.blending import tonnage_weighted_variance
 from bedblend.build import BuildResult, build
 from bedblend.material import Material
 from bedblend.reclaim import Cut, ReclaimFace, ReclaimMethod, campaign
-from bedblend.relax import count_over_repose
+from bedblend.relax import STABLE_TOL_DEG, count_over_repose
 from bedblend.sectors import quadrants, rollup
 from bedblend.stream import dig_sequence, measured_range_t, payloads_from
 from bedblend.terrain import Terrain
@@ -226,15 +226,27 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
     These are the same checks the engine's own tests make, run again on the actual artifact, because
     a passing unit test on a synthetic fixture does not prove the shipped trace is sound.
     """
+    # THE SAME TOLERANCE THE ENGINE ASSERTS, and the residue is reported either way. The angle of
+    # repose is known to a few degrees; asserting a surface to floating-point equality against it
+    # fails builds over material no solver can shift. One degree is far inside that uncertainty and
+    # far outside the defect this exists to catch, which was 446 pairs with the worst at 55.9 against
+    # an imposed 37. The manifest carries the count and the worst angle, so a reader sees the residue
+    # rather than a tolerance that hid it.
     n_over, worst = count_over_repose(
         res.terrain.z, res.terrain.nx, res.terrain.ny, res.terrain.cell_m,
-        scn.repose_deg, floor=res.terrain.z0,
+        scn.repose_deg + STABLE_TOL_DEG, floor=res.terrain.z0,
     )
     if n_over:
         raise AssertionError(
-            f"{scn.id}: {n_over} cell pairs stand over the imposed repose angle of "
-            f"{scn.repose_deg} deg, worst {worst:.1f}. This is the defect that rendered as spikes."
+            f"{scn.id}: {n_over} cell pairs stand more than {STABLE_TOL_DEG:.1f} deg over the "
+            f"imposed repose angle of {scn.repose_deg} deg, worst {worst:.1f}. This is the defect "
+            f"that rendered as spikes."
         )
+    # Reported at the strict angle, so the number in the manifest is the real residue.
+    n_marginal, worst = count_over_repose(
+        res.terrain.z, res.terrain.nx, res.terrain.ny, res.terrain.cell_m,
+        scn.repose_deg, floor=res.terrain.z0,
+    )
     res.model.assert_consistent(res.terrain)
 
     placed = len(res.placed)
@@ -250,7 +262,8 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
         raise AssertionError(f"{scn.id}: the build placed nothing at all")
 
     return {
-        "pairs_over_repose": n_over,
+        "pairs_over_repose": n_marginal,
+        "stable_tolerance_deg": STABLE_TOL_DEG,
         "worst_local_slope_deg": _r(worst, 2),
         "ledger_agrees_with_terrain": True,
         "loads_offered": len(res.loads),

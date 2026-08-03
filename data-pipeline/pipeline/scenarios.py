@@ -440,37 +440,16 @@ CROSS_VALLEY = Scenario(
 )
 
 
-STEEP_SIDEHILL = Scenario(
-    id="steep_sidehill",
-    category="landform",
-    title_en="Steep sidehill, relief doubled",
-    title_es="Ladera empinada, relieve duplicado",
-    summary_en=(
-        "The same sidehill with twice the relief. A uniform slope is comfortable for a truck up to a "
-        "point, and this case exists to find where that stops being true and buildable ground starts "
-        "disappearing."
-    ),
-    summary_es=(
-        "La misma ladera con el doble de relieve. Una pendiente uniforme es comoda para un camion "
-        "hasta cierto punto, y este caso existe para encontrar donde eso deja de ser cierto y el "
-        "terreno construible empieza a desaparecer."
-    ),
-    reason=(
-        "Relief and difficulty are not the same thing: a 30 m sidehill is fully buildable at 13.6 "
-        "degrees while a 29 m valley is only 72 percent buildable at 30.5. Doubling the relief on "
-        "the easy landform is how you find out which of the two numbers is doing the work."
-    ),
-    kill_criterion=(
-        "Buildable ground must fall below the gentle sidehill's. If doubling the relief on the same "
-        "landform changes nothing, the slope is not being computed from the ground."
-    ),
-    n_loads=900,
-    fill=FillType.SIDEHILL,
-    relief_m=58.0,
-    roughness_m=0.6,
-    tags=("topography", "sidehill"),
-)
-
+# STEEP_SIDEHILL IS WITHDRAWN, and the reason is recorded rather than the scenario quietly deleted.
+#
+# It doubled the relief of the sidehill case, to ask where a uniform slope stops being comfortable
+# for a truck. The build does not converge: after the relaxation sweeps stop making progress, 22 cell
+# pairs stand at up to 45.9 degrees against an imposed 37, which is nine degrees over and far outside
+# the one-degree tolerance. Reducing the relief from 58 m to 44 m did not change the outcome.
+#
+# That is a solver limitation on steep ground and not a result, so the scenario is withdrawn rather
+# than shipped with a surface the product's own invariant rejects. The question it asked is a good
+# one and it is open. See the findings file.
 
 ROUGH_GROUND = Scenario(
     id="rough_ground",
@@ -926,7 +905,6 @@ SCENARIOS: list[Scenario] = [
     YARD_FIVE,
     MISROUTED,
     SIDEHILL,
-    STEEP_SIDEHILL,
     VALLEY,
     CROSS_VALLEY,
     RIDGE,
