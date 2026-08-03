@@ -27,7 +27,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   type Index,
   type Scenario,
-  expandFrame,
+  playState,
   loadIndex,
   loadScenario,
   segregationSummary,
@@ -64,7 +64,7 @@ export default function Focus() {
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const [frame, setFrame] = useState(-1);
+  const [pos, setPos] = useState(-1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export default function Focus() {
   }, []);
   useEffect(() => {
     setSc(null);
-    setFrame(-1);
+    setPos(-1);
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
   }, [sid]);
 
@@ -88,15 +88,9 @@ export default function Focus() {
     return () => window.removeEventListener('resize', on);
   }, []);
 
-  // The surface being drawn: a build frame while playing, the finished pile otherwise.
-  const cur = useMemo(() => {
-    if (!sc?.frames || frame < 0) return null;
-    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)] ?? null;
-  }, [sc, frame]);
-  const surface = useMemo(
-    () => (sc?.frames && frame >= 0 ? expandFrame(sc.frames, Math.min(frame, sc.frames.frames.length - 1)) : null),
-    [sc, frame],
-  );
+  // What is on the stage: a moment in the build while playing, the finished pile otherwise.
+  const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
+  const surface = play?.z ?? null;
 
   const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
@@ -119,7 +113,7 @@ export default function Focus() {
           <SiteView3D
             field={sc.field}
             surface={surface}
-            activeSeq={showHistory ? null : (cur?.seq ?? null)}
+            play={showHistory ? null : play}
             plan={sc.plan}
             loads={sc.loads}
             colourBy={colour}
@@ -179,8 +173,8 @@ export default function Focus() {
           <div className="fx-play">
             <PlayBar
               frames={sc.frames}
-              index={frame < 0 ? (sc.frames?.frames.length ?? 1) - 1 : frame}
-              onIndex={setFrame}
+              pos={pos < 0 ? (sc.frames?.frames.length ?? 1) - 1 : pos}
+              onPos={setPos}
             />
           </div>
         )}

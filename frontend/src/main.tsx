@@ -30,14 +30,15 @@ const config: ShellConfig = {
   links: { github: 'https://github.com/fsantibanezleal/CAOS_StockTwin' },
   version: __APP_VERSION__,
   architecture,
+  // THE FOOTER IS NOT A METHODS SECTION. It had the engine, two DOIs, the calibration corpus, the
+  // lane split and the definition of the metric crammed into it, which is four lines of type at the
+  // bottom of every page and the wrong home for every one of those facts. Methodology and
+  // Implementation are the pages that exist to carry them, and they do. What stays here is what a
+  // footer is for: what this is, and the one limit a reader needs before trusting a number.
   footer: {
-    provenance: {
-      en: 'Engine: bedblend, published separately (pypi.org/project/bedblend). Dump geometry calibrated against 28 UAV-surveyed haul-truck dumps (doi:10.3390/mining2010006); construction model from doi:10.3390/min11060636. Data: synthetic dig sequences, seeded and reproducible.',
-      es: 'Motor: bedblend, publicado aparte (pypi.org/project/bedblend). Geometria de descarga calibrada contra 28 descargas relevadas con dron (doi:10.3390/mining2010006); modelo de construccion de doi:10.3390/min11060636. Datos: secuencias de extraccion sinteticas, con semilla y reproducibles.',
-    },
     disclaimer: {
-      en: 'Static, in-browser. The simulation is baked offline; the browser recomputes every verdict from the event log. VRR = var_out / var_in, lower is better. Teaching only: no metal accounting, no blending LP, no setpoint.',
-      es: 'Estatico, en el navegador. La simulacion se hornea fuera de linea; el navegador recalcula cada veredicto desde la bitacora de eventos. VRR = var_salida / var_entrada, menor es mejor. Solo ensenanza: sin contabilidad metalurgica, sin LP de mezcla, sin consignas.',
+      en: 'Teaching and research. No metal accounting, no blending optimizer, no plant setpoint.',
+      es: 'Ensenanza e investigacion. Sin contabilidad metalurgica, sin optimizador de mezcla, sin consignas de planta.',
     },
   },
 };

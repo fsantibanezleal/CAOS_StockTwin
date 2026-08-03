@@ -19,13 +19,28 @@ Routing by declared class is what an operation actually does, and it is the only
 
 Building on relief is what exposed two defects a flat pad physically cannot reveal: a dozer that selected material by elevation and so excavated the hill, and a relaxation that treated elevation as free-floating and eroded bedrock. The case exists so those stay fixed.
 
+### [`valley`](valley.md), Valley fill, confined on two sides
+
+Confinement is why the fill taxonomy exists at all. A valley holds the same tonnage higher and narrower than a pad does, which changes the drop height, and drop height is one of the three drivers of size segregation. It is the cleanest contrast against the flat case.
+
+### [`ridge`](ridge.md), Ridge crest fill, shedding both ways
+
+The opposite of the valley: instead of holding material in, the ground sheds it. Access is tightest here because the buildable ground is a strip, which makes it the clearest demonstration that the plan has to follow the landform.
+
+### [`short_dwell`](short_dwell.md), Short shovel dwell, decorrelated feed
+
+The causal claim of the whole product, isolated. Grade autocorrelation is a consequence of the dig sequence rather than a property of the ore, so changing ONLY the shovel dwell must move the measured stream range and the blending result, everything else held fixed.
+
 ## The matrix
 
 | scenario | ground | areas | benches | loads | trucks | tags |
 |---|---|---|---|---|---|---|
-| [`single`](single.md) | heaped | 1 | 2 | 520 | 4 | basic, physics |
-| [`yard`](yard.md) | heaped | 3 | 2 | 1000 | 6 | core, sectors, routing |
-| [`sidehill`](sidehill.md) | sidehill | 1 | 2 | 520 | 4 | topography, sidehill |
+| [`single`](single.md) | heaped | 1 | 2 | 560 | 4 | basic, physics |
+| [`yard`](yard.md) | heaped | 3 | 2 | 900 | 6 | core, sectors, routing |
+| [`sidehill`](sidehill.md) | sidehill | 1 | 2 | 560 | 4 | topography, sidehill |
+| [`valley`](valley.md) | valley | 1 | 2 | 560 | 4 | topography, valley |
+| [`ridge`](ridge.md) | ridge_crest | 1 | 2 | 560 | 4 | topography, ridge |
+| [`short_dwell`](short_dwell.md) | heaped | 1 | 2 | 560 | 4 | stream, contrast |
 
 ## What every bake is gated on
 

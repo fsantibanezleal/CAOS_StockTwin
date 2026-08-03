@@ -47,12 +47,16 @@ class Scenario:
     summary_es: str
     reason: str
     kill_criterion: str
+    # WHICH AXIS THIS SCENARIO VARIES. The matrix is organised by the thing being changed, because a
+    # flat list of cases does not say what is being compared with what; the app groups the selector
+    # by this and the reader can see the design of the experiment rather than a pile of names.
+    category: str = "physics"
 
     # Site
-    pad_nx: int = 72
-    pad_ny: int = 72
+    pad_nx: int = 56
+    pad_ny: int = 56
     cell_m: float = 2.5
-    shovel_xy: tuple[float, float] = (170.0, 20.0)
+    shovel_xy: tuple[float, float] = (120.0, 122.0)
 
     # Yard
     n_areas: int = 1
@@ -145,9 +149,12 @@ class Scenario:
         p.loads_per_dozer_pass = self.loads_per_dozer_pass
         for a in p.areas:
             a.ramp_width_m = self.ramp_width_m
-            # Equipment enters each area from the side the pit is on, so the crest advances back
-            # toward the way out instead of burying it.
-            a.access_xy = self.access_xy or (a.x1_m, a.y0_m)
+            # THE ENTRANCE IS THE MIDDLE OF THE OPEN EDGE, not a corner. Areas run along +x from
+            # the origin and sit at y0 = 0, so the (x1, y0) corner this used to pick is wedged
+            # between the area and the pad boundary with the pile itself between it and every
+            # approach. Measured on a 90 m area: no truck could reach the entrance at all. The +y
+            # edge is the one that faces open ground, and the shovel now sits past it.
+            a.access_xy = self.access_xy or ((a.x0_m + a.x1_m) / 2.0, a.y1_m)
         return p
 
     def truck(self) -> TruckSpec:
@@ -156,6 +163,7 @@ class Scenario:
 
 SINGLE = Scenario(
     id="single",
+    category="reference",
     title_en="One working stock",
     title_es="Un acopio en operacion",
     summary_en=(
@@ -182,13 +190,14 @@ SINGLE = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=560,
+    n_loads=2200,
     tags=("basic", "physics"),
 )
 
 
 YARD = Scenario(
     id="yard",
+    category="yard",
     title_en="Multi-area stockyard",
     title_es="Patio de acopios multi-area",
     summary_en=(
@@ -215,9 +224,9 @@ YARD = Scenario(
         "more than their own 95 percent intervals, and the repose and mass invariants of the single "
         "case must still hold across all three areas."
     ),
-    pad_nx=136,
-    pad_ny=80,
-    shovel_xy=(330.0, 20.0),
+    pad_nx=124,
+    pad_ny=56,
+    shovel_xy=(155.0, 122.0),
     n_areas=3,
     area_width_m=90.0,
     area_length_m=90.0,
@@ -227,7 +236,7 @@ YARD = Scenario(
     # holding 0.32 and "low grade" on the pile holding 0.82, which the sector chart showed
     # immediately and no table would have.
     classes=("low grade", "mid grade", "high grade"),
-    n_loads=900,
+    n_loads=3600,
     block_sd=0.20,
     n_trucks=6,
     n_cuts=30,
@@ -237,6 +246,7 @@ YARD = Scenario(
 
 SIDEHILL = Scenario(
     id="sidehill",
+    category="landform",
     title_en="Sidehill fill on real topography",
     title_es="Acopio en ladera sobre topografia real",
     summary_en=(
@@ -264,14 +274,14 @@ SIDEHILL = Scenario(
         "ground steeper than repose untouched, and material volume must be measured against the "
         "original surface rather than against zero."
     ),
-    pad_nx=72,
-    pad_ny=72,
-    shovel_xy=(170.0, 20.0),
+    pad_nx=56,
+    pad_ny=56,
+    shovel_xy=(120.0, 122.0),
     n_areas=1,
     area_width_m=90.0,
     area_length_m=90.0,
     classes=("ROM",),
-    n_loads=560,
+    n_loads=2200,
     fill=FillType.SIDEHILL,
     relief_m=18.0,
     roughness_m=0.5,
@@ -281,6 +291,7 @@ SIDEHILL = Scenario(
 
 VALLEY = Scenario(
     id="valley",
+    category="landform",
     title_en="Valley fill, confined on two sides",
     title_es="Relleno de valle, confinado en dos lados",
     summary_en=(
@@ -306,7 +317,7 @@ VALLEY = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=560,
+    n_loads=2200,
     fill=FillType.VALLEY,
     relief_m=26.0,
     roughness_m=0.6,
@@ -316,6 +327,7 @@ VALLEY = Scenario(
 
 RIDGE = Scenario(
     id="ridge",
+    category="landform",
     title_en="Ridge crest fill, shedding both ways",
     title_es="Relleno en cresta, vertiendo a ambos lados",
     summary_en=(
@@ -340,7 +352,7 @@ RIDGE = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=560,
+    n_loads=2200,
     fill=FillType.RIDGE_CREST,
     relief_m=24.0,
     roughness_m=0.5,
@@ -350,6 +362,7 @@ RIDGE = Scenario(
 
 SHORT_DWELL = Scenario(
     id="short_dwell",
+    category="feed",
     title_en="Short shovel dwell, decorrelated feed",
     title_es="Permanencia corta de la pala, alimentacion descorrelacionada",
     summary_en=(
@@ -374,13 +387,297 @@ SHORT_DWELL = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=560,
+    n_loads=2200,
     loads_per_block=4,
     tags=("stream", "contrast"),
 )
 
 
-SCENARIOS: list[Scenario] = [SINGLE, YARD, SIDEHILL, VALLEY, RIDGE, SHORT_DWELL]
+
+# ---------------------------------------------------------------------------------------------
+# THE REST OF THE MATRIX.
+#
+# Six scenarios is a demonstration, not an experiment. What follows varies one thing at a time
+# along the axes that actually change the answer, so a reader can see WHAT WAS COMPARED WITH WHAT
+# rather than a list of names: the landform (all five published fill types, not three), the feed
+# structure that decides whether a stockpile can help at all, the yard layout and its routing, and
+# the operating choices a planner actually controls.
+#
+# Each one still has to say why it is here and what result would mean the code is wrong.
+# ---------------------------------------------------------------------------------------------
+
+CROSS_VALLEY = Scenario(
+    id="cross_valley",
+    category="landform",
+    title_en="Cross-valley fill, confined across the axis",
+    title_es="Relleno transversal, confinado a traves del eje",
+    summary_en=(
+        "The fifth published fill type, and the one that behaves least like the other four. The "
+        "ground falls along one axis and rises across it, so the fill is held on two opposite sides "
+        "while draining along the third."
+    ),
+    summary_es=(
+        "El quinto tipo publicado de relleno, y el que menos se parece a los otros cuatro. El "
+        "terreno baja en un eje y sube en el otro, de modo que el relleno queda contenido en dos "
+        "lados opuestos mientras drena a lo largo del tercero."
+    ),
+    reason=(
+        "The taxonomy has five members and a product that ships three is choosing which physics to "
+        "show. This one is the awkward case: confinement and drainage at right angles, so the crest "
+        "advances along one axis and the toe runs away along the other."
+    ),
+    kill_criterion=(
+        "Buildable ground before any load is placed must differ measurably from both the flat pad "
+        "and the valley. If the three report the same fraction the landform is not entering the "
+        "calculation and the fill type is a label."
+    ),
+    n_loads=2200,
+    fill=FillType.CROSS_VALLEY,
+    relief_m=24.0,
+    roughness_m=0.5,
+    tags=("topography", "cross-valley"),
+)
+
+
+LONG_DWELL = Scenario(
+    id="long_dwell",
+    category="feed",
+    title_en="Long shovel dwell, strongly correlated feed",
+    title_es="Permanencia larga de la pala, alimentacion muy correlacionada",
+    summary_en=(
+        "The opposite end of the axis from the short-dwell case: the shovel stays in one dig block "
+        "for sixty loads. Every other parameter is identical to the reference. This is the feed a "
+        "stockpile can do least about, because whole regions of the pile share one grade."
+    ),
+    summary_es=(
+        "El extremo opuesto del caso de permanencia corta: la pala permanece sesenta cargas en un "
+        "mismo bloque. Todo lo demas es identico a la referencia. Es la alimentacion con la que un "
+        "acopio menos puede ayudar, porque regiones enteras de la pila comparten una sola ley."
+    ),
+    reason=(
+        "Two points define a line and three define a trend. With the reference at twenty loads per "
+        "block and the short-dwell case at four, this is the third point, and it is the one that "
+        "shows the blending benefit collapsing rather than merely weakening."
+    ),
+    kill_criterion=(
+        "The measured stream range must be LONGER than the reference case built with the same seed "
+        "and geometry, and the variance reduction worse. If a longer dwell does not hurt, the "
+        "stream model is not carrying the dig sequence."
+    ),
+    n_loads=2200,
+    loads_per_block=60,
+    tags=("stream", "contrast"),
+)
+
+
+TRENDING = Scenario(
+    id="trending",
+    category="feed",
+    title_en="Trending feed, grade drifting through the campaign",
+    title_es="Alimentacion con tendencia, ley que deriva durante la campana",
+    summary_en=(
+        "Grade drifts steadily from the first bench to the last, which is what a real dig sequence "
+        "through a zoned ore body produces. A drift is not noise: no amount of mixing removes it, "
+        "and a stockpile built through one delivers a reclaim stream that drifts too."
+    ),
+    summary_es=(
+        "La ley deriva de forma sostenida desde el primer banco hasta el ultimo, que es lo que "
+        "produce una secuencia real a traves de un cuerpo zonificado. Una deriva no es ruido: "
+        "ninguna mezcla la elimina, y el flujo recuperado tambien deriva."
+    ),
+    reason=(
+        "Variance reduction is measured against the input variance, and a trend inflates that "
+        "denominator without being the kind of variability blending can address. It is the standard "
+        "way the metric flatters a bed, and the product should show it rather than avoid it."
+    ),
+    kill_criterion=(
+        "Variance reduction must come out BETTER than the reference case while the reclaim stream "
+        "still visibly drifts. A number that improves while the problem gets worse is the point of "
+        "the scenario; if the number does not improve, the trend is not reaching the input."
+    ),
+    n_loads=2200,
+    bench_trend=0.35,
+    tags=("stream", "trend"),
+)
+
+
+YARD_FIVE = Scenario(
+    id="yard_five",
+    category="yard",
+    title_en="Five-area yard, finer ore-control classes",
+    title_es="Patio de cinco areas, clases de control de leyes mas finas",
+    summary_en=(
+        "The same routed campaign split five ways instead of three. Finer classes mean tighter "
+        "piles and a better-defined product, and they also mean more misroutes, longer hauls and "
+        "more areas competing for the same fleet."
+    ),
+    summary_es=(
+        "La misma campana enrutada dividida en cinco clases en vez de tres. Clases mas finas dan "
+        "pilas mas ajustadas y un producto mejor definido, y tambien mas errores de ruteo, "
+        "transportes mas largos y mas areas compitiendo por la misma flota."
+    ),
+    reason=(
+        "How many stockpiles to run is the decision an ore-control engineer actually makes, and it "
+        "is a trade rather than an optimisation. Three against five, same ore, same fleet, is the "
+        "comparison that shows the trade instead of asserting it."
+    ),
+    kill_criterion=(
+        "Within-area grade spread must be TIGHTER than the three-area yard, because that is the "
+        "only thing finer classes buy. If it is not, the router is not separating and the extra "
+        "areas cost without returning."
+    ),
+    pad_nx=228,
+    pad_ny=56,
+    shovel_xy=(265.0, 122.0),
+    n_areas=5,
+    gap_m=20.0,
+    classes=("very low", "low grade", "mid grade", "high grade", "very high"),
+    n_loads=5000,
+    block_sd=0.22,
+    tags=("core", "sectors", "routing"),
+)
+
+
+SHORT_BENCH = Scenario(
+    id="short_bench",
+    category="operations",
+    title_en="Short benches, more lifts",
+    title_es="Bancos bajos, mas levantes",
+    summary_en=(
+        "The same tonnage into the same footprint, built as four nine-metre lifts instead of two "
+        "eighteens. More lifts mean more paddock campaigns, more dozer work and a shorter cascade "
+        "down every face."
+    ),
+    summary_es=(
+        "El mismo tonelaje en la misma huella, construido como cuatro levantes de nueve metros en "
+        "vez de dos de dieciocho. Mas levantes significan mas campanas de paddock, mas trabajo de "
+        "bulldozer y una cascada mas corta en cada cara."
+    ),
+    reason=(
+        "Bench height is the main lever a dump designer has and it drives the physics directly: "
+        "run-out down a face is the horizontal component of the bench slope, and percolation "
+        "segregation only becomes significant above roughly ten to twelve metres of drop."
+    ),
+    kill_criterion=(
+        "The spread of the coarse fraction must be NARROWER than the reference case. A nine-metre "
+        "bench cascades about fourteen metres, at the bottom of the measured envelope; if "
+        "segregation is unchanged it is not being driven by the face at all."
+    ),
+    n_loads=2200,
+    bench_height_m=9.0,
+    n_benches=4,
+    tags=("operations", "bench"),
+)
+
+
+TALL_BENCH = Scenario(
+    id="tall_bench",
+    category="operations",
+    title_en="Tall benches, long cascade",
+    title_es="Bancos altos, cascada larga",
+    summary_en=(
+        "One twenty-eight-metre lift. The longest face the footprint can carry, which is the "
+        "condition under which kinetic sieving does the most work and the toe ends up most "
+        "different from the crest."
+    ),
+    summary_es=(
+        "Un solo levante de veintiocho metros. La cara mas larga que la huella puede sostener, que "
+        "es la condicion en la que el cribado cinetico hace mas trabajo y el pie termina lo mas "
+        "distinto posible de la cresta."
+    ),
+    reason=(
+        "The other end of the bench-height lever, and the case that tests the access mechanic "
+        "hardest: a lift of twenty-eight metres needs roughly sixty-five metres of ramp at the "
+        "working gradient, which is most of the area."
+    ),
+    kill_criterion=(
+        "Zero pairs over repose and no cell below its original ground, at a peak measurably above "
+        "the reference case. A tall bench that does not stand taller means the loads are not "
+        "reaching the working level and the ramp is failing silently."
+    ),
+    n_loads=2200,
+    bench_height_m=28.0,
+    n_benches=1,
+    tags=("operations", "bench"),
+)
+
+
+NARROW_RAMP = Scenario(
+    id="narrow_ramp",
+    category="operations",
+    title_en="Narrow access ramp",
+    title_es="Rampa de acceso angosta",
+    summary_en=(
+        "A twelve-metre corridor instead of twenty-five: single-lane access with no room to pass. "
+        "The ramp still has to be cut and maintained out of the fill, but there is far less of it "
+        "to work with."
+    ),
+    summary_es=(
+        "Un corredor de doce metros en vez de veinticinco: acceso de una pista sin lugar para "
+        "cruzarse. La rampa igual debe cortarse y mantenerse en el relleno, pero hay mucho menos "
+        "con que trabajar."
+    ),
+    reason=(
+        "Ramp width is a dump-design parameter with a real cost: every metre of corridor is "
+        "capacity the footprint does not hold. Whether a narrow ramp actually costs placement is a "
+        "measurement, not an assumption."
+    ),
+    kill_criterion=(
+        "The refusal rate must be no better than the reference case. A narrower way in cannot make "
+        "access easier, and if it does the corridor is not the thing controlling access."
+    ),
+    n_loads=2200,
+    ramp_width_m=12.0,
+    tags=("operations", "access"),
+)
+
+
+SELDOM_DOZED = Scenario(
+    id="seldom_dozed",
+    category="operations",
+    title_en="Dozer on a long cadence",
+    title_es="Bulldozer con cadencia larga",
+    summary_en=(
+        "One dozer pass every hundred and twenty loads instead of every forty. The blade is what "
+        "turns a field of tipped heaps into a floor a truck can cross, so its cadence is the pace "
+        "at which the working level becomes usable again."
+    ),
+    summary_es=(
+        "Una pasada de bulldozer cada ciento veinte cargas en vez de cada cuarenta. La hoja es lo "
+        "que convierte un campo de montones en un piso que un camion puede cruzar, asi que su "
+        "cadencia marca el ritmo al que el nivel de trabajo vuelve a ser utilizable."
+    ),
+    reason=(
+        "Dozer availability is a real operating constraint and the source is explicit that the "
+        "machine works on a cadence rather than continuously. It is also the cheapest lever on "
+        "placement rate, which makes it worth quantifying."
+    ),
+    kill_criterion=(
+        "The refusal rate must rise against the reference case. Less blade work that placed MORE "
+        "loads would mean the cadence is not connected to access at all."
+    ),
+    n_loads=2200,
+    loads_per_dozer_pass=120,
+    tags=("operations", "dozer"),
+)
+
+
+SCENARIOS: list[Scenario] = [
+    SINGLE,
+    SHORT_DWELL,
+    LONG_DWELL,
+    TRENDING,
+    YARD,
+    YARD_FIVE,
+    SIDEHILL,
+    VALLEY,
+    CROSS_VALLEY,
+    RIDGE,
+    SHORT_BENCH,
+    TALL_BENCH,
+    NARROW_RAMP,
+    SELDOM_DOZED,
+]
 
 
 def by_id(scenario_id: str) -> Scenario:

@@ -63,11 +63,12 @@ class BakeResult:
 
 
 class SnapshotRecorder:
-    """Captures the surface at intervals through the build, so the app can animate its growth.
+    """Captures the surface after each placed load, so the app can animate its growth.
 
-    A snapshot is one float per cell, which is why there are a couple of dozen of them and not one per
-    load. Enough to see the base layer go down, the dozer level it and the crest advance; few enough
-    that the artifact stays a few hundred kilobytes.
+    ONE FRAME PER TRUCK. A snapshot every few loads is a slideshow: the pile jumps and the truck on
+    screen is not the one that made the bump. A frame is one float per cell here, at full resolution;
+    the coarse stride that makes the artifact shippable is applied on the way out, in `_half`, so the
+    recorder stays a plain record of what the terrain looked like.
     """
 
     def __init__(self, scn: Scenario, n_loads: int) -> None:
@@ -368,6 +369,7 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
 
     manifest = {
         "id": scn.id,
+        "category": scn.category,
         "title": {"en": scn.title_en, "es": scn.title_es},
         "summary": {"en": scn.summary_en, "es": scn.summary_es},
         "reason": scn.reason,
@@ -459,15 +461,11 @@ def main() -> None:
     from .scenarios import SCENARIOS
 
     todo = SCENARIOS if args.scenario == "all" else [by_id(args.scenario)]
-    index = {"scenarios": [], "topography": topography_report()}
 
     for scn in todo:
         print(f"baking {scn.id} ...", flush=True)
         bake = run(scn.id)
         m = write(bake, out)
-        index["scenarios"].append(
-            {k: m[k] for k in ("id", "title", "summary", "tags", "build", "gate")}
-        )
         print(
             f"  placed {m['build']['loads_placed']}  "
             f"refused {m['build']['refusal_rate']:.1%}  "
@@ -476,8 +474,23 @@ def main() -> None:
             flush=True,
         )
 
+    # THE INDEX IS ASSEMBLED FROM WHAT IS ON DISK, not from what this invocation happened to bake.
+    # It used to be accumulated in the loop, so `run.py ridge` rewrote the index with ridge alone and
+    # silently orphaned the other five scenarios: every artifact was still there, the site loaded
+    # cleanly, and the case selector offered exactly one case. Nothing failed. Building it from the
+    # manifests present, in the canonical order, makes a partial bake refresh what it rebuilt and
+    # leave the rest alone.
+    index = {"scenarios": [], "topography": topography_report()}
+    for scn in SCENARIOS:
+        mf = out / scn.id / "manifest.json"
+        if not mf.exists():
+            continue
+        m = json.loads(mf.read_text(encoding="utf-8"))
+        index["scenarios"].append(
+            {k: m[k] for k in ("id", "category", "title", "summary", "tags", "build", "gate")}
+        )
     (out / "index.json").write_text(json.dumps(index, indent=2, sort_keys=True), encoding="utf-8")
-    print(f"wrote {len(todo)} scenario(s) to {out}")
+    print(f"baked {len(todo)}; index lists {len(index['scenarios'])} scenario(s) in {out}")
 
 
 if __name__ == "__main__":

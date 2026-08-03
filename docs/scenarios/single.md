@@ -44,7 +44,7 @@ plausible artifact.
 | parameter | value | what it controls |
 |---|---|---|
 | repose angle | 37 deg dry | not a constant of the ore: it rises with moisture and collapses past saturation |
-| loads | 520 | the size of the campaign |
+| loads | 560 | the size of the campaign |
 | shovel dwell | 20 loads per dig block | THE control on stream autocorrelation. Consecutive trucks load from the same block, so the correlation length is a consequence of this rather than an input |
 | grade | 0.62 mean, 0.16 between blocks | the incoming distribution |
 | trucks | 4 | fleet size |

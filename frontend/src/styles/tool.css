@@ -566,3 +566,73 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
     padding-bottom: 0.5rem;
   }
 }
+
+/* TWO MAPS SIDE BY SIDE, each with its own variable selector. Half the width each is legible; the
+   three fixed thumbnails this replaced were a contact sheet, not a comparison. */
+.st-fieldpanel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.st-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
+}
+
+.st-pair figure {
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.st-pair figure canvas {
+  min-height: 0;
+  object-fit: contain;
+}
+
+.st-pair figcaption {
+  font-size: 0.74rem;
+  opacity: 0.75;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .st-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The colour scale that sits with the stage controls. Numbers at both ends, unit at the right. */
+.st-scalebar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+.st-scalebar b {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.st-scalebar em {
+  font-style: normal;
+  opacity: 0.6;
+}
+
+.st-scalebar .st-scale {
+  width: 7rem;
+  height: 0.6rem;
+}

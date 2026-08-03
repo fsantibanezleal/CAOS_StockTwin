@@ -25,7 +25,7 @@ import type { CaseDef } from '@fasl-work/caos-app-shell';
 import {
   type Index,
   type Scenario,
-  expandFrame,
+  playState,
   loadIndex,
   loadScenario,
   segregationSummary,
@@ -78,6 +78,16 @@ function useBoxHeight<T extends HTMLElement>(): [React.RefObject<T | null>, numb
   return [ref, h];
 }
 
+/** Human labels for the matrix axes, in both languages. */
+const CATEGORY: Record<string, { en: string; es: string }> = {
+  reference: { en: 'Reference', es: 'Referencia' },
+  feed: { en: 'Feed structure', es: 'Estructura de alimentacion' },
+  yard: { en: 'Yard and routing', es: 'Patio y ruteo' },
+  landform: { en: 'Landform', es: 'Relieve' },
+  operations: { en: 'Operating choices', es: 'Decisiones operativas' },
+  physics: { en: 'Physics', es: 'Fisica' },
+};
+
 export default function Tool() {
   const lang = useShellLang() === 'es' ? 'es' : 'en';
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
@@ -95,7 +105,9 @@ export default function Tool() {
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
-  const [frame, setFrame] = useState(-1); // -1 means the finished pile
+  const [range, setRange] = useState<{ lo: number; hi: number } | null>(null);
+  // Fractional position through the build, in loads. -1 means the finished pile.
+  const [pos, setPos] = useState(-1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -103,7 +115,7 @@ export default function Tool() {
   }, []);
   useEffect(() => {
     setSc(null);
-    setFrame(-1);
+    setPos(-1);
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
   }, [sid]);
 
@@ -115,9 +127,12 @@ export default function Tool() {
       (index?.scenarios ?? []).map((s) => ({
         id: s.id,
         name: s.title[lang],
-        // NO CATEGORY. The shell groups cases under labelled headings, which is right for a deck of
-        // eleven across four categories and wrong for three: it stacked them into a 182px block and
-        // took that height straight off the instrument. One group is one row.
+        // GROUPED BY THE AXIS THEY VARY. The matrix is an experiment, not a list: reference, feed
+        // structure, yard layout, landform, operations. An earlier version dropped the category to
+        // save vertical space when there were only three cases, which was the right call then and
+        // is the wrong one for fourteen, where an ungrouped deck says nothing about what is being
+        // compared with what.
+        category: CATEGORY[s.category ?? 'physics']?.[lang] ?? s.category,
         kind: 'synthetic' as const,
         anchor: `${s.build.loads_placed} loads placed, peak ${s.build.peak_m.toFixed(1)} m`,
       })),
@@ -128,15 +143,8 @@ export default function Tool() {
 
   // The surface being drawn, and the load being worked: a build frame while scrubbing, the
   // finished pile otherwise.
-  const cur = useMemo(() => {
-    if (!sc?.frames || frame < 0) return null;
-    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)] ?? null;
-  }, [sc, frame]);
-  const surface = useMemo(
-    () => (sc?.frames && frame >= 0 ? expandFrame(sc.frames, Math.min(frame, sc.frames.frames.length - 1)) : null),
-    [sc, frame],
-  );
-  const activeSeq = showHistory ? null : (cur?.seq ?? null);
+  const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
+  const surface = play?.z ?? null;
 
   if (err) {
     return (
@@ -159,7 +167,8 @@ export default function Tool() {
             showPaths={showPaths}
             showCrest={showCrest}
             showPlan={showPlan}
-            activeSeq={activeSeq}
+            play={showHistory ? null : play}
+            onRange={setRange}
             dark={dark}
             height={stageH}
           />
@@ -175,6 +184,16 @@ export default function Tool() {
             <option value="thickness">{t('thickness', 'espesor')}</option>
           </select>
         </label>
+        {/* THE SCALE, WITH NUMBERS ON IT. A ramp the reader cannot read is decoration, and the
+            range moves with the scenario and the variable, so it cannot be written into a caption. */}
+        {range && (
+          <span className="st-scalebar" aria-label={t('Colour scale', 'Escala de color')}>
+            <b>{range.lo.toFixed(colour === 'thickness' ? 1 : 3)}</b>
+            <i className="st-scale" />
+            <b>{range.hi.toFixed(colour === 'thickness' ? 1 : 3)}</b>
+            <em>{colour === 'grade' ? 'g/t' : colour === 'thickness' ? 'm' : ''}</em>
+          </span>
+        )}
         <div className="st-toggles">
           <label>
             <input type="checkbox" checked={showPaths} onChange={(e) => setShowPaths(e.target.checked)} />
@@ -217,8 +236,8 @@ export default function Tool() {
         {sc && (
           <PlayBar
             frames={sc.frames}
-            index={frame < 0 ? (sc.frames?.frames.length ?? 1) - 1 : frame}
-            onIndex={setFrame}
+            pos={pos < 0 ? (sc.frames?.frames.length ?? 1) - 1 : pos}
+            onPos={setPos}
             lang={lang}
           />
         )}
@@ -304,7 +323,10 @@ export default function Tool() {
             </div>
             <div>
               <dt>{t('material placed', 'material colocado')}</dt>
-              <dd>{Math.round(sc.manifest.build.volume_m3).toLocaleString()} m3</dd>
+              {/* The locale is pinned to the UI language, not left to the browser. Unpinned,
+                  `toLocaleString()` on a Spanish-locale machine rendered 33644 as "33.644" inside an
+                  English page, where it reads as thirty-three point six. */}
+              <dd>{Math.round(sc.manifest.build.volume_m3).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')} m3</dd>
             </div>
             <div>
               <dt>{t('dozer displacement', 'desplazamiento del bulldozer')}</dt>

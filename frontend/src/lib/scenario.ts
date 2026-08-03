@@ -134,6 +134,8 @@ export interface Sector {
 
 export interface Manifest {
   id: string;
+  /** Which axis of the matrix this scenario varies. Groups the case selector. */
+  category?: string;
   title: { en: string; es: string };
   summary: { en: string; es: string };
   reason: string;
@@ -187,7 +189,7 @@ export interface TopographyRow {
 }
 
 export interface Index {
-  scenarios: Pick<Manifest, 'id' | 'title' | 'summary' | 'tags' | 'build' | 'gate'>[];
+  scenarios: Pick<Manifest, 'id' | 'category' | 'title' | 'summary' | 'tags' | 'build' | 'gate'>[];
   topography: TopographyRow[];
 }
 
@@ -430,6 +432,110 @@ export function extent(f: Field): { w: number; h: number } {
   return { w: f.nx * f.cell_m, h: f.ny * f.cell_m };
 }
 
+
+/** Where the truck is, and what the ground looks like, at a fractional position through the build.
+ *
+ * A LOAD IS AN EVENT WITH A DURATION, not an instant. Given `pos = 12.4` this returns the state 40
+ * percent of the way through load 12: the truck part-way along its approach, and the surface still
+ * the one it is driving onto. The three phases are drive in, tip, drive out, and the material
+ * appears at the tip rather than fading in, because that is what tipping is.
+ */
+export interface PlayState {
+  /** Sequence number of the load being worked. */
+  seq: number;
+  /** Surface to draw. */
+  z: number[] | null;
+  /** Truck position and heading in pad metres, or null before the first load. */
+  truck: { x: number; y: number; heading: number } | null;
+  /** The part of the route already driven, for drawing the trail behind the truck. */
+  trail: [number, number][];
+  /** The part still to drive. */
+  ahead: [number, number][];
+  /** Which of the three phases we are in. */
+  phase: 'approach' | 'tip' | 'departure';
+}
+
+const APPROACH_FRAC = 0.45;
+const TIP_FRAC = 0.15;
+
+/** Walk a polyline to a fraction of its length, returning the point, heading, and the split. */
+function walk(
+  path: [number, number][],
+  f: number,
+): { x: number; y: number; heading: number; done: [number, number][]; left: [number, number][] } | null {
+  if (path.length < 2) return null;
+  const segs: number[] = [];
+  let total = 0;
+  for (let i = 1; i < path.length; i++) {
+    const d = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    segs.push(d);
+    total += d;
+  }
+  if (total <= 0) return null;
+  let want = Math.min(Math.max(f, 0), 1) * total;
+  for (let i = 0; i < segs.length; i++) {
+    if (want <= segs[i] || i === segs.length - 1) {
+      const u = segs[i] > 0 ? Math.min(want / segs[i], 1) : 1;
+      const a = path[i];
+      const b = path[i + 1];
+      const x = a[0] + (b[0] - a[0]) * u;
+      const y = a[1] + (b[1] - a[1]) * u;
+      return {
+        x,
+        y,
+        heading: Math.atan2(b[1] - a[1], b[0] - a[0]),
+        done: [...path.slice(0, i + 1), [x, y]],
+        left: [[x, y], ...path.slice(i + 1)],
+      };
+    }
+    want -= segs[i];
+  }
+  return null;
+}
+
+/** Resolve a fractional build position into everything the scene needs to draw one moment. */
+export function playState(sc: Scenario, pos: number): PlayState | null {
+  const f = sc.frames;
+  if (!f || !f.frames.length) return null;
+  const i = Math.min(Math.max(Math.floor(pos), 0), f.frames.length - 1);
+  const frac = Math.min(Math.max(pos - i, 0), 1);
+  const cur = f.frames[i];
+  const load = sc.loads.find((l) => l.seq === cur.seq) ?? null;
+
+  // The surface BEFORE this load is the previous frame; the surface after is this one. Material
+  // appears when the tray goes up, not gradually while the truck is still driving.
+  const before = i > 0 ? expandFrame(f, i - 1) : expandFrame(f, 0);
+  const after = expandFrame(f, i);
+
+  let phase: PlayState['phase'] = 'approach';
+  let sub = 0;
+  if (frac < APPROACH_FRAC) {
+    phase = 'approach';
+    sub = frac / APPROACH_FRAC;
+  } else if (frac < APPROACH_FRAC + TIP_FRAC) {
+    phase = 'tip';
+    sub = (frac - APPROACH_FRAC) / TIP_FRAC;
+  } else {
+    phase = 'departure';
+    sub = (frac - APPROACH_FRAC - TIP_FRAC) / (1 - APPROACH_FRAC - TIP_FRAC);
+  }
+
+  const path = phase === 'departure' ? (load?.departure ?? []) : (load?.approach ?? []);
+  const w = walk(path as [number, number][], phase === 'tip' ? 1 : sub);
+
+  return {
+    seq: cur.seq,
+    z: phase === 'approach' ? before : after,
+    truck: w
+      ? { x: w.x, y: w.y, heading: w.heading }
+      : load && load.x !== undefined && load.y !== undefined
+        ? { x: load.x, y: load.y, heading: load.head ?? 0 }
+        : null,
+    trail: w ? w.done : [],
+    ahead: w ? w.left : [],
+    phase,
+  };
+}
 
 /** Expand one playback frame back onto the full terrain grid.
  *

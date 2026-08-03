@@ -1,0 +1,71 @@
+{
+  "build": {
+    "dozer_passes": 32,
+    "loads_placed": 298,
+    "mean_displacement_m": 25.35,
+    "peak_m": 10.8,
+    "profiles": {
+      "comet": 37,
+      "oval": 70,
+      "paddock": 161,
+      "rectangular": 29,
+      "sloughed_heap": 1
+    },
+    "refusal_rate": 0.4679,
+    "volume_m3": 33644.0
+  },
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json"
+  ],
+  "frames": 299,
+  "gate": {
+    "kill_criterion": "The measured stream range must be substantially SHORTER than the reference case built with the same seed and geometry. If the dwell does not move the range, the stream model is not causal and the product is claiming something it does not do.",
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 560,
+    "loads_placed": 298,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.4679,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "short_dwell",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 72,
+    "ny": 72
+  },
+  "reason": "The causal claim of the whole product, isolated. Grade autocorrelation is a consequence of the dig sequence rather than a property of the ore, so changing ONLY the shovel dwell must move the measured stream range and the blending result, everything else held fixed.",
+  "reclaim": {
+    "n_cuts": 24,
+    "tonnes": 4914.4
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 4,
+    "measured_range_t": 903.4,
+    "n_loads": 560,
+    "var_in": 0.02419107
+  },
+  "summary": {
+    "en": "The same stockpile fed by a shovel that moves between dig blocks every few loads instead of every twenty. Nothing about the pile changes; only the ORDER the grades arrive in. That is the whole control an operation has over how much a stockpile can help it.",
+    "es": "El mismo acopio alimentado por una pala que cambia de bloque cada pocas cargas en vez de cada veinte. Nada de la pila cambia; solo el ORDEN en que llegan las leyes. Ese es todo el control que una operacion tiene sobre cuanto puede ayudarle un acopio."
+  },
+  "tags": [
+    "stream",
+    "contrast"
+  ],
+  "title": {
+    "en": "Short shovel dwell, decorrelated feed",
+    "es": "Permanencia corta de la pala, alimentacion descorrelacionada"
+  }
+}

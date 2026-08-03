@@ -8,7 +8,7 @@
  * EVERY NUMBER ON SCREEN IS COMPUTED FROM THE EVENT LOG, never read from a baked field. That is what
  * makes them falsifiable: a reader can see the events and the answer in the same view.
  */
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   type Cut,
@@ -191,35 +191,52 @@ export function PlanPanel({
  *  grade pattern follow the thickness, and does the coarse fraction follow either", which is a
  *  comparison, and a comparison needs the panels together. */
 export function FieldPanel({ field, dark }: { field: Field; by?: string; dark: boolean }) {
-  const views: { key: 'grade' | 'coarse' | 'thickness'; en: string }[] = [
-    { key: 'grade', en: 'grade' },
-    { key: 'coarse', en: 'coarse fraction' },
-    { key: 'thickness', en: 'thickness above ground' },
-  ];
-  // A WIDE pad stacks; a squarish one goes side by side. Three columns of a 136-by-80 field are
-  // three slivers, which is worse than one map, and the layout should follow the shape of the site
-  // rather than a fixed column count.
-  const wide = field.nx / field.ny > 1.35;
+  // TWO MAPS, SIDE BY SIDE, EACH WITH ITS OWN SELECTOR.
+  //
+  // Three fixed thumbnails is not a comparison, it is a contact sheet: the reader gets whatever three
+  // views someone chose, at a third of the width each, and cannot ask the one question this panel
+  // exists for, which is "does THIS vary with THAT". Two maps at half width are legible, and letting
+  // each one choose its variable means every pair is available instead of one fixed triple.
+  const [left, setLeft] = useState<FieldVar>('grade');
+  const [right, setRight] = useState<FieldVar>('coarse');
+
   return (
-    <div>
-      <div className={wide ? 'st-multiples st-multiples-wide' : 'st-multiples'}>
-        {views.map((v) => (
-          <figure key={v.key}>
-            <FieldMap field={field} by={v.key} dark={dark} />
-            <figcaption>{v.en}</figcaption>
+    <div className="st-fieldpanel">
+      <div className="st-pair">
+        {([[left, setLeft, 'left'], [right, setRight, 'right']] as const).map(([v, set, side]) => (
+          <figure key={side}>
+            <label className="st-sel">
+              <span>show</span>
+              <select value={v} onChange={(e) => set(e.target.value as FieldVar)}>
+                {FIELD_VARS.map((o) => (
+                  <option key={o.key} value={o.key}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <FieldMap field={field} by={v} dark={dark} />
+            <figcaption>{FIELD_VARS.find((o) => o.key === v)?.caption}</figcaption>
           </figure>
         ))}
       </div>
       <p className="st-note">
-        The same pile, coloured three ways. Grade is what the plant receives; coarse fraction is what
-        size segregation did on the way down each face; thickness is how much material is actually
-        there, measured against the ORIGINAL ground rather than against zero, which are different
-        questions on any sloping site. A cell with no material is drawn as pad, never as material at
-        grade zero: that confusion once made an empty pad read as a full pile.
+        The same pile, two variables at a time. A cell with no material is drawn as pad, never as
+        material at grade zero: that confusion once made an empty pad read as a full pile.
       </p>
     </div>
   );
 }
+
+export type FieldVar = 'grade' | 'coarse' | 'thickness' | 'lift' | 'ground';
+
+const FIELD_VARS: { key: FieldVar; label: string; caption: string }[] = [
+  { key: 'grade', label: 'grade', caption: 'grade, what the plant receives' },
+  { key: 'coarse', label: 'coarse fraction', caption: 'coarse fraction, what segregation did on each face' },
+  { key: 'thickness', label: 'thickness', caption: 'thickness of material above the ORIGINAL ground' },
+  { key: 'lift', label: 'surface elevation', caption: 'surface elevation, ground plus material' },
+  { key: 'ground', label: 'original ground', caption: 'the landform before a single load was placed' },
+];
 
 function FieldMap({
   field,
@@ -227,19 +244,26 @@ function FieldMap({
   dark,
 }: {
   field: Field;
-  by: 'grade' | 'coarse' | 'thickness';
+  by: FieldVar;
   dark: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   const { vals, lo, hi, unit } = useMemo(() => {
     const thick = field.z.map((v, i) => v - field.z0[i]);
-    const v =
+    // `lift` and `ground` are drawn EVERYWHERE, including on bare pad, because a landform is there
+    // whether or not anything was tipped on it. The other three are properties OF THE MATERIAL, so
+    // they are null where there is none.
+    const v: (number | null)[] =
       by === 'grade'
-        ? field.grade
+        ? field.grade.map((g, i) => (thick[i] > EMPTY ? g : null))
         : by === 'coarse'
-          ? field.coarse
-          : thick.map((t) => (t > EMPTY ? t : null));
+          ? field.coarse.map((c, i) => (thick[i] > EMPTY ? c : null))
+          : by === 'thickness'
+            ? thick.map((t) => (t > EMPTY ? t : null))
+            : by === 'lift'
+              ? field.z.slice()
+              : field.z0.slice();
     const present = v.filter((x): x is number => x !== null && Number.isFinite(x));
     return {
       vals: v,

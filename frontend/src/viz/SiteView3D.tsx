@@ -25,7 +25,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
-import type { Field, Load, Plan } from '../lib/scenario';
+import type { Field, Load, Plan, PlayState } from '../lib/scenario';
 
 export type ColourBy = 'grade' | 'coarse' | 'thickness' | 'lift';
 
@@ -40,18 +40,23 @@ interface Props {
   plan: Plan;
   loads: Load[];
   colourBy: ColourBy;
-  /** Sequence number of the load being worked right now, or null for the finished pile.
+  /** The moment being played, or null for the finished pile.
    *
-   *  WHEN SOMETHING IS PLAYING, ONLY THE ACTIVE TRUCK IS DRAWN. Showing every path driven so far
-   *  turns the site into a ball of string and hides the one thing the reader is watching: where this
-   *  load came from and where it went. The full history is still available, as a deliberate toggle,
-   *  for reading the access pattern of the whole campaign. */
-  activeSeq?: number | null;
+   *  WHEN SOMETHING IS PLAYING, ONE TRUCK IS DRAWN AND IT IS MOVING. Showing every path driven so far
+   *  turns the site into a ball of string and hides the one thing the reader is watching: this truck,
+   *  driving in on the route the engine solved, tipping, and driving away. The trail behind it is
+   *  solid and the road ahead of it is faint, so the direction of travel is legible in a still frame.
+   *  The full history stays available behind a deliberate toggle, for reading the access pattern of
+   *  the whole campaign. */
+  play?: PlayState | null;
   showPaths: boolean;
   showCrest: boolean;
   showPlan: boolean;
   dark: boolean;
   height?: number;
+  /** The value range actually drawn, so the page can put a labelled scale beside the stage. A
+   *  colour ramp with no numbers on it is decoration. */
+  onRange?: (r: { lo: number; hi: number }) => void;
 }
 
 /** Perceptually ordered ramp, readable in both themes and safe for the common colour deficiencies. */
@@ -113,12 +118,13 @@ export default function SiteView3D({
   plan,
   loads,
   colourBy,
-  activeSeq = null,
+  play = null,
   showPaths,
   showCrest,
   showPlan,
   dark,
   height = 460,
+  onRange,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const live = useRef<Live | null>(null);
@@ -190,11 +196,22 @@ export default function SiteView3D({
     // -- camera and interaction ---------------------------------------------------------------
     // These live HERE, not in the content effect, so that scrubbing the build or ticking a checkbox
     // leaves the reader looking at the same thing from the same place.
-    const R = Math.max(W, H);
-    let az = -0.7;
-    let el2 = 0.62;
-    let dist = R * 1.15;
-    const target = new THREE.Vector3(0, 0, 0);
+    // FRAME THE WORK, NOT THE PAD. The pad is deliberately bigger than the dump areas, because the
+    // trucks have to drive somewhere, and centring on it put the pile in a corner with three
+    // quarters of the screen given over to empty ground. The camera looks at the middle of the
+    // planned areas and sits back by THEIR extent.
+    const ax0 = Math.min(...plan.areas.map((a) => a.x0));
+    const ax1 = Math.max(...plan.areas.map((a) => a.x1));
+    const ay0 = Math.min(...plan.areas.map((a) => a.y0));
+    const ay1 = Math.max(...plan.areas.map((a) => a.y1));
+    const focusX = (ax0 + ax1) / 2 - W / 2;
+    const focusZ = (ay0 + ay1) / 2 - H / 2;
+    const R = Math.max(ax1 - ax0, ay1 - ay0) * 1.35;
+    const home = { az: -0.7, el: 0.55, dist: R * 1.25 };
+    let az = home.az;
+    let el2 = home.el;
+    let dist = home.dist;
+    const target = new THREE.Vector3(focusX, 0, focusZ);
 
     const place = () => {
       camera.position.set(
@@ -253,7 +270,7 @@ export default function SiteView3D({
     };
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
-      dist = Math.min(Math.max(dist * (1 + Math.sign(e.deltaY) * 0.12), R * 0.35), R * 2.6);
+      dist = Math.min(Math.max(dist * (1 + Math.sign(e.deltaY) * 0.12), R * 0.25), R * 4.0);
       place();
       render();
     };
@@ -266,10 +283,10 @@ export default function SiteView3D({
     dom.addEventListener('wheel', wheel, { passive: false });
 
     const recentre = () => {
-      az = -0.7;
-      el2 = 0.62;
-      dist = R * 1.15;
-      target.set(0, 0, 0);
+      az = home.az;
+      el2 = home.el;
+      dist = home.dist;
+      target.set(focusX, 0, focusZ);
       place();
       render();
     };
@@ -315,7 +332,7 @@ export default function SiteView3D({
       renderer.dispose();
       el.innerHTML = '';
     };
-  }, [field, dark, height]);
+  }, [field, plan, dark, height]);
 
   // -- what is on the stage: rewritten whenever the data or the switches move -------------------
   useEffect(() => {
@@ -373,6 +390,7 @@ export default function SiteView3D({
       pos.needsUpdate = true;
       colAttr.needsUpdate = true;
       L.mGeo.computeVertexNormals();
+      onRange?.(colourBy === 'thickness' ? { lo: 0, hi: maxT } : { lo, hi });
     }
 
     // -- the marks -------------------------------------------------------------------------------
@@ -445,42 +463,67 @@ export default function SiteView3D({
 
     // The truck paths. Approach and departure, drawn separately, because "it does not appear from
     // nothing" is the whole point: a load arrived on a machine that had to get there and then leave.
-    if (showPaths) {
-      // Playing: the truck working right now, and nothing else. Parked: the recent history, which
-      // is what shows how the campaign reached the whole area.
-      const recent =
-        activeSeq === null
-          ? loads.filter((l) => l.placed).slice(-40)
-          : loads.filter((l) => l.placed && l.seq <= activeSeq).slice(-1);
-      // The active truck gets a heavier line, because on its own it has to carry the frame.
-      const solo = activeSeq !== null;
-      const mk = (pts: [number, number][], colour: number, lift: number) => {
-        if (pts.length < 2) return;
-        const g = new THREE.BufferGeometry().setFromPoints(
-          pts.map(([x, z]) => {
-            const i = Math.min(Math.max(Math.floor(x / cm), 0), nx - 1);
-            const j = Math.min(Math.max(Math.floor(z / cm), 0), ny - 1);
-            return new THREE.Vector3(x - W / 2, Z[j * nx + i] + lift, z - H / 2);
+    const groundAt = (x: number, y: number) => {
+      const i = Math.min(Math.max(Math.floor(x / cm), 0), nx - 1);
+      const j = Math.min(Math.max(Math.floor(y / cm), 0), ny - 1);
+      return Z[j * nx + i];
+    };
+    const mkLine = (
+      pts: [number, number][], colour: number, lift: number, opacity = 1, width = 1,
+    ) => {
+      if (pts.length < 2) return;
+      const g = new THREE.BufferGeometry().setFromPoints(
+        pts.map(([x, y]) => new THREE.Vector3(x - W / 2, groundAt(x, y) + lift, y - H / 2)),
+      );
+      L.content.add(
+        new THREE.Line(
+          g,
+          new THREE.LineBasicMaterial({
+            color: colour, transparent: opacity < 1, opacity, linewidth: width,
           }),
-        );
-        L.content.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: colour })));
-      };
-      for (const l of recent) {
-        mk(l.approach ?? [], dark ? 0x62e08a : 0x0f7a3d, 1.2);
-        mk(l.departure ?? [], dark ? 0xff8f6b : 0xb2401b, 0.8);
+        ),
+      );
+    };
+
+    if (showPaths) {
+      if (play) {
+        // THE TRUCK IS DRIVING. Trail solid behind it, road ahead faint, so a paused frame still
+        // says which way it is going.
+        const hot = play.phase === 'departure';
+        mkLine(play.trail, hot ? (dark ? 0xff8f6b : 0xb2401b) : (dark ? 0x62e08a : 0x0f7a3d), 1.3);
+        mkLine(play.ahead, dark ? 0x7f8b99 : 0x9aa4b0, 1.1, 0.45);
+      } else {
+        // Parked on the finished pile: the recent history, which is what shows how the campaign
+        // reached the whole area.
+        for (const l of loads.filter((l) => l.placed).slice(-40)) {
+          mkLine((l.approach ?? []) as [number, number][], dark ? 0x62e08a : 0x0f7a3d, 1.2);
+          mkLine((l.departure ?? []) as [number, number][], dark ? 0xff8f6b : 0xb2401b, 0.8);
+        }
       }
-      // The truck itself, sitting where it tipped, so the reader can see WHAT is making the pile
-      // grow rather than only the line it drove along.
-      const l = solo ? recent[recent.length - 1] : undefined;
-      if (l && l.x !== undefined && l.y !== undefined) {
-        const i = Math.min(Math.max(Math.floor(l.x / cm), 0), nx - 1);
-        const j = Math.min(Math.max(Math.floor(l.y / cm), 0), ny - 1);
-        const box = new THREE.Mesh(
-          new THREE.BoxGeometry(9, 5, 13),
-          new THREE.MeshLambertMaterial({ color: dark ? 0xffd479 : 0xc27a00 }),
+
+      // The truck itself, so the reader sees WHAT is making the pile grow rather than only the line
+      // it drove along. The tray lifts while it tips, which is the moment the material appears.
+      if (play?.truck) {
+        const { x, y, heading } = play.truck;
+        const body = new THREE.Group();
+        const chassis = new THREE.Mesh(
+          new THREE.BoxGeometry(11.5, 2.6, 6.5),
+          new THREE.MeshLambertMaterial({ color: dark ? 0x59636f : 0x46505c }),
         );
-        box.position.set(l.x - W / 2, Z[j * nx + i] + 3.2, l.y - H / 2);
-        L.content.add(box);
+        chassis.position.y = 1.6;
+        body.add(chassis);
+        const tray = new THREE.Mesh(
+          new THREE.BoxGeometry(8.5, 3.4, 6.8),
+          new THREE.MeshLambertMaterial({ color: dark ? 0xffd479 : 0xd98a00 }),
+        );
+        tray.position.set(-1.2, 4.4, 0);
+        // Tipping: the tray pitches up about its rear pivot.
+        tray.rotation.z = play.phase === 'tip' ? -0.85 : 0;
+        if (play.phase === 'tip') tray.position.y = 5.2;
+        body.add(tray);
+        body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
+        body.rotation.y = -heading;
+        L.content.add(body);
       }
     }
 
@@ -498,7 +541,7 @@ export default function SiteView3D({
     }
 
     L.render();
-  }, [field, surface, plan, loads, colourBy, activeSeq, showPaths, showCrest, showPlan, dark, height]);
+  }, [field, surface, plan, loads, colourBy, play, showPaths, showCrest, showPlan, dark, height, onRange]);
 
   return <div ref={host} style={{ width: '100%', height }} aria-label="Site in three dimensions" />;
 }

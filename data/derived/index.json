@@ -2,6 +2,87 @@
   "scenarios": [
     {
       "build": {
+        "dozer_passes": 32,
+        "loads_placed": 298,
+        "mean_displacement_m": 25.35,
+        "peak_m": 10.8,
+        "profiles": {
+          "comet": 37,
+          "oval": 70,
+          "paddock": 161,
+          "rectangular": 29,
+          "sloughed_heap": 1
+        },
+        "refusal_rate": 0.4679,
+        "volume_m3": 33644.0
+      },
+      "gate": {
+        "kill_criterion": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 560,
+        "loads_placed": 298,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.4679,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "single",
+      "summary": {
+        "en": "A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.",
+        "es": "Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."
+      },
+      "tags": [
+        "basic",
+        "physics"
+      ],
+      "title": {
+        "en": "One working stock",
+        "es": "Un acopio en operacion"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 52,
+        "loads_placed": 419,
+        "mean_displacement_m": 30.32,
+        "peak_m": 11.09,
+        "profiles": {
+          "comet": 35,
+          "oval": 66,
+          "paddock": 287,
+          "rectangular": 27,
+          "sloughed_heap": 4
+        },
+        "refusal_rate": 0.5344,
+        "volume_m3": 48642.3
+      },
+      "gate": {
+        "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 419,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.5344,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "yard",
+      "summary": {
+        "en": "The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.",
+        "es": "La aplicacion completa. Tres areas nombradas contienen material de clases declaradas distintas, las cargas se enrutan a un area segun su estimacion de control de leyes, y varias areas se construyen a la vez. Aqui la vista por sector se justifica: cada area reporta una ley, el campo crudo debajo muestra cuan estratificada esta en realidad, y la secuencia de recuperacion decide cual de las dos recibe la planta."
+      },
+      "tags": [
+        "core",
+        "sectors",
+        "routing"
+      ],
+      "title": {
+        "en": "Multi-area stockyard",
+        "es": "Patio de acopios multi-area"
+      }
+    },
+    {
+      "build": {
         "dozer_passes": 35,
         "loads_placed": 326,
         "mean_displacement_m": 20.05,
@@ -38,6 +119,126 @@
       "title": {
         "en": "Sidehill fill on real topography",
         "es": "Acopio en ladera sobre topografia real"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 34,
+        "loads_placed": 328,
+        "mean_displacement_m": 16.17,
+        "peak_m": 26.6,
+        "profiles": {
+          "comet": 48,
+          "oval": 81,
+          "paddock": 162,
+          "rectangular": 33,
+          "sloughed_heap": 4
+        },
+        "refusal_rate": 0.4143,
+        "volume_m3": 31567.1
+      },
+      "gate": {
+        "kill_criterion": "The pile must stand HIGHER than the flat-pad case built from the same load budget, because that is what confinement means. If it does not, the ground is not constraining the material and the topography is decoration.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 560,
+        "loads_placed": 328,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.4143,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "valley",
+      "summary": {
+        "en": "The same campaign tipped into a valley. Confinement changes the answer: the ground holds the material on two sides, so the same tonnage stands markedly higher than it does free-standing on a pad, and the working face runs along the valley rather than out in every direction.",
+        "es": "La misma campana descargada en un valle. El confinamiento cambia la respuesta: el terreno sostiene el material por dos lados, de modo que el mismo tonelaje se para bastante mas alto que libre sobre una plataforma, y la cara de trabajo corre a lo largo del valle."
+      },
+      "tags": [
+        "topography",
+        "valley"
+      ],
+      "title": {
+        "en": "Valley fill, confined on two sides",
+        "es": "Relleno de valle, confinado en dos lados"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 36,
+        "loads_placed": 329,
+        "mean_displacement_m": 40.35,
+        "peak_m": 29.78,
+        "profiles": {
+          "comet": 47,
+          "oval": 85,
+          "paddock": 162,
+          "rectangular": 33,
+          "sloughed_heap": 2
+        },
+        "refusal_rate": 0.4125,
+        "volume_m3": 39406.6
+      },
+      "gate": {
+        "kill_criterion": "Buildable ground before any load is placed must be measurably lower than on a flat pad, and no cell may end below its original ground. A ridge that behaves like a pad has not been modelled.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 560,
+        "loads_placed": 329,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.4125,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "ridge",
+      "summary": {
+        "en": "Built along a ridge, where the ground falls away on both sides. Every edge dump has two faces to choose between, and material that overruns a toe is gone down a hillside rather than sitting at the foot of the pile.",
+        "es": "Construido a lo largo de una cresta, donde el terreno cae por ambos lados. Cada descarga de borde tiene dos caras entre las que elegir, y el material que pasa el pie se va ladera abajo en vez de quedar al pie de la pila."
+      },
+      "tags": [
+        "topography",
+        "ridge"
+      ],
+      "title": {
+        "en": "Ridge crest fill, shedding both ways",
+        "es": "Relleno en cresta, vertiendo a ambos lados"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 32,
+        "loads_placed": 298,
+        "mean_displacement_m": 25.35,
+        "peak_m": 10.8,
+        "profiles": {
+          "comet": 37,
+          "oval": 70,
+          "paddock": 161,
+          "rectangular": 29,
+          "sloughed_heap": 1
+        },
+        "refusal_rate": 0.4679,
+        "volume_m3": 33644.0
+      },
+      "gate": {
+        "kill_criterion": "The measured stream range must be substantially SHORTER than the reference case built with the same seed and geometry. If the dwell does not move the range, the stream model is not causal and the product is claiming something it does not do.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 560,
+        "loads_placed": 298,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.4679,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "short_dwell",
+      "summary": {
+        "en": "The same stockpile fed by a shovel that moves between dig blocks every few loads instead of every twenty. Nothing about the pile changes; only the ORDER the grades arrive in. That is the whole control an operation has over how much a stockpile can help it.",
+        "es": "El mismo acopio alimentado por una pala que cambia de bloque cada pocas cargas en vez de cada veinte. Nada de la pila cambia; solo el ORDEN en que llegan las leyes. Ese es todo el control que una operacion tiene sobre cuanto puede ayudarle un acopio."
+      },
+      "tags": [
+        "stream",
+        "contrast"
+      ],
+      "title": {
+        "en": "Short shovel dwell, decorrelated feed",
+        "es": "Permanencia corta de la pala, alimentacion descorrelacionada"
       }
     }
   ],
