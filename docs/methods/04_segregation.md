@@ -1,6 +1,6 @@
 # Method 4: kinetic size segregation as a conservation law
 
-**Family:** segregation · **Rung:** SOTA · **Tier:** live · `model/segregation.py`, `engine/segregation.ts`
+**Family:** segregation · **Rung:** SOTA · **Tier:** precomputed · `bedblend/facesegregation.py`
 
 ## The mechanism
 

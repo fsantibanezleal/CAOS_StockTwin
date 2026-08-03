@@ -1,6 +1,6 @@
 # Method 12: the residence-time distribution
 
-**Family:** traceability · **Rung:** classical · **Tier:** live · `model/rtd.py`, `engine/rtd.ts`
+**Family:** traceability · **Rung:** classical · **Tier:** live in the browser · `frontend/src/lib/scenario.ts`
 
 ## What it computes
 

@@ -1,6 +1,6 @@
 # Method 9: the variance reduction ratio
 
-**Family:** blending · **Rung:** classical · **Tier:** live · `model/blending.py`, `engine/blending.ts`
+**Family:** blending · **Rung:** classical · **Tier:** live in the browser · `bedblend/blending.py`, `frontend/src/lib/scenario.ts`
 
 ## The definition, and the direction of the inequality
 

@@ -11,10 +11,10 @@ segregation-number calibration is settled and its residual recorded.
 ## Running it
 
 ```bash
-python -m stlab.pipeline                        # every case, canonical bake
-python -m stlab.pipeline G01_chevron --seed 7
-python -m stlab.pipeline G01_chevron --output build/smoke --band-seeds 3
-python -m stlab.pipeline --validate-only
+python data-pipeline/run.py                        # every case, canonical bake
+python data-pipeline/run.py G01_chevron --seed 7
+python data-pipeline/run.py G01_chevron --output build/smoke --band-seeds 3
+python data-pipeline/run.py --validate-only
 ```
 
 ## The sandbox rule
