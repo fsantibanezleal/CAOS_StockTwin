@@ -1,0 +1,147 @@
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 58,
+    "loads_placed": 744,
+    "mean_displacement_m": 19.6,
+    "peak_m": 13.2,
+    "profiles": {
+      "comet": 136,
+      "oval": 255,
+      "paddock": 138,
+      "rectangular": 92,
+      "sloughed_heap": 123
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 74317.6
+  },
+  "category": "campaign",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 745,
+  "gate": {
+    "kill_criterion": "Delivered tonnage must be several times the reference campaign's, and no cut may report negative or NaN tonnage as the pile empties. A campaign that drains a pile it has already exhausted is not tracking the material.",
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 744,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.1733,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "intensive_drain",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "A cut crosses the layers it can reach, and how many that is depends on how deep the campaign goes. Variance reduction measured over a shallow campaign is a different quantity from the same metric over a full one, and the difference is not small.",
+  "reclaim": {
+    "n_cuts": 90,
+    "tonnes": 30660.6
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02873124
+  },
+  "summary": {
+    "en": "The same pile, reclaimed hard: many small cuts rather than a few large ones, run until the pile is substantially gone. Reclaim is where the blending actually happens, and a campaign that stops at a quarter of the pile has only sampled the top of it.",
+    "es": "La misma pila, recuperada con fuerza: muchos cortes pequenos en vez de pocos grandes, hasta desarmar buena parte de la pila. La recuperacion es donde ocurre la mezcla, y una campana que se detiene en un cuarto de la pila solo ha muestreado su parte superior."
+  },
+  "tags": [
+    "campaign",
+    "reclaim"
+  ],
+  "title": {
+    "en": "Intensive draining, the pile taken back down",
+    "es": "Drenaje intensivo, la pila desarmada"
+  }
+}

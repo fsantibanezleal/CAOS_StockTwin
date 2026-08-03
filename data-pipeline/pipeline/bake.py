@@ -261,6 +261,28 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
     }
 
 
+def _frame_deltas(frames: list[tuple[int, int, list[float]]]) -> list[dict]:
+    """First frame complete, the rest as the cells that changed.
+
+    A cell counts as changed when it moves by more than the rounding the frames are already stored
+    at, so the encoding cannot introduce drift the reader would see.
+    """
+    out: list[dict] = []
+    prev: list[float] | None = None
+    for sq, n, z in frames:
+        if prev is None:
+            out.append({"seq": sq, "placed": n, "z": z})
+        else:
+            d: list[float] = []
+            for i, v in enumerate(z):
+                if abs(v - prev[i]) > 0.05:
+                    d.append(i)
+                    d.append(v)
+            out.append({"seq": sq, "placed": n, "d": d})
+        prev = z
+    return out
+
+
 def _stride(nx: int, ny: int) -> int:
     """Cell stride for playback frames.
 
@@ -474,10 +496,15 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
                 "cell_m": res.terrain.cell_m,
                 "step": _stride(res.terrain.nx, res.terrain.ny),
                 "z0": _half(res.terrain.z0, res.terrain.nx, res.terrain.ny),
-                "frames": [
-                    {"seq": sq, "placed": n, "z": _half(z, res.terrain.nx, res.terrain.ny)}
-                    for sq, n, z in res.snapshots
-                ],
+                # DELTAS, BECAUSE A FRAME IS ONE TRUCK. A load touches a couple of dozen cells and
+                # leaves the other nine hundred exactly as they were, so a full surface per frame is
+                # the same numbers written seven hundred times: 2.6 MB per scenario, 110 MB for the
+                # site. The first frame is complete and the rest carry only what moved, as flat
+                # [index, value, index, value] pairs. Reconstruction in the browser is an
+                # accumulation, and it is exact rather than lossy.
+                "frames": _frame_deltas(
+                    [(sq, n, _half(z, res.terrain.nx, res.terrain.ny)) for sq, n, z in res.snapshots]
+                ),
             },
             separators=(",", ":"),
         ),

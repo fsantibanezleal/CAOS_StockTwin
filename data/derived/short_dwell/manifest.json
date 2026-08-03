@@ -1,19 +1,94 @@
 {
-  "build": {
-    "dozer_passes": 32,
-    "loads_placed": 298,
-    "mean_displacement_m": 25.35,
-    "peak_m": 10.8,
-    "profiles": {
-      "comet": 37,
-      "oval": 70,
-      "paddock": 161,
-      "rectangular": 29,
-      "sloughed_heap": 1
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
     },
-    "refusal_rate": 0.4679,
-    "volume_m3": 33644.0
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 58,
+    "loads_placed": 744,
+    "mean_displacement_m": 19.78,
+    "peak_m": 13.62,
+    "profiles": {
+      "comet": 136,
+      "oval": 255,
+      "paddock": 138,
+      "rectangular": 92,
+      "sloughed_heap": 123
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 79081.6
   },
+  "category": "feed",
   "engine": "bedblend",
   "files": [
     "plan.json",
@@ -21,17 +96,18 @@
     "sectors.json",
     "field.json",
     "cuts.json",
-    "frames.json"
+    "frames.json",
+    "volume.json"
   ],
-  "frames": 299,
+  "frames": 745,
   "gate": {
     "kill_criterion": "The measured stream range must be substantially SHORTER than the reference case built with the same seed and geometry. If the dwell does not move the range, the stream model is not causal and the product is claiming something it does not do.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 560,
-    "loads_placed": 298,
+    "loads_offered": 900,
+    "loads_placed": 744,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.4679,
+    "refusal_rate": 0.1733,
     "worst_local_slope_deg": 37.0
   },
   "id": "short_dwell",
@@ -41,20 +117,20 @@
   },
   "pad": {
     "cell_m": 2.5,
-    "nx": 72,
-    "ny": 72
+    "nx": 60,
+    "ny": 60
   },
   "reason": "The causal claim of the whole product, isolated. Grade autocorrelation is a consequence of the dig sequence rather than a property of the ore, so changing ONLY the shovel dwell must move the measured stream range and the blending result, everything else held fixed.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 4914.4
+    "tonnes": 21608.9
   },
   "seed": 20260802,
   "stream": {
     "loads_per_block": 4,
-    "measured_range_t": 903.4,
-    "n_loads": 560,
-    "var_in": 0.02419107
+    "measured_range_t": 852.5,
+    "n_loads": 900,
+    "var_in": 0.02471293
   },
   "summary": {
     "en": "The same stockpile fed by a shovel that moves between dig blocks every few loads instead of every twenty. Nothing about the pile changes; only the ORDER the grades arrive in. That is the whole control an operation has over how much a stockpile can help it.",

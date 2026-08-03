@@ -141,7 +141,11 @@ export interface Frames {
    *  which is what lets a player show the truck working right now instead of every path ever
    *  driven. */
   step?: number;
-  frames: { seq: number; placed: number; z: number[] }[];
+  /** The first frame is complete; the rest carry only the cells that changed, as flat
+   *  [index, value, index, value] pairs. A load touches a couple of dozen cells and leaves the rest
+   *  alone, so a full surface per frame writes the same numbers hundreds of times: 2.6 MB per
+   *  scenario against 110 MB for the whole site. `expandFrame` accumulates them. */
+  frames: { seq: number; placed: number; z?: number[]; d?: number[] }[];
 }
 
 export interface Cut {
@@ -592,16 +596,48 @@ export function playState(sc: Scenario, pos: number): PlayState | null {
  * rendering fault. It rounds the crest by a fraction of a cell while playing; the final state is
  * drawn from the real field, so nothing measured is affected.
  */
+/** The coarse surface at `index`, accumulating deltas from the last complete frame. Cached, because
+ *  playing forward would otherwise replay the whole history on every tick. */
+const COARSE = new WeakMap<Frames, { at: number; z: number[] }>();
+
+function coarseAt(f: Frames, index: number): number[] | null {
+  const first = f.frames[0];
+  if (!first?.z) return null;
+  const cache = COARSE.get(f);
+  let at: number;
+  let z: number[];
+  if (cache && cache.at <= index) {
+    at = cache.at;
+    z = cache.z;
+  } else {
+    at = 0;
+    z = first.z.slice();
+  }
+  for (let k = at + 1; k <= index; k++) {
+    const fr = f.frames[k];
+    if (!fr) break;
+    if (fr.z) {
+      z = fr.z.slice();
+    } else if (fr.d) {
+      for (let i = 0; i + 1 < fr.d.length; i += 2) z[fr.d[i]] = fr.d[i + 1];
+    }
+  }
+  COARSE.set(f, { at: index, z });
+  return z;
+}
+
 export function expandFrame(f: Frames, index: number): number[] | null {
   const fr = f.frames[index];
   if (!fr) return null;
+  const coarse = coarseAt(f, index);
+  if (!coarse) return null;
   const step = f.step ?? 1;
-  if (step === 1) return fr.z;
+  if (step === 1) return coarse.slice();
 
   const { nx, ny } = f;
   const hnx = Math.ceil(nx / step);
   const hny = Math.ceil(ny / step);
-  if (fr.z.length !== hnx * hny) return null;
+  if (coarse.length !== hnx * hny) return null;
 
   const out = new Array<number>(nx * ny);
   for (let j = 0; j < ny; j++) {
@@ -614,10 +650,10 @@ export function expandFrame(f: Frames, index: number): number[] | null {
       const i0 = Math.min(Math.floor(u), hnx - 1);
       const i1 = Math.min(i0 + 1, hnx - 1);
       const ti = u - i0;
-      const a = fr.z[j0 * hnx + i0];
-      const b = fr.z[j0 * hnx + i1];
-      const c = fr.z[j1 * hnx + i0];
-      const d = fr.z[j1 * hnx + i1];
+      const a = coarse[j0 * hnx + i0];
+      const b = coarse[j0 * hnx + i1];
+      const c = coarse[j1 * hnx + i0];
+      const d = coarse[j1 * hnx + i1];
       out[j * nx + i] = (a + (b - a) * ti) * (1 - tj) + (c + (d - c) * ti) * tj;
     }
   }

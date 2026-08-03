@@ -1,0 +1,147 @@
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 58,
+    "loads_placed": 744,
+    "mean_displacement_m": 16.3,
+    "peak_m": 12.51,
+    "profiles": {
+      "comet": 120,
+      "oval": 251,
+      "paddock": 137,
+      "rectangular": 96,
+      "sloughed_heap": 140
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 78865.7
+  },
+  "category": "operations",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 745,
+  "gate": {
+    "kill_criterion": "The refusal rate must be no better than the reference. A narrower way in cannot make access easier, and if it does the corridor is not the thing controlling access.",
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 744,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.1733,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "narrow_ramp",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "Ramp width is a dump-design parameter with a real cost: every metre of corridor is capacity the footprint does not hold. Whether a narrow ramp actually costs placement is a measurement, not an assumption.",
+  "reclaim": {
+    "n_cuts": 24,
+    "tonnes": 22019.1
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02873124
+  },
+  "summary": {
+    "en": "A twelve-metre corridor instead of twenty-five: single-lane access with no room to pass. The ramp still has to be cut and maintained out of the fill, with far less of it to work with.",
+    "es": "Un corredor de doce metros en vez de veinticinco: acceso de una pista sin lugar para cruzarse. La rampa igual debe cortarse y mantenerse en el relleno, con mucho menos con que trabajar."
+  },
+  "tags": [
+    "operations",
+    "access"
+  ],
+  "title": {
+    "en": "Narrow access ramp",
+    "es": "Rampa de acceso angosta"
+  }
+}

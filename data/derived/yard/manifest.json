@@ -1,19 +1,94 @@
 {
-  "build": {
-    "dozer_passes": 52,
-    "loads_placed": 419,
-    "mean_displacement_m": 30.32,
-    "peak_m": 11.09,
-    "profiles": {
-      "comet": 35,
-      "oval": 66,
-      "paddock": 287,
-      "rectangular": 27,
-      "sloughed_heap": 4
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
     },
-    "refusal_rate": 0.5344,
-    "volume_m3": 48642.3
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 174,
+    "loads_placed": 2232,
+    "mean_displacement_m": 20.85,
+    "peak_m": 13.7,
+    "profiles": {
+      "comet": 408,
+      "oval": 728,
+      "paddock": 412,
+      "rectangular": 274,
+      "sloughed_heap": 410
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 238780.5
   },
+  "category": "yard",
   "engine": "bedblend",
   "files": [
     "plan.json",
@@ -21,17 +96,18 @@
     "sectors.json",
     "field.json",
     "cuts.json",
-    "frames.json"
+    "frames.json",
+    "volume.json"
   ],
-  "frames": 420,
+  "frames": 2233,
   "gate": {
     "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 900,
-    "loads_placed": 419,
+    "loads_offered": 2700,
+    "loads_placed": 2232,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.5344,
+    "refusal_rate": 0.1733,
     "worst_local_slope_deg": 37.0
   },
   "id": "yard",
@@ -41,20 +117,20 @@
   },
   "pad": {
     "cell_m": 2.5,
-    "nx": 136,
-    "ny": 80
+    "nx": 148,
+    "ny": 60
   },
   "reason": "Routing by declared class is what an operation actually does, and it is the only configuration in which a sector rollup can be compared against anything. A single-area yard has one sector, so the raw-versus-sector comparison has nothing to say.",
   "reclaim": {
     "n_cuts": 30,
-    "tonnes": 4368.5
+    "tonnes": 61909.0
   },
   "seed": 20260802,
   "stream": {
     "loads_per_block": 20,
-    "measured_range_t": 5265.2,
-    "n_loads": 900,
-    "var_in": 0.0403974
+    "measured_range_t": 4480.0,
+    "n_loads": 2700,
+    "var_in": 0.04099415
   },
   "summary": {
     "en": "The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.",
