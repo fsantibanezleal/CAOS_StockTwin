@@ -32,8 +32,12 @@ const EMPTY = 1e-4;
  *  before this existed, the table-led views ran at 14 to 26 percent, which is the ADR's own
  *  description of "showing chrome with a picture in it". A table is a readout, not an instrument, so
  *  each of these views now LEADS with a chart and keeps its table underneath. */
-function stageChartHeight(): number {
-  return Math.max(300, Math.round(window.innerHeight * 0.58));
+function stageChartHeight(el?: HTMLElement | null): number {
+  // MEASURE THE BOX. A fraction of the window ignores the header, the scenario deck, the tab strip
+  // and the footer, which together are most of a laptop screen; the charts came out taller than the
+  // space they had and the panel scrolled when it should have fitted.
+  const box = el?.parentElement?.clientHeight ?? 0;
+  return Math.max(320, Math.round(box > 120 ? box - 96 : window.innerHeight * 0.52));
 }
 
 function ramp(t: number): string {
@@ -79,8 +83,13 @@ export function PlanPanel({
     const W = field.nx * field.cell_m;
     const H = field.ny * field.cell_m;
     const draw = () => {
-      const cssW = cv.parentElement?.clientWidth ?? 600;
-      const s = cssW / W;
+      // Fit the WHOLE pad into the box: sized by width alone a square site is taller than the
+      // screen, which is what ran the plan and field views past the footer.
+      const availW = cv.parentElement?.clientWidth ?? 600;
+      const box = cv.parentElement?.clientHeight ?? 0;
+      const availH = box > 200 ? box - 90 : Math.round(window.innerHeight * 0.58);
+      const s = Math.min(availW / W, availH / H);
+      const cssW = W * s;
       const cssH = H * s;
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
@@ -174,7 +183,45 @@ export function PlanPanel({
 
 /* ---------------------------------------------------------------- the raw field ------------- */
 
-export function FieldPanel({
+/** THREE LINKED MAPS, not one.
+ *
+ *  A single square plan map is height-limited in a wide viewport: fitted to the space available it
+ *  can never fill half the screen, and the rest of the width sits empty. Three of them side by side
+ *  fill it AND say more, because the question a reader has is not "what is the grade" but "does the
+ *  grade pattern follow the thickness, and does the coarse fraction follow either" — which is a
+ *  comparison, and a comparison needs the panels together. */
+export function FieldPanel({ field, dark }: { field: Field; by?: string; dark: boolean }) {
+  const views: { key: 'grade' | 'coarse' | 'thickness'; en: string }[] = [
+    { key: 'grade', en: 'grade' },
+    { key: 'coarse', en: 'coarse fraction' },
+    { key: 'thickness', en: 'thickness above ground' },
+  ];
+  // A WIDE pad stacks; a squarish one goes side by side. Three columns of a 136-by-80 field are
+  // three slivers, which is worse than one map, and the layout should follow the shape of the site
+  // rather than a fixed column count.
+  const wide = field.nx / field.ny > 1.35;
+  return (
+    <div>
+      <div className={wide ? 'st-multiples st-multiples-wide' : 'st-multiples'}>
+        {views.map((v) => (
+          <figure key={v.key}>
+            <FieldMap field={field} by={v.key} dark={dark} />
+            <figcaption>{v.en}</figcaption>
+          </figure>
+        ))}
+      </div>
+      <p className="st-note">
+        The same pile, coloured three ways. Grade is what the plant receives; coarse fraction is what
+        size segregation did on the way down each face; thickness is how much material is actually
+        there, measured against the ORIGINAL ground rather than against zero, which are different
+        questions on any sloping site. A cell with no material is drawn as pad, never as material at
+        grade zero: that confusion once made an empty pad read as a full pile.
+      </p>
+    </div>
+  );
+}
+
+function FieldMap({
   field,
   by,
   dark,
@@ -206,8 +253,10 @@ export function FieldPanel({
     const cv = ref.current;
     if (!cv) return;
     const draw = () => {
-      const cssW = cv.parentElement?.clientWidth ?? 600;
-      const s = cssW / field.nx;
+      const availW = cv.parentElement?.clientWidth ?? 600;
+      const availH = Math.max(220, Math.round(window.innerHeight * 0.55));
+      const s = Math.min(availW / field.nx, availH / field.ny);
+      const cssW = field.nx * s;
       const cssH = field.ny * s;
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
@@ -266,7 +315,7 @@ function EnvelopeChart({
     if (!cv) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = stageChartHeight();
+      const cssH = stageChartHeight(cv);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;
@@ -460,7 +509,7 @@ export function SectorPanel({ sectors, dark = false }: { sectors: Sector[]; dark
     if (!cv || !sectors.length) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = stageChartHeight();
+      const cssH = stageChartHeight(cv);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;
@@ -622,7 +671,7 @@ export function ReclaimPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
     if (!cv) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = stageChartHeight();
+      const cssH = stageChartHeight(cv);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;
@@ -750,7 +799,7 @@ export function VariogramPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
     if (!cv || !vg.centres.length) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = Math.round(stageChartHeight() * 0.62);
+      const cssH = Math.round(stageChartHeight(cv) * 0.62);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;

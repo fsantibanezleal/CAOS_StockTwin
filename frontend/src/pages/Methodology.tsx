@@ -1,4 +1,4 @@
-import { Callout, Cite, Equation, InlineMath, Refs, useShellLang } from '@fasl-work/caos-app-shell';
+import { Callout, Cite, Equation, InlineMath, Refs, useShellLang, Tabs } from '@fasl-work/caos-app-shell';
 
 /**
  * The method, in the order material moves through it.
@@ -10,19 +10,13 @@ import { Callout, Cite, Equation, InlineMath, Refs, useShellLang } from '@fasl-w
  */
 export default function Methodology() {
   const es = useShellLang() === 'es';
-  return (
-    <div className="page-body prose">
-      <div className="page-head">
-        <h1>{es ? 'Metodología' : 'Methodology'}</h1>
-        <p className="lede">
-          {es
-            ? 'El material pasa por siete operadores: el terreno que lo restringe, el plan que decide donde va, el camion que lo lleva, la descarga que le da forma, la relajacion que lo asienta, el bulldozer que lo mueve otra vez, y la recuperacion que lo saca. Cada uno se describe abajo con su fuente.'
-            : 'Material passes through seven operators: the terrain that constrains it, the plan that decides where it goes, the truck that carries it, the dump that shapes it, the relaxation that settles it, the dozer that moves it again, and the reclaim that takes it out. Each is described below with its source.'}
-        </p>
-      </div>
+  const tabs = [
+    {
+      id: 's0',
+      label: es ? 'Terreno y transitabilidad' : 'Terrain and trafficability',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '1. Terreno y transitabilidad' : '1. Terrain and trafficability'}</h2>
         <p>
           {es
             ? 'El estado es una elevacion actual y el terreno ORIGINAL, guardados por separado. En cualquier sitio con pendiente esas dos respuestas divergen de inmediato, y una vista que dibuja solo la superficie muestra una ladera como si fuera un acopio. De la superficie se derivan dos campos: la CRESTA del nivel de trabajo y la TRANSITABILIDAD.'
@@ -39,10 +33,15 @@ export default function Methodology() {
             ? 'Construir en ladera expuso ambos. El bulldozer elegia material por ELEVACION, lo cual es correcto en plano y catastrofico en pendiente: en una ladera el terreno alto ES el cerro, y la hoja llevo una celda 4,43 m por debajo del terreno original. Y la relajacion trataba la elevacion como libre y erosionaba la roca in situ. Ahora solo el material colocado puede moverse, y el terreno original es un piso.'
             : 'Building on a sidehill exposed both. The dozer selected material by ELEVATION, which is right on a flat pad and catastrophic on a slope: on a hillside the high ground IS the hill, and the blade drove a cell 4.43 m below original ground. And the relaxation treated elevation as free-floating and eroded bedrock. Only placed material can move now, and the original ground is a floor.'}
         </Callout>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's1',
+      label: es ? 'El plan de descarga' : 'The dump plan',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '2. El plan de descarga' : '2. The dump plan'}</h2>
         <p>
           {es
             ? 'Areas nombradas con un programa de bancos, mas un corredor de acceso reservado donde no se descarga nada. Las posiciones de descarga de paddock se generan sobre una retícula serpenteante de filas espaciadas; las de borde avanzan en barridos radiales desde un punto semilla. Las filas se ordenan de la mas lejana al acceso hacia la mas cercana, para que el camion nunca deba cruzar material que ya coloco.'
@@ -53,10 +52,15 @@ export default function Methodology() {
             ? 'La cadencia del bulldozer sigue la practica publicada: se empuja el material despues de dos filas. Y la berma TIENE HUECOS. Una berma continua sobre cada celda de cresta no es una berma, es un muro: medido, los rechazos SUBIAN cuanto mas corria el bulldozer, 62 por ciento con una pasada cada 10 cargas contra 33 por ciento cada 40. Con huecos, los rechazos caen a 19,2 por ciento.'
             : 'The dozer cadence follows published practice: material is dozed up the pile after two rows. And the berm HAS GAPS. A continuous berm along every crest cell is not a berm, it is a wall: measured, refusals went UP the more the dozer ran, 62 percent at one pass per 10 loads against 33 percent at one per 40. With gaps, refusals fall to 19.2 percent.'}
         </p>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's2',
+      label: es ? 'Camiones, rutas y posicionamiento' : 'Trucks, routes and spotting',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '3. Camiones, rutas y posicionamiento' : '3. Trucks, routes and spotting'}</h2>
         <p>
           {es
             ? 'Un camion es una entidad con posicion, rumbo, estado de ciclo, carga con su bloque de origen, y las dos polilineas que el producto debe poder dibujar: la aproximacion y la salida. Las rutas se resuelven con A* sobre la superficie transitable usando distancia real de viaje, de modo que un paso diagonal cuesta raiz de dos y no uno.'
@@ -73,10 +77,15 @@ export default function Methodology() {
             ? 'Un punto planificado a menudo no se puede ocupar. El operador se posiciona en el punto transitable mas cercano, que es exactamente lo que ocurre en terreno, y la desviacion se registra. Medido: 101 de 158 cargas caen exactamente donde se planificaron, con una desviacion media de 4,2 m. Esa brecha es la comparacion entre ubicacion planificada y real que un export de despacho permite hacer.'
             : 'A planned tip often cannot be occupied. The operator spots at the nearest workable point, which is exactly what happens on site, and the deviation is recorded. Measured: 101 of 158 loads land exactly as planned, mean deviation 4.2 m. That gap is the planned-against-actual dump location comparison a dispatch export supports.'}
         </Callout>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's3',
+      label: es ? 'La geometría de descarga, calibrada' : 'The dump geometry, calibrated',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '4. La geometría de descarga, calibrada' : '4. The dump geometry, calibrated'}</h2>
         <p>
           {es
             ? 'Dos regimenes, porque la fuente describe dos. Un monton de paddock sobre terreno plano toma la forma de un tronco eliptico dimensionado por el propio camion, colocado con una pendiente inicial cercana a 2:1 que se asienta hasta el angulo de reposo con el tiempo. Un volcado de borde cae en cascada por la cara.'
@@ -95,10 +104,15 @@ export default function Methodology() {
             : 'Which type forms is decided by distance to the crest. Among the three at-crest types the source is explicit that position alone does not determine it and that its hypothesis about uneven tray loading was never tested, so the choice is drawn from their measured frequencies with a fixed seed. The frequencies are real; the selection is admittedly stochastic.'}
           {' '}<Cite id="young2022" paren />
         </p>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's4',
+      label: es ? 'Relajación al ángulo de reposo' : 'Relaxation to the angle of repose',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '5. Relajación al ángulo de reposo' : '5. Relaxation to the angle of repose'}</h2>
         <p>
           {es
             ? 'La regla de derrumbe es la del automata de arena de Bak, Tang y Wiesenfeld, usada aqui solo como solucionador de relajacion conservativo: la pendiente critica se IMPONE como el angulo de reposo del material en vez de ser un parametro libre, y las estadisticas de avalancha quedan fuera de alcance. Una celda entrega un total T repartido como '
@@ -116,10 +130,15 @@ export default function Methodology() {
             ? 'Cuando una celda se derrumba QUEDA MAS BAJA, lo que desestabiliza a las celdas de ARRIBA. El solucionador anterior solo volvia a encolar a las que recibian material, asi que con una cola de mayor-primero un vecino cuesta arriba se revisaba una vez, salia estable, y nunca se volvia a mirar despues de que esta celda cayera por debajo. Resultado medido: 446 pares de celdas paradas hasta 55,9 grados contra 37 impuestos. Ahora cero, y el invariante se ASEVERA en cada bake.'
             : 'When a cell topples it GETS LOWER, which destabilises the cells ABOVE it. The previous solver only re-queued the cells that received material, so with a highest-first queue an uphill neighbour was checked once, came out stable, and was never looked at again after this cell dropped below it. Measured result: 446 cell pairs standing at up to 55.9 degrees against an imposed 37. Now zero, and the invariant is ASSERTED on every bake.'}
         </Callout>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's5',
+      label: es ? 'Segregación por tamaño en la cara' : 'Size segregation down the face',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '6. Segregación por tamaño en la cara' : '6. Size segregation down the face'}</h2>
         <p>
           {es
             ? 'El motor tenia un solucionador de cribado cinetico y nunca lo aplicaba, porque en el producto anterior nada formaba una cara por la que una avalancha pudiera correr. Ahora el grueso corre al pie y el fino queda cerca de la cresta, con parte del grueso rodando MAS ALLA del pie. Tres impulsores publicados, todos cantidades que el motor ya tenia: altura de caida, angulo de la cara y dispersion de tamanos.'
@@ -136,10 +155,15 @@ export default function Methodology() {
             ? 'La DIRECCION de cada efecto esta publicada y repetida en fuentes independientes. Las formas funcionales son las curvas mas simples que reproducen esas afirmaciones. Es un modelo operacional defendible, no uno constitutivo validado, y calibrarlo con DEM o con el ensayo de laboratorio correspondiente queda registrado como trabajo futuro en vez de suponerse hecho.'
             : 'The DIRECTION of every effect is published and repeated across independent sources. The functional forms are the simplest curves reproducing those statements. This is a defensible operational model, not a validated constitutive one, and calibrating it with DEM or the corresponding laboratory test is recorded as future work rather than quietly assumed.'}
         </Callout>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's6',
+      label: es ? 'El bulldozer, y la honestidad sobre la trazabilidad' : 'The dozer, and honesty about provenance',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '7. El bulldozer, y la honestidad sobre la trazabilidad' : '7. The dozer, and honesty about provenance'}</h2>
         <p>
           {es
             ? 'El bulldozer nivela el piso, empuja material sobre la cara, levanta bermas y desplaza material lateralmente. La fuente es directa: esas acciones mezclan el material desde su ubicacion original de descarga de formas intratables, y por eso es dificil saber donde esta el material dentro del acopio.'
@@ -151,10 +175,15 @@ export default function Methodology() {
             ? 'Consecuencia, y es un requisito de honestidad y no una funcionalidad: la version anterior reportaba fracciones de procedencia que sumaban uno con 1e-12 de tolerancia y presentaba eso como respuesta. Con un bulldozer en el modelo esa precision pertenece a la simulacion, no al mundo. El desplazamiento medio medido es de 7,34 m, y la procedencia ahora lo lleva adjunto.'
             : 'Consequence, and it is an honesty requirement rather than a feature: the previous version reported provenance fractions summing to one within 1e-12 and presented that as an answer. With a dozer in the model that precision belongs to the simulation, not to the world. Measured mean displacement is 7.34 m, and provenance now carries it attached.'}
         </p>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's7',
+      label: es ? 'Recuperación y el veredicto' : 'Reclaim and the verdict',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '8. Recuperación y el veredicto' : '8. Reclaim and the verdict'}</h2>
         <p>
           {es
             ? 'Recuperar hace que el procesamiento del acopio se parezca a minar una pila de tronadura, sujeto a los mismos metodos de control de leyes y planificacion. La maquina engancha una LOSA, acotada por profundidad de corte y ancho, parada sobre un nivel de trabajo con una altura de cara segura, y avanza en secuencia. Tres ordenes: ultimo en entrar primero en salir, primero en entrar primero en salir, y altura completa. Solo el ultimo mezcla los bancos.'
@@ -175,7 +204,23 @@ export default function Methodology() {
           ids={['young2021', 'young2022', 'moraga2017', 'bak1987', 'gray2005', 'savage1988', 'schramm2021', 'kumral2006']}
           label="Refs"
         />
-      </section>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className="page-body prose">
+      <div className="page-head">
+        <h1>{es ? 'Metodología' : 'Methodology'}</h1>
+        <p className="lede">
+          {es
+            ? 'El material pasa por siete operadores: el terreno que lo restringe, el plan que decide donde va, el camion que lo lleva, la descarga que le da forma, la relajacion que lo asienta, el bulldozer que lo mueve otra vez, y la recuperacion que lo saca. Cada uno se describe abajo con su fuente.'
+            : 'Material passes through seven operators: the terrain that constrains it, the plan that decides where it goes, the truck that carries it, the dump that shapes it, the relaxation that settles it, the dozer that moves it again, and the reclaim that takes it out. Each is described below with its source.'}
+        </p>
+      </div>
+
+      <Tabs tabs={tabs} ariaLabel={es ? 'Secciones' : 'Sections'} />
     </div>
   );
 }

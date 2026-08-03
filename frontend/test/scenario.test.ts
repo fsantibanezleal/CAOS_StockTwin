@@ -40,6 +40,7 @@ function load(id: string): Scenario {
     field: read<Field>(id, 'field.json'),
     cuts: read<Cut[]>(id, 'cuts.json'),
     sectors: read<{ areas: Sector[] }>(id, 'sectors.json'),
+    frames: read(id, 'frames.json'),
   };
 }
 

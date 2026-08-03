@@ -243,3 +243,21 @@
 .fx-hud .muted span {
   opacity: 0.5;
 }
+
+/* The playback bar sits ON the stage, like the HUD: this is the view built for watching the build,
+   so the transport belongs with the picture rather than in the parameter rail. */
+.fx-play {
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 3.4rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--st-bg, #0e1319) 74%, transparent);
+  backdrop-filter: blur(7px);
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.fx-play .st-play {
+  padding: 0;
+}

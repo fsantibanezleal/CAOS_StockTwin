@@ -20,8 +20,10 @@
     "loads.json",
     "sectors.json",
     "field.json",
-    "cuts.json"
+    "cuts.json",
+    "frames.json"
   ],
+  "frames": 11,
   "gate": {
     "kill_criterion": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
     "ledger_agrees_with_terrain": true,

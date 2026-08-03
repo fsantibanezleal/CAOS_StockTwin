@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Callout, useShellLang } from '@fasl-work/caos-app-shell';
+import { Callout, useShellLang, Tabs } from '@fasl-work/caos-app-shell';
 
 import { type Index, loadIndex } from '../lib/scenario';
 
@@ -17,6 +17,23 @@ export default function Experiments() {
   useEffect(() => {
     loadIndex().then(setIndex).catch((e) => setErr(String(e)));
   }, []);
+
+  const tabs = [
+    {
+      id: 's0',
+      label: es ? 'Sobre los rechazos' : 'On refusals',
+      content: (
+        <>
+
+        <p>
+          {es
+            ? 'Una tasa de rechazo distinta de cero no es un defecto: es el modelo informando que el plan pidio algo que la pila ya no permite. El material recien colocado se para en su angulo de reposo y un camion trabaja hasta unos dos tercios de eso, de modo que la pila crece sobre su propio acceso a menos que el plan reserve un corredor y ordene el trabajo desde lo mas lejano hacia la salida. La tasa es una medida real de que tan bueno es el plan de descarga, y por eso se muestra en vez de suprimirse.'
+            : 'A non-zero refusal rate is not a defect: it is the model reporting that the plan asked for something the pile no longer allows. Freshly placed material stands at its angle of repose and a truck works to roughly two thirds of that, so the pile grows over its own access unless the plan reserves a corridor and orders the work from furthest-away back toward the exit. The rate is a real measure of how good the dump plan is, which is why it is shown rather than suppressed.'}
+        </p>
+        </>
+      ),
+    },
+  ];
 
   return (
     <div className="page-body prose">
@@ -95,14 +112,7 @@ export default function Experiments() {
         </section>
       ))}
 
-      <section>
-        <h2>{es ? 'Sobre los rechazos' : 'On refusals'}</h2>
-        <p>
-          {es
-            ? 'Una tasa de rechazo distinta de cero no es un defecto: es el modelo informando que el plan pidio algo que la pila ya no permite. El material recien colocado se para en su angulo de reposo y un camion trabaja hasta unos dos tercios de eso, de modo que la pila crece sobre su propio acceso a menos que el plan reserve un corredor y ordene el trabajo desde lo mas lejano hacia la salida. La tasa es una medida real de que tan bueno es el plan de descarga, y por eso se muestra en vez de suprimirse.'
-            : 'A non-zero refusal rate is not a defect: it is the model reporting that the plan asked for something the pile no longer allows. Freshly placed material stands at its angle of repose and a truck works to roughly two thirds of that, so the pile grows over its own access unless the plan reserves a corridor and orders the work from furthest-away back toward the exit. The rate is a real measure of how good the dump plan is, which is why it is shown rather than suppressed.'}
-        </p>
-      </section>
+      <Tabs tabs={tabs} ariaLabel={es ? 'Secciones' : 'Sections'} />
     </div>
   );
 }

@@ -20,8 +20,10 @@
     "loads.json",
     "sectors.json",
     "field.json",
-    "cuts.json"
+    "cuts.json",
+    "frames.json"
   ],
+  "frames": 16,
   "gate": {
     "kill_criterion": "No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.",
     "ledger_agrees_with_terrain": true,

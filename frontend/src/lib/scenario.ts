@@ -90,6 +90,16 @@ export interface Field {
   blocks: [number, number, number, number, number][];
 }
 
+/** Surface snapshots through the build, so the pile can be watched growing rather than only
+ *  inspected once finished. */
+export interface Frames {
+  nx: number;
+  ny: number;
+  cell_m: number;
+  z0: number[];
+  frames: { placed: number; z: number[] }[];
+}
+
 export interface Cut {
   t: number;
   grade: number;
@@ -155,6 +165,7 @@ export interface Manifest {
 
 export interface Scenario {
   manifest: Manifest;
+  frames: Frames | null;
   plan: Plan;
   loads: Load[];
   field: Field;
@@ -193,15 +204,19 @@ export async function loadIndex(): Promise<Index> {
 }
 
 export async function loadScenario(id: string): Promise<Scenario> {
-  const [manifest, plan, loads, field, cuts, sectors] = await Promise.all([
+  const [manifest, plan, loads, field, cuts, sectors, frames] = await Promise.all([
     get<Manifest>(`${id}/manifest.json`),
     get<Plan>(`${id}/plan.json`),
     get<Load[]>(`${id}/loads.json`),
     get<Field>(`${id}/field.json`),
     get<Cut[]>(`${id}/cuts.json`),
     get<{ areas: Sector[] }>(`${id}/sectors.json`),
+    // Frames are the only optional artifact: a scenario baked before they existed still loads, it
+    // just cannot be played. Failing the whole page over a missing animation would be the wrong
+    // trade.
+    get<Frames>(`${id}/frames.json`).catch(() => null),
   ]);
-  return { manifest, plan, loads, field, cuts, sectors };
+  return { manifest, plan, loads, field, cuts, sectors, frames };
 }
 
 /* ------------------------------------------------------------------------------------------- */

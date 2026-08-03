@@ -115,6 +115,7 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
         terrain, plan, fleet, loads,
         repose_deg=scn.repose_deg, seed=seed, material=material, route=router,
         paddock_frac=scn.paddock_frac,
+        snapshot_every=max(1, scn.n_loads // max(1, scn.n_snapshots)),
         # How far from the planned tip the operator may spot. 25 m was too tight once the pile stood
         # 12 m tall: most of its surface is at the angle of repose and therefore undrivable, so the
         # nearest workable ground is often further than that and the load was refused rather than
@@ -314,6 +315,23 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         ),
         encoding="utf-8",
     )
+    # THE FRAMES. One surface per snapshot, so the app can play the build rather than only show its
+    # end state. Rounded hard: a frame is one float per cell and there are a couple of dozen of them.
+    (d / "frames.json").write_text(
+        json.dumps(
+            {
+                "nx": res.terrain.nx,
+                "ny": res.terrain.ny,
+                "cell_m": res.terrain.cell_m,
+                "z0": [_r(v, 2) for v in res.terrain.z0],
+                "frames": [
+                    {"placed": n, "z": [_r(v, 2) for v in z]} for n, z in res.snapshots
+                ],
+            },
+            separators=(",", ":"),
+        ),
+        encoding="utf-8",
+    )
     (d / "cuts.json").write_text(
         json.dumps(
             [
@@ -373,7 +391,8 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         },
         "reclaim": {"n_cuts": len(bake.cuts), "tonnes": _r(sum(c.tonnes for c in bake.cuts), 1)},
         "gate": bake.gate,
-        "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json"],
+        "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json", "frames.json"],
+        "frames": len(res.snapshots),
     }
     (d / "manifest.json").write_text(
         json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"

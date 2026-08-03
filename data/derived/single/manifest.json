@@ -20,8 +20,10 @@
     "loads.json",
     "sectors.json",
     "field.json",
-    "cuts.json"
+    "cuts.json",
+    "frames.json"
   ],
+  "frames": 15,
   "gate": {
     "kill_criterion": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
     "ledger_agrees_with_terrain": true,

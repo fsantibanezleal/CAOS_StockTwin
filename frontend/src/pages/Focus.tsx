@@ -33,6 +33,7 @@ import {
   verdict,
 } from '../lib/scenario';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
+import PlayBar from '../viz/PlayBar';
 import '../styles/focus.css';
 
 function useDark(): boolean {
@@ -62,6 +63,7 @@ export default function Focus() {
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(false);
   const [through, setThrough] = useState(1);
+  const [frame, setFrame] = useState(-1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export default function Focus() {
   }, []);
   useEffect(() => {
     setSc(null);
+    setFrame(-1);
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
   }, [sid]);
 
@@ -83,6 +86,12 @@ export default function Focus() {
     window.addEventListener('resize', on);
     return () => window.removeEventListener('resize', on);
   }, []);
+
+  // The surface being drawn: a build frame while playing, the finished pile otherwise.
+  const surface = useMemo(() => {
+    if (!sc?.frames || frame < 0) return null;
+    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)]?.z ?? null;
+  }, [sc, frame]);
 
   const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
@@ -104,6 +113,7 @@ export default function Focus() {
         {sc ? (
           <SiteView3D
             field={sc.field}
+            surface={surface}
             plan={sc.plan}
             loads={sc.loads}
             colourBy={colour}
@@ -159,6 +169,16 @@ export default function Focus() {
           <Minimize2 size={15} aria-hidden />
           <span>Return</span>
         </button>
+
+        {sc && (
+          <div className="fx-play">
+            <PlayBar
+              frames={sc.frames}
+              index={frame < 0 ? (sc.frames?.frames.length ?? 1) - 1 : frame}
+              onIndex={setFrame}
+            />
+          </div>
+        )}
 
         {m && (
           <p className="fx-caption">

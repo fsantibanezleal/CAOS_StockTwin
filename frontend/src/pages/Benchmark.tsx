@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Callout, Cite, Refs, useShellLang } from '@fasl-work/caos-app-shell';
+import { Callout, Cite, Refs, useShellLang, Tabs } from '@fasl-work/caos-app-shell';
 
 import { MEASURED, type Scenario, loadScenario, profileStats, verdict } from '../lib/scenario';
 
@@ -20,19 +20,13 @@ export default function Benchmark() {
   const v = sc ? verdict(sc) : null;
   const inBand = (x: number, [a, b]: readonly [number, number]) => x >= a && x <= b;
 
-  return (
-    <div className="page-body prose">
-      <div className="page-head">
-        <h1>{es ? 'Contraste' : 'Benchmark'}</h1>
-        <p className="lede">
-          {es
-            ? 'Contra que se mide este producto: la geometria medida en 28 descargas reales, la linea base de la industria para un modelo de acopio, y la cota ideal de mezcla. Y, con el mismo detalle, lo que todavia no esta hecho.'
-            : 'What this product is measured against: the geometry measured across 28 real dumps, the industry baseline for a stockpile model, and the ideal blending bound. And, in the same detail, what is not yet done.'}
-        </p>
-      </div>
+  const tabs = [
+    {
+      id: 's0',
+      label: es ? 'La geometría, contra 28 descargas medidas' : 'The geometry, against 28 measured dumps',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '1. La geometría, contra 28 descargas medidas' : '1. The geometry, against 28 measured dumps'}</h2>
         <p>
           {es
             ? 'El operador de descarga de borde se calibra contra fotogrametria por dron de descargas individuales de un CAT 793F, no contra una suposicion. El predecesor colocaba cada carga como un disco isotropico de 4,5 m de radio, que falla los tres rangos a la vez.'
@@ -92,10 +86,15 @@ export default function Benchmark() {
             ? 'Si un perfil no puede ajustarse dentro del rango medido, el operador esta MAL y se rediseña, no se ajusta hasta que se vea aceptable.'
             : 'If a profile cannot be fitted inside the measured envelope, the operator is WRONG and gets redesigned, not tuned until it looks acceptable.'}
         </Callout>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's1',
+      label: es ? 'La línea base de la industria' : 'The industry baseline',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '2. La línea base de la industria' : '2. The industry baseline'}</h2>
         <p>
           {es
             ? 'Es explicita y humilde: el modelo de bloques hoy en operacion para un acopio grande es UN solo valor homogeneizado que lleva la ley promedio movil. Un numero para toda la pila. Ese es el listón real.'
@@ -137,10 +136,15 @@ export default function Benchmark() {
             </table>
           </div>
         )}
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's2',
+      label: es ? 'La mezcla, contra la cota ideal' : 'Blending, against the ideal bound',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '3. La mezcla, contra la cota ideal' : '3. Blending, against the ideal bound'}</h2>
         {v && (
           <p>
             {es ? 'En el escenario base la razon medida es ' : 'On the base scenario the measured ratio is '}
@@ -158,10 +162,15 @@ export default function Benchmark() {
             : 'The ratio is never quoted alone. The ideal is typically three to four times better than any real bed achieves, so a ratio without its bound reads far more flattering than it is. And N is MEASURED from the build itself rather than configured.'}
           {' '}<Cite id="schramm2021" paren /> <Cite id="kumral2006" paren />
         </p>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's3',
+      label: es ? 'Lo que NO está hecho' : 'What is NOT done',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '4. Lo que NO está hecho' : '4. What is NOT done'}</h2>
         <p>
           {es
             ? 'Listado con el mismo detalle que lo demas, porque omitirlo seria la sobreafirmacion que este producto existe para evitar.'
@@ -200,7 +209,23 @@ export default function Benchmark() {
           ids={['young2021', 'young2022', 'youngdata2021', 'schramm2021', 'kumral2006', 'moraga2017']}
           label="Refs"
         />
-      </section>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className="page-body prose">
+      <div className="page-head">
+        <h1>{es ? 'Contraste' : 'Benchmark'}</h1>
+        <p className="lede">
+          {es
+            ? 'Contra que se mide este producto: la geometria medida en 28 descargas reales, la linea base de la industria para un modelo de acopio, y la cota ideal de mezcla. Y, con el mismo detalle, lo que todavia no esta hecho.'
+            : 'What this product is measured against: the geometry measured across 28 real dumps, the industry baseline for a stockpile model, and the ideal blending bound. And, in the same detail, what is not yet done.'}
+        </p>
+      </div>
+
+      <Tabs tabs={tabs} ariaLabel={es ? 'Secciones' : 'Sections'} />
     </div>
   );
 }

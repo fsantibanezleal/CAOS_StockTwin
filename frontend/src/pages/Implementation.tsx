@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Callout, Cite, Refs, useShellLang } from '@fasl-work/caos-app-shell';
+import { Callout, Cite, Refs, useShellLang, Tabs } from '@fasl-work/caos-app-shell';
 
 import { type Index, loadIndex } from '../lib/scenario';
 
@@ -16,19 +16,13 @@ export default function Implementation() {
     loadIndex().then(setIndex).catch(() => setIndex(null));
   }, []);
 
-  return (
-    <div className="page-body prose">
-      <div className="page-head">
-        <h1>{es ? 'Implementación' : 'Implementation'}</h1>
-        <p className="lede">
-          {es
-            ? 'El motor es un paquete publicado aparte; este repositorio es el producto que lo consume. La simulacion corre fuera de linea y despacha una bitacora de eventos; el navegador la reproduce y RECALCULA cada veredicto. Nada de lo que se muestra como resultado viene horneado en el archivo.'
-            : 'The engine is a separately published package; this repository is the product that consumes it. The simulation runs offline and ships an event log; the browser replays it and RECOMPUTES every verdict. Nothing shown as a result comes baked into the file.'}
-        </p>
-      </div>
+  const tabs = [
+    {
+      id: 's0',
+      label: es ? 'El motor vive en su propio repositorio' : 'The engine lives in its own repository',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '1. El motor vive en su propio repositorio' : '1. The engine lives in its own repository'}</h2>
         <p>
           {es
             ? 'Un producto no declara paquete propio. Un paquete interno anuncia una biblioteca que nadie puede instalar, asi que la fisica del acopio vive en bedblend, publicado en PyPI y consumido con version fija. Este repositorio invoca su tuberia POR RUTA, y una comprobacion de integridad rechaza cualquier tabla de proyecto, instalacion editable o invocacion como modulo, de modo que el paquete interno no puede volver.'
@@ -54,10 +48,15 @@ export default function Implementation() {
               : 'React on the shared shell, three.js for the site view and canvas for the fields and the series.'}
           </li>
         </ul>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's1',
+      label: es ? 'Por qué la simulación se hornea' : 'Why the simulation is baked',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '2. Por qué la simulación se hornea' : '2. Why the simulation is baked'}</h2>
         <p>
           {es
             ? 'El motor rutea cada carga sobre la superficie transitable, inunda la plataforma para calcular alcance, relaja despues de cada operacion y clasifica por tamano cada carga en cascada. Eso son decenas de segundos por unos cientos de cargas: correcto fuera de linea e inutilizable en una pagina. Correrlo en el navegador significaria una pestana congelada o un modelo lo bastante simple como para estar equivocado, y la version anterior de este producto eligio lo segundo.'
@@ -68,10 +67,15 @@ export default function Implementation() {
             ? 'La traza lleva EVENTOS y GEOMETRIA: el plan, cada carga con su ruta de aproximacion y de salida, la superficie, el campo de bloques y los cortes. No lleva los VEREDICTOS. La reduccion de varianza, los variogramas, la eficiencia contra la cota ideal y los intervalos por sector se recalculan en el navegador desde esos eventos. Una traza que despachara una razon horneada seria una lamina, y su numero seria infalsable: un lector no podria distinguir un resultado real de un error de tipeo.'
             : 'The trace carries EVENTS and GEOMETRY: the plan, every load with its approach and departure path, the surface, the block field and the cuts. It does NOT carry the VERDICTS. Variance reduction, the variograms, the efficiency against the ideal bound and the per-sector intervals are all recomputed in the browser from those events. A trace shipping a baked ratio would be a slide, and its number would be unfalsifiable: a reader could not tell a real result from a typo.'}
         </Callout>
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's2',
+      label: es ? 'Cada horneada pasa por una compuerta' : 'Every bake passes a gate',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '3. Cada horneada pasa por una compuerta' : '3. Every bake passes a gate'}</h2>
         <p>
           {es
             ? 'Los invariantes se comprueban sobre el ARTEFACTO REAL, no sobre un caso sintetico, porque una prueba unitaria que pasa sobre un fixture no demuestra que la traza despachada sea correcta.'
@@ -123,10 +127,15 @@ export default function Implementation() {
             </table>
           </div>
         )}
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's3',
+      label: es ? 'El terreno, cuantificado' : 'The ground, quantified',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '4. El terreno, cuantificado' : '4. The ground, quantified'}</h2>
         <p>
           {es
             ? 'Solo uno de los cinco tipos publicados de relleno es una plataforma plana. La diferencia entre ellos es un numero, no una ilustracion: la fraccion de terreno que un camion ya podria recorrer antes de colocar nada.'
@@ -157,10 +166,15 @@ export default function Implementation() {
             </table>
           </div>
         )}
-      </section>
+        </>
+      ),
+    },
+    {
+      id: 's4',
+      label: es ? 'Determinismo y reproducibilidad' : 'Determinism and reproducibility',
+      content: (
+        <>
 
-      <section>
-        <h2>{es ? '5. Determinismo y reproducibilidad' : '5. Determinism and reproducibility'}</h2>
         <p>
           {es
             ? 'Todo lo estocastico proviene de un unico generador con semilla, asi que una horneada es reproducible bit a bit. El manifiesto es una funcion PURA del escenario y su semilla: sin reloj, sin nombre de host, sin rutas absolutas. Un manifiesto que cambiara en cada re-horneada volveria inutil el historial de la evidencia, porque un cambio real dejaria de distinguirse de una re-ejecucion.'
@@ -172,7 +186,23 @@ export default function Implementation() {
             : 'Tests ALWAYS bake into a sandbox. A test run writing the canonical tree is how a release once shipped a clobbered artifact, and the fix is that tests cannot reach it.'}
         </p>
         <Refs ids={['young2021', 'young2022', 'moraga2017']} label="Refs" />
-      </section>
+        </>
+      ),
+    },
+  ];
+
+  return (
+    <div className="page-body prose">
+      <div className="page-head">
+        <h1>{es ? 'Implementación' : 'Implementation'}</h1>
+        <p className="lede">
+          {es
+            ? 'El motor es un paquete publicado aparte; este repositorio es el producto que lo consume. La simulacion corre fuera de linea y despacha una bitacora de eventos; el navegador la reproduce y RECALCULA cada veredicto. Nada de lo que se muestra como resultado viene horneado en el archivo.'
+            : 'The engine is a separately published package; this repository is the product that consumes it. The simulation runs offline and ships an event log; the browser replays it and RECOMPUTES every verdict. Nothing shown as a result comes baked into the file.'}
+        </p>
+      </div>
+
+      <Tabs tabs={tabs} ariaLabel={es ? 'Secciones' : 'Sections'} />
     </div>
   );
 }
