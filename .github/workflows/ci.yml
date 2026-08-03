@@ -71,8 +71,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -r requirements.txt
-      - name: The TypeScript case registry matches the Python definitions
-        run: python scripts/export_cases.py --check
+      # The TypeScript case registry is gone with the TypeScript engine mirror. The simulation bakes
+      # offline and the browser reads artifacts, so there is no second copy of the case definitions
+      # left to drift. What replaces this check is the Contract 2 gate over the committed artifacts.
       - name: The generated documentation pages match the code
         run: python scripts/gen_docs.py --check
       - name: The architecture diagrams regenerate identically, with no hardcoded colour
