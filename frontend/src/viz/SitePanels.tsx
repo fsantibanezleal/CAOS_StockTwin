@@ -188,7 +188,7 @@ export function PlanPanel({
  *  A single square plan map is height-limited in a wide viewport: fitted to the space available it
  *  can never fill half the screen, and the rest of the width sits empty. Three of them side by side
  *  fill it AND say more, because the question a reader has is not "what is the grade" but "does the
- *  grade pattern follow the thickness, and does the coarse fraction follow either" — which is a
+ *  grade pattern follow the thickness, and does the coarse fraction follow either", which is a
  *  comparison, and a comparison needs the panels together. */
 export function FieldPanel({ field, dark }: { field: Field; by?: string; dark: boolean }) {
   const views: { key: 'grade' | 'coarse' | 'thickness'; en: string }[] = [
