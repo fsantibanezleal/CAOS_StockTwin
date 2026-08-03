@@ -33,7 +33,7 @@ plausible artifact.
 |---|---|---|
 | areas | 3 (low grade, mid grade, high grade) | named dump location polygons, which is how a fleet-management system locates a load |
 | area size | 90 x 90 m | the footprint of each |
-| benches | 2 at 8 m | lifts, built upward the way a pit cuts downward |
+| benches | 2 at 18 m | lifts, built upward the way a pit cuts downward |
 | row spacing | 10 m | separation of the paddock rows that lay the base layer |
 | tip spacing | 8 m | separation of loads along a row |
 | dozer cadence | every 40 loads | the published practice is to doze after two rows |
@@ -44,7 +44,7 @@ plausible artifact.
 | parameter | value | what it controls |
 |---|---|---|
 | repose angle | 37 deg dry | not a constant of the ore: it rises with moisture and collapses past saturation |
-| loads | 420 | the size of the campaign |
+| loads | 1000 | the size of the campaign |
 | shovel dwell | 20 loads per dig block | THE control on stream autocorrelation. Consecutive trucks load from the same block, so the correlation length is a consequence of this rather than an input |
 | grade | 0.62 mean, 0.20 between blocks | the incoming distribution |
 | trucks | 6 | fleet size |

@@ -10,7 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "postbuild": "node spa-404.mjs",
     "preview": "vite preview",
-    "test": "node --import tsx --test test/engine.test.ts test/contract.test.ts test/crosslane.test.ts"
+    "test": "vitest run"
   },
   "dependencies": {
     "@fasl-work/caos-app-shell": "^0.3.0",
@@ -31,6 +31,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
-    "vite": "^6.0.7"
+    "vite": "^6.0.7",
+    "vitest": "^3.0.5"
   }
 }

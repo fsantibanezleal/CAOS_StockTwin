@@ -1,26 +1,26 @@
 /**
- * The workbench.
+ * The workbench, built from the SHELL'S OWN PRIMITIVES.
  *
- * LAID OUT AGAINST TWO ADRs, because the previous version violated both and a reader saw exactly
- * that: readouts stacked as cards below the fold, and the focus entry buried as a line of prose at
- * the bottom of the page.
+ * The previous version of this page hand-rolled every one of them: its own tab strip, its own
+ * scenario dropdown, its own full-bleed width hack with negative margins. That is the violation
+ * Felipe called out, and it is explicit in the ADRs:
  *
- * ADR-0071, the UI floor:
- *   the page IS the viewport. No document scroll, no horizontal drag. Scrolling belongs inside the
- *   one container that owns long content, never on the document.
- *   navigation chrome gets ONE row, at most about six sibling tabs.
- *   the instrument takes at least 50 percent of the viewport area. Below that "the product is
- *   showing chrome with a picture in it".
+ *   ADR-0016 §5  the page root is the shell's `.page-body`, centred, NEVER full-bleed, and a product
+ *                never redefines a shell primitive. The repo already carried `.page-body.st-layout`
+ *                for exactly this and it was ignored in favour of `width: 100vw`.
+ *   ADR-0016 §6  major sections of a page use the shell's `Tabs`, the accent-soft pills, not a
+ *                bespoke row of buttons.
+ *   ADR-0071     the page IS the viewport, one tab row, the instrument at or above half the screen.
+ *   ADR-0070     the focus entry is a visible control on the SAME SURFACE as the scenario selector.
  *
- * ADR-0070, the focus route:
- *   "KPIs are overlaid on the stage as a HUD, not stacked as cards above or below it."
- *   "There MUST be a visible, obvious entry control in the App, on the same surface as the scenario
- *   selector."
- *
- * So: one header row carrying the scenario selector and the focus entry TOGETHER, one tab row of
- * six, a stage that fills what is left, and the readouts on the stage rather than under it.
+ * So: `CaseSelector` for the scenario deck, `Tabs` for the views, `.page-body.st-layout` for width,
+ * and the readouts overlaid on the stage rather than stacked beneath it.
  */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { CaseSelector, Tabs, useShellLang } from '@fasl-work/caos-app-shell';
+import type { CaseDef } from '@fasl-work/caos-app-shell';
 
 import {
   type Index,
@@ -31,6 +31,7 @@ import {
   verdict,
 } from '../lib/scenario';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
+import PlayBar from '../viz/PlayBar';
 import {
   DumpDetailPanel,
   FieldPanel,
@@ -40,17 +41,6 @@ import {
   VariogramPanel,
 } from '../viz/SitePanels';
 import '../styles/tool.css';
-
-type TabId = 'site' | 'plan' | 'field' | 'dump' | 'sectors' | 'reclaim';
-
-const TABS: { id: TabId; en: string; es: string }[] = [
-  { id: 'site', en: 'Site', es: 'Faena' },
-  { id: 'plan', en: 'Dump plan', es: 'Plan de descarga' },
-  { id: 'field', en: 'Raw field', es: 'Campo crudo' },
-  { id: 'dump', en: 'Dump detail', es: 'Detalle de descarga' },
-  { id: 'sectors', en: 'Sectors', es: 'Sectores' },
-  { id: 'reclaim', en: 'Reclaim', es: 'Recuperacion' },
-];
 
 function useDark(): boolean {
   const read = () =>
@@ -66,209 +56,243 @@ function useDark(): boolean {
   return dark;
 }
 
-/** Stage height in pixels, so the instrument clears the ADR-0071 fifty percent floor.
+/** Height of an element, observed.
  *
- *  Measured rather than guessed: the header and tab rows are fixed, so whatever is left of the
- *  viewport below them belongs to the stage. */
-function useStageHeight(): number {
-  const calc = () => Math.max(320, Math.round(window.innerHeight * 0.66));
-  const [h, setH] = useState(calc);
+ *  MEASURED, NOT GUESSED. Sizing the canvas as a fraction of the window looks right until the deck,
+ *  the tab strip, the panel controls and the playback bar are added up: at 70 percent of the window
+ *  the stage and its transport ran straight over the footer. The numeric gate did not catch it,
+ *  because the document itself was not scrolling; only looking at the render did. So the canvas takes
+ *  the space its own container actually has. */
+function useBoxHeight<T extends HTMLElement>(): [React.RefObject<T | null>, number] {
+  const ref = useRef<T | null>(null);
+  const [h, setH] = useState(360);
   useEffect(() => {
-    const on = () => setH(calc());
-    window.addEventListener('resize', on);
-    return () => window.removeEventListener('resize', on);
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setH(Math.max(280, Math.round(el.clientHeight))));
+    ro.observe(el);
+    setH(Math.max(280, Math.round(el.clientHeight)));
+    return () => ro.disconnect();
   }, []);
-  return h;
+  return [ref, h];
 }
 
-export default function Tool({ lang = 'en' }: { lang?: 'en' | 'es' }) {
+export default function Tool() {
+  const lang = useShellLang() === 'es' ? 'es' : 'en';
+  const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const dark = useDark();
-  const stageH = useStageHeight();
+  const nav = useNavigate();
+  const [params] = useSearchParams();
+  const [stageRef, stageH] = useBoxHeight<HTMLDivElement>();
+
   const [index, setIndex] = useState<Index | null>(null);
-  const [sid, setSid] = useState<string>('single');
+  // The round trip from the focus route carries the scenario back, per ADR-0070 clause 5.
+  const [sid, setSid] = useState(() => params.get('case') ?? params.get('scenario') ?? 'single');
   const [sc, setSc] = useState<Scenario | null>(null);
-  const [tab, setTab] = useState<TabId>('site');
   const [colour, setColour] = useState<ColourBy>('grade');
   const [showPaths, setShowPaths] = useState(true);
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
+  const [frame, setFrame] = useState(-1); // -1 means the finished pile
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    loadIndex()
-      .then(setIndex)
-      .catch((e) => setErr(String(e)));
+    loadIndex().then(setIndex).catch((e) => setErr(String(e)));
   }, []);
-
   useEffect(() => {
     setSc(null);
-    loadScenario(sid)
-      .then(setSc)
-      .catch((e) => setErr(String(e)));
+    setFrame(-1);
+    loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
   }, [sid]);
 
   const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
 
-  // ADR-0070: the round trip preserves the scenario, so the focus route opens on what is on screen.
-  const toFocus = useCallback(() => {
-    window.location.hash = `#/focus/${sid}`;
-  }, [sid]);
+  const cases: CaseDef[] = useMemo(
+    () =>
+      (index?.scenarios ?? []).map((s) => ({
+        id: s.id,
+        name: s.title[lang],
+        // NO CATEGORY. The shell groups cases under labelled headings, which is right for a deck of
+        // eleven across four categories and wrong for three: it stacked them into a 182px block and
+        // took that height straight off the instrument. One group is one row.
+        kind: 'synthetic' as const,
+        anchor: `${s.build.loads_placed} loads placed, peak ${s.build.peak_m.toFixed(1)} m`,
+      })),
+    [index, lang],
+  );
 
-  const t = (en: string, es: string) => (lang === 'es' ? es : en);
+  const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
+
+  // The surface being drawn: a build frame while scrubbing, the finished pile otherwise.
+  const surface = useMemo(() => {
+    if (!sc?.frames || frame < 0) return null;
+    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)]?.z ?? null;
+  }, [sc, frame]);
 
   if (err) {
     return (
-      <div className="st-page">
+      <div className="page-body st-layout">
         <p className="st-bad">Could not load the scenario data: {err}</p>
       </div>
     );
   }
 
-  return (
-    <div className="st-page">
-      {/* ONE header row. The scenario selector and the focus entry sit on the SAME SURFACE, which is
-          what ADR-0070 requires and what the previous version did not do. */}
-      <header className="st-bar">
+  const site = (
+    <div className="st-stagefill">
+      <div className="st-canvashost" ref={stageRef}>
+      {sc && (
+        <SiteView3D
+          field={sc.field}
+          surface={surface}
+          plan={sc.plan}
+          loads={sc.loads}
+          colourBy={colour}
+          showPaths={showPaths}
+          showCrest={showCrest}
+          showPlan={showPlan}
+          dark={dark}
+          height={stageH}
+        />
+      )}
+
+      {/* ADR-0070: the readouts are overlaid on the stage, never stacked as cards beneath it. */}
+      {sc && v && seg && (
+        <div className="st-hud">
+          <div>
+            <b>{v.vrr.toFixed(3)}</b>
+            <span>{t('variance reduction', 'reducción de varianza')}</span>
+          </div>
+          <div className={v.boundReliable ? '' : 'muted'}>
+            <b>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</b>
+            <span>
+              {v.boundReliable
+                ? t('ideal 1/N bound', 'cota ideal 1/N')
+                : t('bound not reliable here', 'cota no confiable aquí')}
+            </span>
+          </div>
+          <div>
+            <b>{sc.manifest.build.loads_placed}</b>
+            <span>{t('loads placed', 'cargas colocadas')}</span>
+          </div>
+          <div>
+            <b>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</b>
+            <span>{t('tips refused', 'puntos rechazados')}</span>
+          </div>
+          <div>
+            <b>{sc.manifest.build.peak_m.toFixed(1)} m</b>
+            <span>{t('peak height', 'altura máxima')}</span>
+          </div>
+          <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
+            <b>{sc.manifest.gate.pairs_over_repose}</b>
+            <span>{t('pairs over repose', 'pares sobre reposo')}</span>
+          </div>
+        </div>
+      )}
+      </div>
+
+      <div className="st-controls">
         <label className="st-sel">
-          <span>{t('Scenario', 'Escenario')}</span>
-          <select value={sid} onChange={(e) => setSid(e.target.value)}>
-            {(index?.scenarios ?? []).map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.title[lang]}
-              </option>
-            ))}
+          <span>{t('Colour by', 'Colorear por')}</span>
+          <select value={colour} onChange={(e) => setColour(e.target.value as ColourBy)}>
+            <option value="grade">{t('grade', 'ley')}</option>
+            <option value="coarse">{t('coarse fraction', 'fracción gruesa')}</option>
+            <option value="thickness">{t('thickness', 'espesor')}</option>
           </select>
         </label>
-
-        {(tab === 'site' || tab === 'field') && (
-          <label className="st-sel">
-            <span>{t('Colour by', 'Colorear por')}</span>
-            <select value={colour} onChange={(e) => setColour(e.target.value as ColourBy)}>
-              <option value="grade">{t('grade', 'ley')}</option>
-              <option value="coarse">{t('coarse fraction', 'fraccion gruesa')}</option>
-              <option value="thickness">{t('thickness', 'espesor')}</option>
-            </select>
+        <div className="st-toggles">
+          <label>
+            <input type="checkbox" checked={showPaths} onChange={(e) => setShowPaths(e.target.checked)} />
+            {t('truck paths', 'rutas')}
           </label>
-        )}
+          <label>
+            <input type="checkbox" checked={showCrest} onChange={(e) => setShowCrest(e.target.checked)} />
+            {t('crest', 'cresta')}
+          </label>
+          <label>
+            <input type="checkbox" checked={showPlan} onChange={(e) => setShowPlan(e.target.checked)} />
+            {t('areas', 'áreas')}
+          </label>
+        </div>
+        <span
+          className="st-hint"
+          title={t(
+            'Drag to orbit. Shift-drag or right-drag to pan. Wheel to zoom. Double click to recentre.',
+            'Arrastra para orbitar. Shift o botón derecho para desplazar. Rueda para acercar. Doble clic para recentrar.',
+          )}
+        >
+          {t('orbit · pan · zoom', 'orbitar · desplazar · zoom')}
+        </span>
 
-        {tab === 'site' && (
-          <div className="st-toggles">
-            <label>
-              <input
-                type="checkbox"
-                checked={showPaths}
-                onChange={(e) => setShowPaths(e.target.checked)}
-              />
-              {t('truck paths', 'rutas')}
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={showCrest}
-                onChange={(e) => setShowCrest(e.target.checked)}
-              />
-              {t('crest', 'cresta')}
-            </label>
-            <label>
-              <input
-                type="checkbox"
-                checked={showPlan}
-                onChange={(e) => setShowPlan(e.target.checked)}
-              />
-              {t('areas', 'areas')}
-            </label>
-          </div>
+        {/* The transport shares the control row: every extra row of chrome is height the
+            instrument does not get, and ADR-0071 gives the instrument at least half the screen. */}
+        {sc && (
+          <PlayBar
+            frames={sc.frames}
+            index={frame < 0 ? (sc.frames?.frames.length ?? 1) - 1 : frame}
+            onIndex={setFrame}
+            lang={lang}
+          />
         )}
+      </div>
+    </div>
+  );
 
+  const tabs = [
+    { id: 'site', label: t('Site', 'Faena'), content: site },
+    {
+      id: 'plan',
+      label: t('Dump plan', 'Plan de descarga'),
+      content: sc ? <PlanPanel plan={sc.plan} loads={sc.loads} field={sc.field} dark={dark} /> : null,
+    },
+    {
+      id: 'field',
+      label: t('Raw field', 'Campo crudo'),
+      content: sc ? <FieldPanel field={sc.field} dark={dark} /> : null,
+    },
+    {
+      id: 'dump',
+      label: t('Dump detail', 'Detalle de descarga'),
+      content: sc ? <DumpDetailPanel sc={sc} dark={dark} /> : null,
+    },
+    {
+      id: 'sectors',
+      label: t('Sectors', 'Sectores'),
+      content: sc ? <SectorPanel sectors={sc.sectors.areas} dark={dark} /> : null,
+    },
+    {
+      id: 'reclaim',
+      label: t('Reclaim', 'Recuperación'),
+      content: sc ? (
+        <>
+          <ReclaimPanel sc={sc} dark={dark} />
+          <VariogramPanel sc={sc} dark={dark} />
+        </>
+      ) : null,
+    },
+  ];
+
+  return (
+    <div className="page-body st-layout">
+      {/* The scenario deck and the focus entry on ONE surface, per ADR-0070. */}
+      <div className="st-deck">
+        <CaseSelector
+          cases={cases}
+          selectedId={sid}
+          onSelect={setSid}
+          lang={lang}
+          deepLink
+          ariaLabel={t('Scenario', 'Escenario')}
+        />
         <button type="button" className="st-focus" onClick={toFocus}>
-          {t('Focus view', 'Vista enfocada')}
+          <Maximize2 size={14} aria-hidden />
+          <span>{t('Focus view', 'Vista enfocada')}</span>
         </button>
-      </header>
+      </div>
 
-      {/* ONE tab row, six peers, never wrapping. ADR-0071 clauses 4 and 5. */}
-      <nav className="st-tabs" role="tablist" aria-label={t('Views', 'Vistas')}>
-        {TABS.map((x) => (
-          <button
-            key={x.id}
-            type="button"
-            role="tab"
-            aria-selected={tab === x.id}
-            className={tab === x.id ? 'on' : ''}
-            onClick={() => setTab(x.id)}
-          >
-            {x[lang]}
-          </button>
-        ))}
-      </nav>
+      {!sc && <p className="st-note">{t('Loading the scenario ...', 'Cargando el escenario ...')}</p>}
 
-      {/* The stage owns the rest of the viewport, and it is the only thing that scrolls. */}
-      <main className="st-stage">
-        {!sc && (
-          <p className="st-note">{t('Loading the scenario ...', 'Cargando el escenario ...')}</p>
-        )}
-
-        {sc && tab === 'site' && (
-          <div className="st-stagefill">
-            <SiteView3D
-              field={sc.field}
-              plan={sc.plan}
-              loads={sc.loads}
-              colourBy={colour}
-              showPaths={showPaths}
-              showCrest={showCrest}
-              showPlan={showPlan}
-              dark={dark}
-              height={stageH}
-            />
-
-            {/* THE HUD. Overlaid on the stage, never stacked as cards beneath it. */}
-            {v && seg && (
-              <div className="st-hud">
-                <div>
-                  <b>{v.vrr.toFixed(3)}</b>
-                  <span>{t('variance reduction', 'reduccion de varianza')}</span>
-                </div>
-                <div>
-                  <b>{v.ideal.toFixed(3)}</b>
-                  <span>{t('ideal 1/N bound', 'cota ideal 1/N')}</span>
-                </div>
-                <div>
-                  <b>{sc.manifest.build.loads_placed}</b>
-                  <span>{t('loads placed', 'cargas colocadas')}</span>
-                </div>
-                <div>
-                  <b>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</b>
-                  <span>{t('tips refused', 'puntos rechazados')}</span>
-                </div>
-                <div>
-                  <b>{sc.manifest.build.peak_m.toFixed(1)} m</b>
-                  <span>{t('peak height', 'altura maxima')}</span>
-                </div>
-                <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
-                  <b>{sc.manifest.gate.pairs_over_repose}</b>
-                  <span>{t('pairs over repose', 'pares sobre reposo')}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {sc && tab === 'plan' && (
-          <PlanPanel plan={sc.plan} loads={sc.loads} field={sc.field} dark={dark} />
-        )}
-        {sc && tab === 'field' && (
-          <FieldPanel field={sc.field} by={colour === 'lift' ? 'grade' : colour} dark={dark} />
-        )}
-        {sc && tab === 'dump' && <DumpDetailPanel sc={sc} dark={dark} />}
-        {sc && tab === 'sectors' && <SectorPanel sectors={sc.sectors.areas} dark={dark} />}
-        {sc && tab === 'reclaim' && (
-          <>
-            <ReclaimPanel sc={sc} dark={dark} />
-            <VariogramPanel sc={sc} dark={dark} />
-          </>
-        )}
-      </main>
+      <Tabs tabs={tabs} initial="site" ariaLabel={t('Views', 'Vistas')} />
     </div>
   );
 }

@@ -32,12 +32,12 @@ const config: ShellConfig = {
   architecture,
   footer: {
     provenance: {
-      en: 'Engines: repose-angle relaxation (Bak et al. 1987), Gray-Thornton segregation (doi:10.1098/rspa.2004.1420), per-cell lot ledger (doi:10.1016/j.minpro.2015.04.012). Data: oreblocks synthetic (CC-BY); MineLib (doi:10.1007/s10479-012-1258-3) fetched at runtime, never bundled.',
-      es: 'Motores: relajación con ángulo de reposo (Bak et al. 1987), segregación de Gray y Thornton (doi:10.1098/rspa.2004.1420), libro mayor de lotes por celda (doi:10.1016/j.minpro.2015.04.012). Datos: oreblocks sintético (CC-BY); MineLib (doi:10.1007/s10479-012-1258-3) en tiempo de ejecución, nunca empaquetado.',
+      en: 'Engine: bedblend, published separately (pypi.org/project/bedblend). Dump geometry calibrated against 28 UAV-surveyed haul-truck dumps (doi:10.3390/mining2010006); construction model from doi:10.3390/min11060636. Data: synthetic dig sequences, seeded and reproducible.',
+      es: 'Motor: bedblend, publicado aparte (pypi.org/project/bedblend). Geometria de descarga calibrada contra 28 descargas relevadas con dron (doi:10.3390/mining2010006); modelo de construccion de doi:10.3390/min11060636. Datos: secuencias de extraccion sinteticas, con semilla y reproducibles.',
     },
     disclaimer: {
-      en: 'Static, in-browser, no backend. VRR = var_out / var_in, lower is better, always against the derived 1/N bound. Teaching only: no metal accounting, no blending LP, no setpoint.',
-      es: 'Estático, en el navegador, sin backend. VRR = var_salida / var_entrada, menor es mejor, siempre contra la cota derivada 1/N. Solo ensenanza: sin contabilidad metalurgica, sin LP de mezcla, sin consignas.',
+      en: 'Static, in-browser. The simulation is baked offline; the browser recomputes every verdict from the event log. VRR = var_out / var_in, lower is better. Teaching only: no metal accounting, no blending LP, no setpoint.',
+      es: 'Estatico, en el navegador. La simulacion se hornea fuera de linea; el navegador recalcula cada veredicto desde la bitacora de eventos. VRR = var_salida / var_entrada, menor es mejor. Solo ensenanza: sin contabilidad metalurgica, sin LP de mezcla, sin consignas.',
     },
   },
 };

@@ -1,101 +1,38 @@
-/* Workbench layout, written against ADR-0071.
+/* Workbench styling.
  *
- * THE PAGE IS THE VIEWPORT. document.scrollHeight must equal innerHeight and scrollWidth must equal
- * innerWidth. Scrolling belongs INSIDE the one container that owns long content, which here is the
- * stage. Two defects the deployed predecessor had, both visible without any tooling:
+ * WHAT IS NOT HERE ANY MORE, and that is the point. The tab strip, the scenario dropdown and the
+ * page width were all hand-rolled here. They are shell primitives: `Tabs`, `CaseSelector`, and
+ * `.page-body.st-layout`, which this repo already carried. ADR-0016 section 5 is explicit that a
+ * product never redefines a shell primitive and that a page is never full-bleed; the previous
+ * version used `width: 100vw` with negative margins to escape a container it should have been
+ * using correctly.
  *
- *   the footer sat under the tab bar, because the page was taller than the viewport and the shell
- *   footer was pushed into the chrome instead of following the content;
- *   the readouts were stacked as cards below the fold, which ADR-0070 forbids outright.
- *
- * Every ancestor of a horizontally scrollable row carries min-width: 0, per clause 3. Without it a
- * grid child refuses to shrink below its content and the whole document gains a sideways scroll that
- * is very hard to trace back to its cause.
+ * What remains is only what the shell has no primitive for: the HUD overlaid on the stage, the
+ * playback bar, and the tables and legends inside a panel.
  */
 
-/* A WORKBENCH IS NOT PROSE. ADR-0071 clause 2: an App route takes the full viewport, never a reading
- * column. Measured on the first build, the page used the left half of a 1600px viewport and every
- * view failed the 50 percent instrument floor for that one reason: the 3-D stage read 33 percent, the
- * tables 5 percent. Capping an instrument at a reading width discards the screen the reader has. */
-.st-page {
-  /* FULL BLEED. Escaping the shell's centred reading column rather than trying to widen it, because
-     the workbench is not prose and the container it sits in belongs to the shell. 100vw with a
-     negative margin of half the difference re-centres on the viewport whatever the ancestor width
-     happens to be, which is stable across shell versions in a way that overriding max-width is not. */
-  width: 100vw;
-  max-width: 100vw;
-  margin-left: calc(50% - 50vw);
-  margin-right: calc(50% - 50vw);
-  padding-inline: 1.1rem;
-  box-sizing: border-box;
-  display: grid;
-  /* header, tabs, stage. The stage takes everything left, so the instrument clears the 50 percent
-     floor without anyone computing a pixel height by hand. */
-  grid-template-rows: auto auto minmax(0, 1fr);
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  gap: 0.5rem;
-}
-
-/* -- the one header row ---------------------------------------------------------------------- */
-
-.st-bar {
+/* The scenario deck and the focus entry share one surface, per ADR-0070. */
+.st-deck {
   display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: 0.9rem;
+  align-items: flex-start;
+  gap: 1rem;
   min-width: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding: 0.35rem 0;
-  scrollbar-width: thin;
+  margin-bottom: 0.5rem;
 }
 
-.st-sel {
+.st-deck > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.st-focus {
+  flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  white-space: nowrap;
-  font-size: 0.82rem;
-}
-
-.st-sel > span {
-  opacity: 0.72;
-}
-
-.st-sel select {
-  font: inherit;
-  padding: 0.25rem 0.45rem;
-  border-radius: 6px;
-  border: 1px solid var(--st-line, #c8cfd8);
-  background: var(--st-panel, transparent);
-  color: inherit;
-  max-width: 16rem;
-}
-
-.st-toggles {
-  display: inline-flex;
-  gap: 0.75rem;
-  white-space: nowrap;
-  font-size: 0.8rem;
-  opacity: 0.9;
-}
-
-.st-toggles label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-/* The focus entry. On the SAME SURFACE as the scenario selector, and it looks like a control,
-   because ADR-0070 asks for "a visible, obvious entry control" and a sentence of prose is not one. */
-.st-focus {
-  margin-left: auto;
-  flex: 0 0 auto;
   font: inherit;
   font-size: 0.82rem;
-  padding: 0.3rem 0.8rem;
+  padding: 0.35rem 0.85rem;
   border-radius: 999px;
   border: 1px solid currentColor;
   background: transparent;
@@ -108,35 +45,122 @@
   background: color-mix(in srgb, currentColor 12%, transparent);
 }
 
-/* -- the one tab row ------------------------------------------------------------------------- */
-
-.st-tabs {
+/* Per-panel controls sit with their panel, not in a global bar. ADR-0071 clause 6. */
+.st-controls {
   display: flex;
-  flex-wrap: nowrap;          /* a tab bar never wraps, clause 4 */
-  gap: 0.25rem;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  border-bottom: 1px solid var(--st-line, #d5dbe3);
+  padding: 0.3rem 0 0.1rem;
+  font-size: 0.78rem;
 }
 
-.st-tabs button {
-  font: inherit;
-  font-size: 0.85rem;
+.st-stagebar {
+  display: contents;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.st-hint {
+  opacity: 0.6;
+  font-size: 0.72rem;
+}
+
+.st-sel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   white-space: nowrap;
-  padding: 0.4rem 0.75rem;
-  border: 0;
-  border-bottom: 2px solid transparent;
+}
+
+.st-sel > span {
+  opacity: 0.72;
+}
+
+.st-sel select {
+  font: inherit;
+  padding: 0.22rem 0.4rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   background: transparent;
   color: inherit;
-  opacity: 0.7;
+}
+
+.st-toggles {
+  display: inline-flex;
+  gap: 0.75rem;
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
+.st-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* -- the playback bar -------------------------------------------------------------------------- */
+/* Paused by default and it stops itself at the end: the standing rule is that no animation starts
+   unattended or keeps running in a hidden tab. */
+
+.st-play {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 12rem;
+  flex: 1 1 18rem;
+  padding: 0;
+}
+
+.st-play button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: transparent;
+  color: inherit;
   cursor: pointer;
 }
 
-.st-tabs button.on {
-  opacity: 1;
-  font-weight: 600;
-  border-bottom-color: currentColor;
+.st-play button:hover {
+  background: color-mix(in srgb, currentColor 12%, transparent);
+}
+
+.st-play-scrub {
+  flex: 1 1 auto;
+  min-width: 6rem;
+}
+
+.st-play-read {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.8;
+  white-space: nowrap;
+}
+
+.st-play-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.st-play-speed > span {
+  opacity: 0.68;
+  font-size: 0.72rem;
+}
+
+.st-play-speed select {
+  font: inherit;
+  font-size: 0.75rem;
+  padding: 0.15rem 0.3rem;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+  background: transparent;
+  color: inherit;
 }
 
 /* -- the stage ------------------------------------------------------------------------------- */
@@ -152,6 +176,19 @@
 .st-stagefill {
   position: relative;         /* the HUD anchors to this, not to the document */
   min-width: 0;
+  min-height: 0;
+  /* The canvas takes what is left after the panel controls and the transport, so neither can be
+     pushed over the footer. Guessing a fraction of the window is what put them there. */
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+}
+
+.st-canvashost {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 /* -- the HUD --------------------------------------------------------------------------------- */
@@ -339,4 +376,149 @@
   .st-focus {
     margin-left: 0.5rem;
   }
+}
+
+.st-hud .muted b,
+.st-hud .muted span {
+  opacity: 0.55;
+}
+
+/* -- making the shell's tab panel own the remaining height ------------------------------------- */
+/* NOT a redefinition of the primitive: the shell's `.tabs` / `.tabpanel` keep their own appearance
+   and behaviour. This only says, INSIDE the workbench layout, that the panel is the box that takes
+   what is left and scrolls internally. Without it the panel is auto-height, `.st-stagefill`'s
+   `height: 100%` resolves against nothing and the stage collapses to a quarter of the screen, while
+   the aspect-ratio canvases run hundreds of pixels past the footer. */
+
+/* The workbench stacks: deck on top, tabs below. `.page-body.st-layout` is a flex ROW in the shared
+   sheet, which turned the three-chip scenario deck into a 338px left rail and left the 3-D stage at
+   47.7 percent against the ADR-0071 floor of 50. Measured, not guessed. */
+.page-body.st-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-body.st-layout > .tabs {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.page-body.st-layout > .tabs > .tablist {
+  flex: 0 0 auto;
+}
+
+.page-body.st-layout > .tabs > .tabpanel {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;          /* the ONE scroller: content never pushes the footer */
+  overflow-x: hidden;
+}
+
+/* A panel that draws by aspect ratio must still fit its box. These are square-ish fields over a
+   whole pad, so at full width they are taller than the screen; the container scrolls, and the image
+   is capped so a reader sees the whole thing rather than a slice. */
+.page-body.st-layout .tabpanel canvas {
+  max-width: 100%;
+}
+
+/* The workbench footer is compact. The provenance and the disclaimer are mandatory content, but at
+   full prose size they were taking a sixth of the viewport away from the instrument. */
+body:has(.page-body.st-layout) .site-footer {
+  /* MEASURED: at prose size this footer was 157px of a 900px viewport, and the instrument landed at
+     47 percent against the ADR-0071 floor of 50. The provenance and the disclaimer are mandatory
+     content and are still here in full; only their type size and padding shrink, and only on the
+     workbench route. The prose routes keep the normal footer. */
+  font-size: 0.64rem;
+  line-height: 1.2;
+}
+
+body:has(.page-body.st-layout) .site-footer .footer-inner {
+  padding: 0.4rem 1.2rem;
+  gap: 0.25rem;
+}
+
+/* Small multiples: the three field views side by side, so the width carries instrument rather than
+   whitespace. They wrap on a narrow screen instead of shrinking to illegibility. */
+.st-multiples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(28rem, 1fr));
+  gap: 0.9rem;
+  min-width: 0;
+  align-items: end;
+}
+
+.st-multiples-wide {
+  /* A wide site gets two columns, not three: at three each map is a sliver and the set reads
+     as decoration rather than as a comparison. */
+  grid-template-columns: repeat(auto-fit, minmax(34rem, 1fr));
+}
+
+.st-multiples figure {
+  margin: 0;
+  min-width: 0;
+}
+
+.st-multiples figcaption {
+  font-size: 0.74rem;
+  opacity: 0.75;
+  padding-top: 0.25rem;
+  text-align: center;
+}
+
+/* Trimming chrome, not content: the instrument was landing just under the ADR-0071 half-screen floor
+   and every row of padding around it is height it does not get. */
+.page-body.st-layout > .tabs > .tablist {
+  padding-block: 0.15rem;
+}
+
+.page-body.st-layout .st-deck {
+  margin-bottom: 0.25rem;
+}
+
+.page-body.st-layout .st-controls {
+  padding: 0.15rem 0 0;
+}
+
+/* THE SCENARIO DECK IS A ROW, NOT A RAIL.
+ *
+ * The shell's CaseSelector stacks its groups vertically, which is right for a deck of eleven cases in
+ * four categories. This product has THREE. As a rail it cost 330px of width permanently and 658px of
+ * height, and the 3-D stage came out at 47.7 percent against the ADR-0071 floor of 50. ADR-0071
+ * clause 7 is explicit that the control should fit the job. Laying the same primitive out
+ * horizontally keeps its behaviour, its chips, its deep link and its accessibility, and gives the
+ * width back to the instrument. Nothing about the component is redefined; only its flow direction.
+ */
+.page-body.st-layout .st-deck .cs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1.1rem;
+  min-width: 0;
+}
+
+.page-body.st-layout .st-deck .cs-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.page-body.st-layout .st-deck .cs-group-label {
+  font-size: 0.66rem;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.page-body.st-layout .st-deck .cs-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.page-body.st-layout .st-deck .cs-chip {
+  white-space: nowrap;
 }

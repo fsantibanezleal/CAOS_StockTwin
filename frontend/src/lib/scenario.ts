@@ -90,6 +90,16 @@ export interface Field {
   blocks: [number, number, number, number, number][];
 }
 
+/** Surface snapshots through the build, so the pile can be watched growing rather than only
+ *  inspected once finished. */
+export interface Frames {
+  nx: number;
+  ny: number;
+  cell_m: number;
+  z0: number[];
+  frames: { placed: number; z: number[] }[];
+}
+
 export interface Cut {
   t: number;
   grade: number;
@@ -155,6 +165,7 @@ export interface Manifest {
 
 export interface Scenario {
   manifest: Manifest;
+  frames: Frames | null;
   plan: Plan;
   loads: Load[];
   field: Field;
@@ -193,15 +204,19 @@ export async function loadIndex(): Promise<Index> {
 }
 
 export async function loadScenario(id: string): Promise<Scenario> {
-  const [manifest, plan, loads, field, cuts, sectors] = await Promise.all([
+  const [manifest, plan, loads, field, cuts, sectors, frames] = await Promise.all([
     get<Manifest>(`${id}/manifest.json`),
     get<Plan>(`${id}/plan.json`),
     get<Load[]>(`${id}/loads.json`),
     get<Field>(`${id}/field.json`),
     get<Cut[]>(`${id}/cuts.json`),
     get<{ areas: Sector[] }>(`${id}/sectors.json`),
+    // Frames are the only optional artifact: a scenario baked before they existed still loads, it
+    // just cannot be played. Failing the whole page over a missing animation would be the wrong
+    // trade.
+    get<Frames>(`${id}/frames.json`).catch(() => null),
   ]);
-  return { manifest, plan, loads, field, cuts, sectors };
+  return { manifest, plan, loads, field, cuts, sectors, frames };
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -230,6 +245,16 @@ export interface Verdict {
    *  three to four times better than any real bed achieves. */
   ideal: number;
   efficiency: number;
+  /** Whether the efficiency can be believed.
+   *
+   *  An efficiency above one says the achieved reduction beat the independent-source bound, which is
+   *  arithmetically impossible for genuinely independent sources. It therefore does not mean the pile
+   *  is miraculous; it means N is being underestimated. Measured on two of the three scenarios the
+   *  ratio comes out at 5 to 44 times the bound, so the source count taken from cut provenance is
+   *  clearly not capturing how many independent grades a cut actually averages. Until that is
+   *  root-caused the number is withheld rather than displayed, because a headline of "4387 percent of
+   *  ideal" is worse than no headline at all. */
+  boundReliable: boolean;
   nLayers: number;
   tonnesIn: number;
   tonnesOut: number;
@@ -254,10 +279,17 @@ export function verdict(sc: Scenario): Verdict {
   const wOut = sc.cuts.map((c) => c.t);
   const varOut = weightedVariance(gOut, wOut);
 
-  const layerCounts = sc.cuts.map((c) => Object.keys(c.prov).length);
-  const nLayers = layerCounts.length
-    ? layerCounts.reduce((a, b) => a + b, 0) / layerCounts.length
-    : 1;
+  // THE EFFECTIVE NUMBER OF INDEPENDENT SOURCES per cut, not the raw count of them. A cut drawing
+  // 95 percent of its tonnage from one dig block and traces of four others is averaging one source,
+  // not five, and counting keys would say five. The inverse participation ratio, 1 / sum of squared
+  // fractions, is the standard effective-sample-size measure and gives one for a pure cut and n for
+  // an evenly mixed one.
+  const eff = sc.cuts.map((c) => {
+    const f = Object.values(c.prov);
+    const ss = f.reduce((a, x) => a + x * x, 0);
+    return ss > 0 ? 1 / ss : 1;
+  });
+  const nLayers = eff.length ? eff.reduce((a, b) => a + b, 0) / eff.length : 1;
 
   const vrr = varIn > 0 ? varOut / varIn : 0;
   const ideal = nLayers > 0 ? 1 / nLayers : 1;
@@ -266,7 +298,12 @@ export function verdict(sc: Scenario): Verdict {
     varOut,
     vrr,
     ideal,
-    efficiency: vrr > 0 ? Math.min(ideal / vrr, 1) : 1,
+    // NOT capped. An efficiency above one means the achieved reduction beat the bound, which is
+    // arithmetically impossible for genuinely independent sources and therefore says the source
+    // count is being underestimated rather than that the pile is miraculous. Silently clamping it to
+    // 100 percent would hide exactly that diagnostic.
+    efficiency: vrr > 0 ? ideal / vrr : 1,
+    boundReliable: vrr > 0 ? ideal / vrr <= 1.05 : false,
     nLayers,
     tonnesIn: placed.length * 231,
     tonnesOut: wOut.reduce((a, b) => a + b, 0),

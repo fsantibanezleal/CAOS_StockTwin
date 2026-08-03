@@ -25,6 +25,12 @@ export type ColourBy = 'grade' | 'coarse' | 'thickness' | 'lift';
 
 interface Props {
   field: Field;
+  /** Surface to draw INSTEAD of `field.z`, for playing the build back frame by frame.
+   *
+   *  The ground and the grade field stay as they are: only the elevation moves. That is honest for
+   *  a replay, because the ledger's grade per column is the FINAL composition and pretending to know
+   *  an intermediate one would be inventing data the bake did not record. */
+  surface?: number[] | null;
   plan: Plan;
   loads: Load[];
   colourBy: ColourBy;
@@ -66,6 +72,7 @@ const EMPTY = 1e-4;
 
 export default function SiteView3D({
   field,
+  surface = null,
   plan,
   loads,
   colourBy,
@@ -89,6 +96,8 @@ export default function SiteView3D({
     if (!el) return;
 
     const { nx, ny, cell_m: cm } = field;
+    // One accessor for the surface being drawn, so playback and the final state cannot diverge.
+    const Z = surface && surface.length === nx * ny ? surface : field.z;
     const W = nx * cm;
     const H = ny * cm;
 
@@ -144,7 +153,7 @@ export default function SiteView3D({
       const pos = mGeo.attributes.position as THREE.BufferAttribute;
       const col = new Float32Array(nx * ny * 3);
 
-      const thick = field.z.map((v, i) => v - field.z0[i]);
+      const thick = Z.map((v, i) => v - field.z0[i]);
       const maxT = Math.max(...thick, 1e-6);
       const vals =
         colourBy === 'grade'
@@ -157,7 +166,7 @@ export default function SiteView3D({
       const hi = present.length ? Math.max(...present) : 1;
 
       for (let k = 0; k < nx * ny; k++) {
-        pos.setY(k, field.z[k]);
+        pos.setY(k, Z[k]);
         const t = thick[k];
         let c: [number, number, number];
         if (t <= EMPTY) {
@@ -198,7 +207,7 @@ export default function SiteView3D({
       for (let j = 1; j < ny - 1; j++) {
         for (let i = 1; i < nx - 1; i++) {
           const k = j * nx + i;
-          if (field.z[k] - field.z0[k] <= EMPTY) continue;
+          if (Z[k] - field.z0[k] <= EMPTY) continue;
           let drop = 0;
           for (const [di, dj] of [
             [1, 0],
@@ -206,11 +215,11 @@ export default function SiteView3D({
             [0, 1],
             [0, -1],
           ]) {
-            drop = Math.max(drop, field.z[k] - field.z[(j + dj) * nx + (i + di)]);
+            drop = Math.max(drop, Z[k] - Z[(j + dj) * nx + (i + di)]);
           }
           if (drop >= 1.0) {
             const p = at(i, j);
-            pts.push(p.x, field.z[k] + 0.35, p.z);
+            pts.push(p.x, Z[k] + 0.35, p.z);
           }
         }
       }
@@ -260,7 +269,7 @@ export default function SiteView3D({
           pts.map(([x, z]) => {
             const i = Math.min(Math.max(Math.floor(x / cm), 0), nx - 1);
             const j = Math.min(Math.max(Math.floor(z / cm), 0), ny - 1);
-            return new THREE.Vector3(x - W / 2, field.z[j * nx + i] + lift, z - H / 2);
+            return new THREE.Vector3(x - W / 2, Z[j * nx + i] + lift, z - H / 2);
           }),
         );
         scene.add(new THREE.Line(g, new THREE.LineBasicMaterial({ color: colour })));
@@ -280,7 +289,7 @@ export default function SiteView3D({
         new THREE.ConeGeometry(6, 14, 12),
         new THREE.MeshLambertMaterial({ color: dark ? 0xd8dee9 : 0x33475b }),
       );
-      m.position.set(sx - W / 2, field.z[j * nx + i] + 7, sy - H / 2);
+      m.position.set(sx - W / 2, Z[j * nx + i] + 7, sy - H / 2);
       scene.add(m);
     }
 
@@ -301,6 +310,7 @@ export default function SiteView3D({
     };
 
     let drag = false;
+    let panning = false;
     let lx = 0;
     let ly = 0;
     const dom = renderer.domElement;
@@ -308,15 +318,32 @@ export default function SiteView3D({
     dom.style.cursor = 'grab';
     const down = (e: PointerEvent) => {
       drag = true;
+      // PAN, not just orbit. Middle button, right button, or shift with the left, which is the
+      // convention every CAD and mine-planning package uses. Rotate-only leaves a reader unable to
+      // bring a corner of a three-area yard into the middle of the screen.
+      panning = e.button === 1 || e.button === 2 || e.shiftKey;
       lx = e.clientX;
       ly = e.clientY;
       dom.setPointerCapture(e.pointerId);
-      dom.style.cursor = 'grabbing';
+      dom.style.cursor = panning ? 'move' : 'grabbing';
     };
     const move = (e: PointerEvent) => {
       if (!drag) return;
-      az -= (e.clientX - lx) * 0.006;
-      el2 = Math.min(Math.max(el2 + (e.clientY - ly) * 0.005, 0.12), 1.45);
+      const dx = e.clientX - lx;
+      const dy = e.clientY - ly;
+      if (panning) {
+        // Translate the look-at point in the camera's own screen plane, scaled by distance so the
+        // ground appears to follow the pointer at any zoom.
+        const k = dist * 0.0016;
+        const right = new THREE.Vector3();
+        const up = new THREE.Vector3();
+        camera.matrixWorld.extractBasis(right, up, new THREE.Vector3());
+        target.addScaledVector(right, -dx * k);
+        target.addScaledVector(up, dy * k);
+      } else {
+        az -= dx * 0.006;
+        el2 = Math.min(Math.max(el2 + dy * 0.005, 0.12), 1.45);
+      }
       lx = e.clientX;
       ly = e.clientY;
       place();
@@ -331,10 +358,23 @@ export default function SiteView3D({
       dist = Math.min(Math.max(dist * (1 + Math.sign(e.deltaY) * 0.12), R * 0.35), R * 2.6);
       place();
     };
+    // Right-drag pans, so the context menu must not eat it.
+    const noMenu = (e: Event) => e.preventDefault();
+    dom.addEventListener('contextmenu', noMenu);
     dom.addEventListener('pointerdown', down);
     dom.addEventListener('pointermove', move);
     dom.addEventListener('pointerup', up);
     dom.addEventListener('wheel', wheel, { passive: false });
+
+    const recentre = () => {
+      az = -0.7;
+      el2 = 0.62;
+      dist = R * 1.15;
+      target.set(0, 0, 0);
+      place();
+      renderer.render(scene, camera);
+    };
+    dom.addEventListener('dblclick', recentre);
 
     const resize = () => {
       const w = el.clientWidth || 600;
@@ -359,10 +399,12 @@ export default function SiteView3D({
 
     return () => {
       ro.disconnect();
+      dom.removeEventListener('contextmenu', noMenu);
       dom.removeEventListener('pointerdown', down);
       dom.removeEventListener('pointermove', move);
       dom.removeEventListener('pointerup', up);
       dom.removeEventListener('wheel', wheel);
+      dom.removeEventListener('dblclick', recentre);
       dom.removeEventListener('pointermove', render);
       dom.removeEventListener('wheel', render);
       renderer.dispose();
@@ -372,7 +414,7 @@ export default function SiteView3D({
       });
       el.innerHTML = '';
     };
-  }, [field, plan, loads, colourBy, through, showPaths, showCrest, showPlan, dark, height]);
+  }, [field, surface, plan, loads, colourBy, through, showPaths, showCrest, showPlan, dark, height]);
 
   return <div ref={host} style={{ width: '100%', height }} aria-label="Site in three dimensions" />;
 }

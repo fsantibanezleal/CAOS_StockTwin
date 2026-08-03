@@ -23,9 +23,9 @@ Building on relief is what exposed two defects a flat pad physically cannot reve
 
 | scenario | ground | areas | benches | loads | trucks | tags |
 |---|---|---|---|---|---|---|
-| [`single`](single.md) | heaped | 1 | 2 | 240 | 4 | basic, physics |
-| [`yard`](yard.md) | heaped | 3 | 2 | 420 | 6 | core, sectors, routing |
-| [`sidehill`](sidehill.md) | sidehill | 1 | 2 | 240 | 4 | topography, sidehill |
+| [`single`](single.md) | heaped | 1 | 2 | 520 | 4 | basic, physics |
+| [`yard`](yard.md) | heaped | 3 | 2 | 1000 | 6 | core, sectors, routing |
+| [`sidehill`](sidehill.md) | sidehill | 1 | 2 | 520 | 4 | topography, sidehill |
 
 ## What every bake is gated on
 

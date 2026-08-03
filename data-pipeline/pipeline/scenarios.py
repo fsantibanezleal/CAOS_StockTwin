@@ -59,7 +59,12 @@ class Scenario:
     area_width_m: float = 90.0
     area_length_m: float = 90.0
     gap_m: float = 20.0
-    bench_height_m: float = 8.0
+    # BENCH HEIGHT IS NOT COSMETIC. Run-out down the face is the horizontal component of the bench
+    # slope, so it scales directly with this: an 8 m bench cascades about 12 m, which sits BELOW the
+    # 13 to 46 m envelope measured off a 30 m dump crest. It also sits below the 10 to 12 m threshold
+    # at which percolation segregation becomes significant, so a short bench produces a geometry that
+    # is correct for itself and comparable to nothing. 18 m puts both in range.
+    bench_height_m: float = 18.0
     n_benches: int = 2
     classes: tuple[str, ...] = ("ROM",)
     access_xy: tuple[float, float] | None = None
@@ -69,6 +74,12 @@ class Scenario:
     tip_spacing_m: float = 8.0
     loads_per_dozer_pass: int = 40
     ramp_width_m: float = 25.0
+    # How much of a bench goes down as paddock base layer before the edge campaign starts. The base
+    # layer is ONE lift of heaps, roughly a couple of metres over the footprint, which against an 18 m
+    # bench is about a sixth of its volume. The earlier 0.35 was a guess and it starved the edge
+    # campaign: on a tall bench it consumed the entire load budget in paddock dumps and no face was
+    # ever formed to cascade over.
+    paddock_frac: float = 0.18
 
     # Fleet and material
     n_trucks: int = 4
@@ -156,7 +167,7 @@ SINGLE = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=240,
+    n_loads=520,
     tags=("basic", "physics"),
 )
 
@@ -201,7 +212,7 @@ YARD = Scenario(
     # holding 0.32 and "low grade" on the pile holding 0.82, which the sector chart showed
     # immediately and no table would have.
     classes=("low grade", "mid grade", "high grade"),
-    n_loads=420,
+    n_loads=1000,
     block_sd=0.20,
     n_trucks=6,
     n_cuts=30,
@@ -245,7 +256,7 @@ SIDEHILL = Scenario(
     area_width_m=90.0,
     area_length_m=90.0,
     classes=("ROM",),
-    n_loads=240,
+    n_loads=520,
     fill=FillType.SIDEHILL,
     relief_m=18.0,
     roughness_m=0.5,
