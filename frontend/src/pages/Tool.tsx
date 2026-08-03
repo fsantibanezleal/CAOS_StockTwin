@@ -21,6 +21,7 @@
  * six, a stage that fills what is left, and the readouts on the stage rather than under it.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   type Index,
@@ -83,9 +84,13 @@ function useStageHeight(): number {
 
 export default function Tool({ lang = 'en' }: { lang?: 'en' | 'es' }) {
   const dark = useDark();
+  const nav = useNavigate();
+  const [params] = useSearchParams();
   const stageH = useStageHeight();
   const [index, setIndex] = useState<Index | null>(null);
-  const [sid, setSid] = useState<string>('single');
+  // Returning from the focus route carries the scenario back, so a round trip does not reset the
+  // reader's work. ADR-0070 clause 5.
+  const [sid, setSid] = useState<string>(() => params.get('scenario') ?? 'single');
   const [sc, setSc] = useState<Scenario | null>(null);
   const [tab, setTab] = useState<TabId>('site');
   const [colour, setColour] = useState<ColourBy>('grade');
@@ -110,10 +115,10 @@ export default function Tool({ lang = 'en' }: { lang?: 'en' | 'es' }) {
   const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
 
-  // ADR-0070: the round trip preserves the scenario, so the focus route opens on what is on screen.
-  const toFocus = useCallback(() => {
-    window.location.hash = `#/focus/${sid}`;
-  }, [sid]);
+  // ADR-0070: the round trip preserves the scenario, so the focus route opens on what is on screen
+  // and returning lands back here on the same one. The app uses BrowserRouter, so this is a path and
+  // not a hash: a hash URL simply does not match and the route renders nothing at all.
+  const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
 
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
 
@@ -229,9 +234,13 @@ export default function Tool({ lang = 'en' }: { lang?: 'en' | 'es' }) {
                   <b>{v.vrr.toFixed(3)}</b>
                   <span>{t('variance reduction', 'reduccion de varianza')}</span>
                 </div>
-                <div>
-                  <b>{v.ideal.toFixed(3)}</b>
-                  <span>{t('ideal 1/N bound', 'cota ideal 1/N')}</span>
+                <div className={v.boundReliable ? '' : 'muted'}>
+                  <b>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</b>
+                  <span>
+                    {v.boundReliable
+                      ? t('ideal 1/N bound', 'cota ideal 1/N')
+                      : t('bound not reliable here', 'cota no confiable aquí')}
+                  </span>
                 </div>
                 <div>
                   <b>{sc.manifest.build.loads_placed}</b>

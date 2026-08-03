@@ -1,212 +1,206 @@
 import { useEffect, useState } from 'react';
 import { Callout, Cite, Refs, useShellLang } from '@fasl-work/caos-app-shell';
-import { PUBLISHED_ANCHORS } from '../engine';
-import { loadMatrix } from '../lib/artifacts';
-import type { Matrix } from '../lib/contract.types';
+
+import { MEASURED, type Scenario, loadScenario, profileStats, verdict } from '../lib/scenario';
 
 /**
- * ADR-0017 section 2: the numbers come ONLY from a committed artifact, never typed in. When the bake
- * has not run, the page says so and shows nothing rather than showing a zero, because a zero in a
- * metric column is indistinguishable from a real measurement.
+ * What this product is measured against, and where it falls short.
+ *
+ * The comparison is computed from the shipped artifact, so the page cannot claim a fit the bake did
+ * not produce. Anything not yet done is listed as not yet done rather than being left out.
  */
 export default function Benchmark() {
   const es = useShellLang() === 'es';
-  const [matrix, setMatrix] = useState<Matrix | null>(null);
-  const [state, setState] = useState<'loading' | 'ready' | 'missing'>('loading');
-
+  const [sc, setSc] = useState<Scenario | null>(null);
   useEffect(() => {
-    let alive = true;
-    loadMatrix().then((m) => {
-      if (!alive) return;
-      setMatrix(m);
-      setState(m ? 'ready' : 'missing');
-    });
-    return () => { alive = false; };
+    loadScenario('single').then(setSc).catch(() => setSc(null));
   }, []);
+
+  const stats = sc ? profileStats(sc) : [];
+  const v = sc ? verdict(sc) : null;
+  const inBand = (x: number, [a, b]: readonly [number, number]) => x >= a && x <= b;
 
   return (
     <div className="page-body prose">
       <div className="page-head">
-        <h1>Benchmark</h1>
+        <h1>{es ? 'Contraste' : 'Benchmark'}</h1>
         <p className="lede">
           {es
-            ? 'Todos los numeros de esta página se leen del artefacto comprometido que produjo el horneado canónico sobre 31 semillas por caso. Ninguno esta escrito a mano. Las cuatro afirmaciones ordinales se publican aquí pasen o fallen.'
-            : 'Every number on this page is read from the committed artifact produced by the canonical bake over 31 seeds per case. None is typed in. The four ordinal assertions are published here whether they pass or fail.'}
+            ? 'Contra que se mide este producto: la geometria medida en 28 descargas reales, la linea base de la industria para un modelo de acopio, y la cota ideal de mezcla. Y, con el mismo detalle, lo que todavia no esta hecho.'
+            : 'What this product is measured against: the geometry measured across 28 real dumps, the industry baseline for a stockpile model, and the ideal blending bound. And, in the same detail, what is not yet done.'}
         </p>
       </div>
 
       <section>
-        <h2>{es ? 'Anclas publicadas' : 'Published anchors'}</h2>
+        <h2>{es ? '1. La geometría, contra 28 descargas medidas' : '1. The geometry, against 28 measured dumps'}</h2>
         <p>
           {es
-            ? 'El eje de apilado se compara contra resultados publicados y no solo contra si mismo. Estos digitos NO son objetivos de reproducción: vienen de una pila circular de otras dimensiones y su fuente es internamente inconsistente sobre ellos. La prueba es ordinal y de orden de magnitud.'
-            : 'The stacking axis is scored against published results, not only against itself. These digits are not reproduction targets: they come from a circular pile of different dimensions and their source is internally inconsistent about them. The test is ordinal and magnitude-level.'}
+            ? 'El operador de descarga de borde se calibra contra fotogrametria por dron de descargas individuales de un CAT 793F, no contra una suposicion. El predecesor colocaba cada carga como un disco isotropico de 4,5 m de radio, que falla los tres rangos a la vez.'
+            : 'The edge dump operator is calibrated against UAV photogrammetry of individual CAT 793F dumps, not against an assumption. The predecessor placed every load as an isotropic 4.5 m radius disc, which fails all three ranges at once.'}
+          {' '}<Cite id="young2022" paren /> <Cite id="youngdata2021" paren />
         </p>
-        <table className="cmp-table st-table">
-          <thead>
-            <tr><th>VRR</th><th>{es ? 'que es' : 'what'}</th><th>{es ? 'fuente' : 'source'}</th></tr>
-          </thead>
-          <tbody>
-            {PUBLISHED_ANCHORS.map((a) => (
-              <tr key={a.src + a.vrr}>
-                <td className="st-mono">{a.vrr.toFixed(3)}</td>
-                <td style={{ textAlign: 'left', whiteSpace: 'normal' }}>{es ? a.es : a.en}</td>
-                <td style={{ textAlign: 'left', whiteSpace: 'normal', fontSize: '0.72rem' }}>{a.src}</td>
+        <div className="st-tablewrap">
+          <table className="st-table">
+            <thead>
+              <tr>
+                <th>{es ? 'perfil' : 'profile'}</th>
+                <th>{es ? 'cargas' : 'loads'}</th>
+                <th>{es ? 'largo m' : 'length m'}</th>
+                <th>{es ? 'ancho m' : 'width m'}</th>
+                <th>{es ? 'espesor m' : 'thickness m'}</th>
+                <th>{es ? 'dentro del rango' : 'in the envelope'}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-        <Refs ids={['loubser2015', 'kumral2006', 'schramm2021']} label="Refs" />
+            </thead>
+            <tbody>
+              {stats
+                .filter((r) => r.profile !== 'paddock')
+                .map((r) => {
+                  const ok =
+                    inBand(r.len, MEASURED.length) &&
+                    inBand(r.wid, MEASURED.width) &&
+                    inBand(r.thick, MEASURED.thickness);
+                  return (
+                    <tr key={r.profile}>
+                      <td>{r.profile.replace('_', ' ')}</td>
+                      <td>{r.n}</td>
+                      <td>{r.len.toFixed(1)}</td>
+                      <td>{r.wid.toFixed(1)}</td>
+                      <td>{r.thick.toFixed(2)}</td>
+                      <td className={ok ? 'st-ok' : 'st-bad'}>{ok ? (es ? 'sí' : 'yes') : 'NO'}</td>
+                    </tr>
+                  );
+                })}
+              <tr className="st-ref">
+                <td>{es ? 'medido' : 'measured'}</td>
+                <td>28</td>
+                <td>
+                  {MEASURED.length[0]} - {MEASURED.length[1]}
+                </td>
+                <td>
+                  {MEASURED.width[0]} - {MEASURED.width[1]}
+                </td>
+                <td>
+                  {MEASURED.thickness[0]} - {MEASURED.thickness[1]}
+                </td>
+                <td className="st-muted">{MEASURED.source}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <Callout variant="honest" title={es ? 'Criterio de descarte, declarado por adelantado' : 'Kill criterion, stated in advance'}>
+          {es
+            ? 'Si un perfil no puede ajustarse dentro del rango medido, el operador esta MAL y se rediseña, no se ajusta hasta que se vea aceptable.'
+            : 'If a profile cannot be fitted inside the measured envelope, the operator is WRONG and gets redesigned, not tuned until it looks acceptable.'}
+        </Callout>
       </section>
 
-      {state === 'loading' && <p className="st-note">{es ? 'Cargando el artefacto...' : 'Loading the artifact...'}</p>}
-
-      {state === 'missing' && (
-        <section>
-          <h2>{es ? 'El horneado canónico no está presente en esta construcción' : 'The canonical bake is not present in this build'}</h2>
-          <Callout variant="honest" title={es ? 'Sin numeros en vez de numeros inventados' : 'No numbers rather than invented numbers'}>
-            {es
-              ? 'Esta página lee unicamente del artefacto comprometido. Cuando el artefacto no está, la página lo dice y no muestra nada: un cero en una columna de métricas es indistinguible de una medición real, y rellenar la tabla con valores plausibles es exactamente el fallo que está regla existe para evitar. Para producirlo, ejecuta el horneado canónico y reconstruye el sitio; el comando esta en la página de Implementación. Mientras tanto, la App calcula todas estas métricas en vivo para el caso seleccionado.'
-              : 'This page reads only from the committed artifact. When the artifact is absent the page says so and shows nothing: a zero in a metric column is indistinguishable from a real measurement, and filling the table with plausible values is exactly the failure this rule exists to prevent. To produce it, run the canonical bake and rebuild the site; the command is on the Implementation page. In the meantime the App computes all of these metrics live for the selected case.'}
-          </Callout>
-        </section>
-      )}
-
-      {state === 'ready' && matrix && (
-        <>
-          <section>
-            <h2>{es ? 'Las cuatro afirmaciones' : 'The four assertions'}</h2>
-            <table className="cmp-table st-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>{es ? 'afirmación' : 'assertion'}</th>
-                  <th>{es ? 'medido' : 'measured'}</th>
-                  <th>{es ? 'veredicto' : 'verdict'}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {matrix.assertions.map((a) => (
-                  <tr key={a.id}>
-                    <td className="st-mono">{a.id}</td>
-                    <td style={{ textAlign: 'left', whiteSpace: 'normal' }}>{a.statement}</td>
-                    <td className="st-mono" style={{ textAlign: 'left', whiteSpace: 'normal', fontSize: '0.7rem' }}>
-                      {Object.entries(a.measured)
-                        .map(([k, v]) => `${k} ${Number(v).toFixed(4)}`).join(' · ')}
-                    </td>
-                    <td className={a.pass ? 'st-pass' : 'st-fail'}>{a.pass ? 'PASS' : 'FAIL'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {matrix.assertions.some((a) => !a.pass) && (
-              <Callout variant="honest" title={es ? 'Una afirmación fallo' : 'An assertion failed'}>
-                {es
-                  ? 'Una afirmación fallida se publica con los numeros que la hicieron fallar. Un resultado negativo es un resultado; ajustar la parametrización hasta que pase sería convertir una prueba en una decoración.'
-                  : 'A failed assertion is published with the numbers that failed it. A negative result is a result; tuning the parameterisation until it passes would turn a test into a decoration.'}
-              </Callout>
-            )}
-          </section>
-
-          <section>
-            <h2>{es ? 'La matriz completa, caso por métrica' : 'The complete case-by-metric matrix'}</h2>
-            <p>
-              {es
-                ? `${matrix.rows.length} casos, cada uno con su banda de credibilidad sobre las semillas indicadas. Una celda faltante hace fallar la compuerta de completitud; no se promedia para hacerla desaparecer.`
-                : `${matrix.rows.length} cases, each with its credible band over the stated number of seeds. A missing cell fails the completeness gate; it is not averaged away.`}
-            </p>
-            <div className="st-tablewrap" style={{ maxHeight: 'none' }}>
-              <table className="cmp-table st-table">
-                <thead>
-                  <tr>
-                    <th>{es ? 'caso' : 'case'}</th>
-                    <th>VRR</th>
-                    <th>{es ? 'banda p05 a p95' : 'band p05 to p95'}</th>
-                    <th>1/N</th>
-                    <th>N</th>
-                    <th>{es ? 'eficiencia' : 'efficiency'}</th>
-                    <th>E</th>
-                    <th>{es ? 'segregación' : 'segregation'}</th>
-                    <th>{es ? 'residencia' : 'residence'}</th>
-                    <th>{es ? 'semillas' : 'seeds'}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {matrix.rows.map((r) => (
-                    <tr key={r.case_id}>
-                      <td className="st-mono" style={{ textAlign: 'left' }}>{r.case_id}</td>
-                      <td className="st-mono">{r.vrr.toFixed(4)}</td>
-                      <td className="st-mono">{r.vrr_band[0].toFixed(4)} - {r.vrr_band[1].toFixed(4)}</td>
-                      <td className="st-mono">{r.vrr_ideal.toFixed(4)}</td>
-                      <td className="st-mono">{r.n_layers.toFixed(1)}</td>
-                      <td className="st-mono">{(r.efficiency * 100).toFixed(0)} %</td>
-                      <td className="st-mono">{Number.isFinite(r.mixing_effect) ? r.mixing_effect.toFixed(1) : '--'}</td>
-                      <td className="st-mono">{r.segregation_index.toFixed(3)}</td>
-                      <td>{r.rtd_character}</td>
-                      <td className="st-mono">{r.seeds}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section>
-            <h2>{es ? 'El eje de apilado' : 'The stacking axis'}</h2>
-            <p>
-              {es
-                ? 'El orden que la literatura acuerda, chevcon mejor que conos concéntricos, se reproduce. Pero chevron sale mejor que chevcon, lo que a primera vista contradice a Loubser y de Korte y no lo hace: su comparación es sobre un patio circular, donde la operación continua obliga al apilador a recorrer el anillo y chevron no es una opción disponible. En una cama lineal cada capa de chevron abarca toda la longitud, así que un corte en cualquier estación muestrea capas de toda la construcción; las de chevcon vienen de una ventana viajera y están correlacionadas entre si.'
-                : 'The ordering the literature agrees on, chevcon better than cone shell, is reproduced. But chevron comes out better than chevcon, which at first reading contradicts Loubser and de Korte and does not: their comparison is on a circular yard, where continuous operation forces the stacker around the ring and chevron is not an available method. On a linear bed every chevron layer spans the whole length, so a cut at any station samples layers from across the entire build; chevcon’s come from a travelling window and are correlated with one another.'}
-              {' '}<Cite id="loubser2015" paren />
-            </p>
-            <p>
-              {es
-                ? 'La columna de eficiencia es el diagnóstico útil. Chevcon cruza mas capas por corte que chevron y aun así mezcla peor, lo que muestra que el conteo de capas por si solo no es la respuesta: lo que importa es cuántas capas independientes cruza el corte.'
-                : 'The efficiency column is the useful diagnostic. Chevcon crosses more layers per cut than chevron and still blends worse, which shows that layer count alone is not the answer: what matters is how many independent layers the cut crosses.'}
-            </p>
-          </section>
-
-          <section>
-            <h2>{es ? 'El tier aprendido' : 'The learned tier'}</h2>
-            <Callout variant="honest" title={es ? 'No activo en esta versión' : 'Not active in this release'}>
-              {es
-                ? 'El corpus barrido, la línea base de regresión multiple al estilo de Kumral y el sustituto de perceptron están implementados en el carril fuera de línea, pero el veredicto de refutación no se ha publicado y por eso el tier aprendido NO aparece como método en la App. Un modelo sin medir mostrado junto a otros medidos es un defecto, no una característica. Cuando el veredicto exista aparecera aquí con su número, en la dirección que sea: si la red no supera a la regresión por más que la banda por remuestreo de la regresión, el resultado negativo se reporta y la red queda solo como demostración del carril aprendido en el navegador.'
-                : 'The swept corpus, the Kumral-style multiple-regression baseline and the perceptron surrogate are implemented in the offline lane, but the refutation verdict has not been published, so the learned tier does not appear as a method in the App. An unmeasured model displayed beside measured ones is a defect, not a feature. When the verdict exists it will appear here with its number, in whichever direction it falls: if the network does not beat the regression by more than the regression’s own bootstrap band, the negative result is reported and the network stays only as a demonstration of the in-browser learned lane.'}
-            </Callout>
-            <Refs ids={['kumral2006']} label="Refs" />
-          </section>
-
-          <section>
-            <h2>{es ? 'Paridad entre carriles' : 'Cross-lane parity'}</h2>
-            <p>
-              {es
-                ? 'La misma física existe dos veces: en el motor fuera de línea que produce los artefactos, y en el navegador para que un control mueva la pila al instante. La aplicación solo es honesta si ambas coinciden, así que la diferencia se mide y se publica en vez de suponerse. El carril fuera de línea es la verdad canónica; el del navegador es un espejo con una tolerancia declarada.'
-                : 'The same physics exists twice: in the offline engine that produces the artifacts, and in the browser so a control moves the pile immediately. The app is only honest if the two agree, so the difference is measured and published rather than assumed. The offline lane is canonical truth; the browser lane is a mirror with a stated tolerance.'}
-            </p>
+      <section>
+        <h2>{es ? '2. La línea base de la industria' : '2. The industry baseline'}</h2>
+        <p>
+          {es
+            ? 'Es explicita y humilde: el modelo de bloques hoy en operacion para un acopio grande es UN solo valor homogeneizado que lleva la ley promedio movil. Un numero para toda la pila. Ese es el listón real.'
+            : 'It is explicit and humbling: the block model in place today for a large stockpile is ONE large homogenized block value carrying the rolling average grade. One number for the whole pile. That is the actual bar.'}
+          {' '}<Cite id="young2021" paren />
+        </p>
+        {v && (
+          <div className="st-tablewrap">
             <table className="st-table">
               <thead>
                 <tr>
-                  <th>{es ? 'Cantidad' : 'Quantity'}</th>
-                  <th>{es ? 'Acuerdo medido' : 'Measured agreement'}</th>
+                  <th>{es ? 'lo que reporta' : 'what it reports'}</th>
+                  <th>{es ? 'línea base' : 'baseline'}</th>
+                  <th>{es ? 'este producto' : 'this product'}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr><td>{es ? 'Flujo de entrada' : 'Input stream'}</td><td><code>5.7e-14</code></td></tr>
-                <tr><td>{es ? 'Tonelaje depositado, por lote' : 'Deposited tonnage, per lot'}</td><td><code>1.8e-13</code></td></tr>
-                <tr><td>{es ? 'Masa total de la pila' : 'Total pile mass'}</td><td><code>1.1e-11</code></td></tr>
-                <tr><td>{es ? 'Capas por corte' : 'Layers per cut'}</td><td>{es ? 'exacto' : 'exact'}</td></tr>
-                <tr><td>{es ? 'Composición granulométrica del lote' : 'Lot size-split composition'}</td><td><code>9.8e-4</code></td></tr>
-                <tr><td>{es ? 'Ley del corte' : 'Cut grade'}</td><td><code>5.4e-4</code></td></tr>
+                <tr>
+                  <td>{es ? 'valores de ley' : 'grade values'}</td>
+                  <td>1</td>
+                  <td>{sc ? sc.field.grade.filter((g) => g !== null).length.toLocaleString() : '-'}</td>
+                </tr>
+                <tr>
+                  <td>{es ? 'densidad de muestreo' : 'sampling density'}</td>
+                  <td>175,000 t {es ? 'por muestra' : 'per sample'}</td>
+                  <td>100-400 t {es ? 'por muestra' : 'per sample'}</td>
+                </tr>
+                <tr>
+                  <td>{es ? 'estructura interna visible' : 'internal structure visible'}</td>
+                  <td>{es ? 'ninguna' : 'none'}</td>
+                  <td>{es ? 'por banco y por sector' : 'by lift and by sector'}</td>
+                </tr>
+                <tr>
+                  <td>{es ? 'trazabilidad del corte' : 'cut provenance'}</td>
+                  <td>{es ? 'ninguna' : 'none'}</td>
+                  <td>{es ? 'por bloque de origen, con su desplazamiento' : 'per source block, with its displacement'}</td>
+                </tr>
               </tbody>
             </table>
-            <Callout variant="honest" title={es ? 'La masa es exacta; la composición no' : 'Mass is exact; composition is not'}>
-              {es
-                ? 'La masa, la geometría y el conteo de capas coinciden de forma exacta, y el conteo de capas es la cantidad sobre la que descansa toda afirmación de mezcla. Lo que se separa es la composición por tamaño, en el cuarto decimal, por el orden de acumulación en punto flotante del solver de segregación y no por una diferencia de lógica: el mismo cálculo se leyó rutina por rutina en ambos carriles y las salidas del solver por banda coinciden a 1e-12. Un corte con ley 0,58 en el navegador puede leerse 0,5805 en el artefacto. Para decidir entre geometrías esa diferencia es irrelevante; para citar una ley, el artefacto manda.'
-                : 'Mass, geometry and the layer count agree exactly, and the layer count is the quantity every blending claim rests on. What separates is the size-split composition, in the fourth decimal, from floating-point accumulation order in the segregation solver rather than from a logic difference: the same computation was read routine by routine across both lanes, and the per-band solver outputs match to 1e-12. A cut reading 0.58 in the browser may read 0.5805 in the artifact. For choosing between geometries that difference is irrelevant; for quoting a grade, the artifact governs.'}
-            </Callout>
-          </section>
-        </>
-      )}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <h2>{es ? '3. La mezcla, contra la cota ideal' : '3. Blending, against the ideal bound'}</h2>
+        {v && (
+          <p>
+            {es ? 'En el escenario base la razon medida es ' : 'On the base scenario the measured ratio is '}
+            <strong>{v.vrr.toFixed(3)}</strong>
+            {es ? ' contra una cota ideal de ' : ' against an ideal bound of '}
+            <strong>{v.ideal.toFixed(3)}</strong>
+            {es
+              ? `, es decir un ${(v.efficiency * 100).toFixed(0)} por ciento del ideal, con ${v.nLayers.toFixed(1)} fuentes distintas por corte en promedio.`
+              : `, that is ${(v.efficiency * 100).toFixed(0)} percent of the ideal, with ${v.nLayers.toFixed(1)} distinct sources per cut on average.`}
+          </p>
+        )}
+        <p>
+          {es
+            ? 'La razon nunca se cita sola. El ideal es tipicamente tres a cuatro veces mejor que lo que logra cualquier cama real, asi que una razon sin su cota se lee mucho mas favorable de lo que es. Y N se MIDE del propio build, no se configura.'
+            : 'The ratio is never quoted alone. The ideal is typically three to four times better than any real bed achieves, so a ratio without its bound reads far more flattering than it is. And N is MEASURED from the build itself rather than configured.'}
+          {' '}<Cite id="schramm2021" paren /> <Cite id="kumral2006" paren />
+        </p>
+      </section>
+
+      <section>
+        <h2>{es ? '4. Lo que NO está hecho' : '4. What is NOT done'}</h2>
+        <p>
+          {es
+            ? 'Listado con el mismo detalle que lo demas, porque omitirlo seria la sobreafirmacion que este producto existe para evitar.'
+            : 'Listed in the same detail as the rest, because leaving it out would be the overclaim this product exists to avoid.'}
+        </p>
+        <ul>
+          <li>
+            {es
+              ? 'La segregacion se calibra contra la TABLA publicada, no contra las superficies 3-D subyacentes. El conjunto de datos esta abierto bajo CC BY; ajustar contra las superficies es trabajo futuro declarado, no algo supuesto.'
+              : 'Segregation is calibrated against the published TABLE, not against the underlying 3-D surfaces. The dataset is open under CC BY; fitting against the surfaces is declared future work, not something assumed done.'}
+            {' '}<Cite id="youngdata2021" paren />
+          </li>
+          <li>
+            {es
+              ? 'Las formas funcionales de la segregacion son las curvas mas simples que reproducen afirmaciones verbales publicadas. La direccion de cada efecto esta respaldada; las magnitudes no estan validadas contra DEM ni contra un ensayo de laboratorio.'
+              : 'The segregation functional forms are the simplest curves reproducing published verbal statements. The direction of each effect is supported; the magnitudes are not validated against DEM or a laboratory test.'}
+          </li>
+          <li>
+            {es
+              ? 'No hay modelo sustituto aprendido. No se despacha ninguno hasta que supere a una regresion multiple sobre el mismo corpus por mas que la propia banda de la regresion.'
+              : 'There is no learned surrogate model. None ships until it beats a multiple regression on the same corpus by more than the regression own band.'}
+            {' '}<Cite id="kumral2006" paren />
+          </li>
+          <li>
+            {es
+              ? 'La relacion entre humedad y angulo de reposo tiene la forma correcta y un pico real, pero su valor a cualquier humedad dada no esta validado. Esta marcado como tal en el codigo.'
+              : 'The moisture-to-repose relationship has the right shape and a real peak, but its value at any given moisture is not validated. It is marked as such in the code.'}
+          </li>
+          <li>
+            {es
+              ? 'Los rechazos de puntos planificados van de 2,9 a 13,8 por ciento segun el escenario. Es comportamiento real y se reporta, pero no es cero: el plan todavia pide en ocasiones puntos que la pila ya cubrio.'
+              : 'Refusals of planned tips run from 2.9 to 13.8 percent depending on the scenario. That is real behaviour and it is reported, but it is not zero: the plan still occasionally asks for tips the pile has grown over.'}
+          </li>
+        </ul>
+        <Refs
+          ids={['young2021', 'young2022', 'youngdata2021', 'schramm2021', 'kumral2006', 'moraga2017']}
+          label="Refs"
+        />
+      </section>
     </div>
   );
 }

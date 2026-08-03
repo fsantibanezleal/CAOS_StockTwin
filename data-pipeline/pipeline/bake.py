@@ -114,16 +114,39 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
     res = build(
         terrain, plan, fleet, loads,
         repose_deg=scn.repose_deg, seed=seed, material=material, route=router,
+        paddock_frac=scn.paddock_frac,
+        # How far from the planned tip the operator may spot. 25 m was too tight once the pile stood
+        # 12 m tall: most of its surface is at the angle of repose and therefore undrivable, so the
+        # nearest workable ground is often further than that and the load was refused rather than
+        # placed slightly off-plan. An operator walks further than 25 m to find a spot.
+        max_spot_offset_m=45.0,
     )
 
-    face = ReclaimFace(
-        method=ReclaimMethod.FULL_HEIGHT, position_m=0.0, direction=(1.0, 0.0),
-        depth_m=10.0, width_m=1e6, max_face_m=15.0,
-    )
-    cuts = campaign(
-        res.terrain, res.model, face,
-        cut_tonnes=scn.cut_tonnes, n_cuts=scn.n_cuts, repose_deg=scn.repose_deg,
-    )
+    # ONE PILE AT A TIME. An unbounded face width lets a single cut slice through every area in the
+    # yard simultaneously, which no loader does and which quietly destroys the measurement: cuts end
+    # up averaging three separately-routed stockpiles together, their grades collapse onto the overall
+    # mean, and the variance reduction comes out better than the independent-source bound, which is
+    # arithmetically impossible and was the signal that the setup was wrong.
+    cuts: list[Cut] = []
+    per_area = max(1, scn.n_cuts // max(1, len(plan.areas)))
+    for area in plan.areas:
+        face = ReclaimFace(
+            method=ReclaimMethod.FULL_HEIGHT,
+            position_m=area.x0_m,
+            direction=(1.0, 0.0),
+            depth_m=10.0,
+            width_m=area.length_m,
+            max_face_m=15.0,
+        )
+        cuts.extend(
+            campaign(
+                res.terrain, res.model, face,
+                cut_tonnes=scn.cut_tonnes, n_cuts=per_area, repose_deg=scn.repose_deg,
+            )
+        )
+    # A cut that delivered nothing is not a cut. Keeping them would put zero-tonnage rows in the feed
+    # series and drag the weighted statistics around for no physical reason.
+    cuts = [c for c in cuts if c.tonnes > 0]
 
     gate = _gate(scn, res, cuts, loads)
     return BakeResult(scenario=scn, result=res, cuts=cuts, gate=gate)

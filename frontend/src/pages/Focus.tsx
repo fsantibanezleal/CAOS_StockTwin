@@ -1,243 +1,304 @@
-import { useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Minimize2 } from 'lucide-react';
-import { useShellLang } from '@fasl-work/caos-app-shell';
-import {
-  CASES, CASES_BY_ID, RECLAIM_GEOMETRY, RECLAIM_METHODS, STACKING_LABELS, STACKING_METHODS,
-  blendingRegime, configFor, defaultVariant, dumpsFor, simulate,
-} from '../engine';
-import type { ReclaimMethod, StackingMethod } from '../engine';
-import { PileView3D, type Scalar } from '../viz/PileView3D';
-import { Ctl, VariantBar } from '../viz/Panels';
-
 /**
- * ADR-0070 scenario focus view: one selected pile, full page, nothing competing with it.
+ * The focus route: the pile owns the screen.
  *
- * ADDITIVE. The App keeps every tab and all its explanation; this route is a second way to look at the
- * SAME case through the SAME engine, for operating it rather than reading about it. It renders OUTSIDE
- * the AppShell on purpose: the header and footer are exactly the chrome a focus view exists to escape.
+ * BUILT AGAINST ADR-0070, clause by clause, because the previous version satisfied almost none of it:
  *
- * The clauses this implements, each of which is easy to fake and therefore stated: the stage owns the
- * viewport; one parameter column on the right; the KPIs are a HUD overlaid on the stage rather than
- * cards stacked above it; the blending regime is NAMED on the stage in one plain sentence; a
- * basic/advanced toggle governs parameter density; there is a visible return that lands back on the
- * App with the same case selected; and the route is deep-linkable per case.
+ *   1. the stage owns at least 80 percent of the viewport, edge to edge, no card and no border
+ *   2. ONE parameter column, on the right, scrollable independently of the stage
+ *   3. KPIs are OVERLAID on the stage as a HUD, never stacked as cards above or below it
+ *   4. a visible return control at the top right of the stage, landing back on the App
+ *   5. the round trip preserves the scenario, so leaving and returning does not reset the reader
  *
- * Motion starts paused. This view recomputes on a control change and draws on demand; nothing here
- * runs a permanent animation loop, because a focus view that autoplays is a compute bomb on a
- * background tab.
+ * WHY IT EXISTS at all, rather than for symmetry: this product passes the applicability test. A reader
+ * comparing how three sites build the same tonnage needs the instrument large, the controls to hand,
+ * and the readouts where their eyes already are.
+ *
+ * WHAT THE CONTROLS DO AND DO NOT DO. Every control here re-renders the view over the baked trace: it
+ * changes what is drawn and what is measured, immediately. None of them re-runs the simulation,
+ * because the simulation routes every load over the trafficable surface and relaxes after every
+ * operation, which is tens of seconds. ADR-0070 is explicit that a parameter which cannot respond
+ * live must not be presented as a live control, so the ones that would need a re-bake are shown as
+ * READOUTS of the scenario rather than as sliders that lie.
  */
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Minimize2 } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+
+import {
+  type Index,
+  type Scenario,
+  loadIndex,
+  loadScenario,
+  segregationSummary,
+  verdict,
+} from '../lib/scenario';
+import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
+import '../styles/focus.css';
+
+function useDark(): boolean {
+  const read = () =>
+    document.documentElement.dataset.theme === 'dark' ||
+    (!document.documentElement.dataset.theme &&
+      window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [dark, setDark] = useState(read);
+  useEffect(() => {
+    const obs = new MutationObserver(() => setDark(read()));
+    obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
+  return dark;
+}
+
 export default function Focus() {
-  const { caseId } = useParams();
-  const es = useShellLang() === 'es';
-  const base = useMemo(() => CASES_BY_ID[caseId ?? ''] ?? CASES[0], [caseId]);
+  const { caseId } = useParams<{ caseId: string }>();
+  const nav = useNavigate();
+  const dark = useDark();
+  const sid = caseId ?? 'single';
 
-  const [advanced, setAdvanced] = useState(false);
-  const [variantId, setVariantId] = useState<string | null>(defaultVariant(base)?.id ?? null);
-  const [stacking, setStacking] = useState<StackingMethod>(base.stacking);
-  const [reclaim, setReclaim] = useState<ReclaimMethod>(base.reclaim);
-  const [nPasses, setNPasses] = useState(base.nPasses);
-  const [sr, setSr] = useState(base.sr);
-  const [repose, setRepose] = useState(base.reposeDeg);
-  const [reclaimRate, setReclaimRate] = useState(base.reclaimRate);
-  const [scalar, setScalar] = useState<Scalar>('height');
-  const [cutAt, setCutAt] = useState(1);
-  const [scrub, setScrub] = useState<number | null>(null);
-  const [vex, setVex] = useState(1);
+  const [index, setIndex] = useState<Index | null>(null);
+  const [sc, setSc] = useState<Scenario | null>(null);
+  const [colour, setColour] = useState<ColourBy>('grade');
+  const [showPaths, setShowPaths] = useState(true);
+  const [showCrest, setShowCrest] = useState(true);
+  const [showPlan, setShowPlan] = useState(false);
+  const [through, setThrough] = useState(1);
+  const [err, setErr] = useState<string | null>(null);
 
-  // switching case from the rail must actually switch the experiment, not only the title
-  const [seen, setSeen] = useState(base.id);
-  if (seen !== base.id) {
-    setSeen(base.id);
-    setVariantId(defaultVariant(base)?.id ?? null);
-    setStacking(base.stacking);
-    setReclaim(base.reclaim);
-    setNPasses(base.nPasses);
-    setSr(base.sr);
-    setRepose(base.reposeDeg);
-    setReclaimRate(base.reclaimRate);
-    setScrub(null);
+  useEffect(() => {
+    loadIndex().then(setIndex).catch((e) => setErr(String(e)));
+  }, []);
+  useEffect(() => {
+    setSc(null);
+    loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
+  }, [sid]);
+
+  // Clause 5: leaving lands back on the App WITH THIS SCENARIO, not on a default.
+  const back = useCallback(() => nav(`/?scenario=${sid}`), [nav, sid]);
+
+  // Clause 1: the stage is the viewport minus nothing. Measured, not assumed: the gate asserts the
+  // instrument clears 80 percent here rather than the App route's 50.
+  const [stageH, setStageH] = useState(() => Math.max(420, window.innerHeight - 8));
+  useEffect(() => {
+    const on = () => setStageH(Math.max(420, window.innerHeight - 8));
+    window.addEventListener('resize', on);
+    return () => window.removeEventListener('resize', on);
+  }, []);
+
+  const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
+  const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
+
+  if (err) {
+    return (
+      <div className="fx-root">
+        <p className="fx-err">Could not load the scenario: {err}</p>
+        <Link to="/">Back to the App</Link>
+      </div>
+    );
   }
 
-  // the chip sets the regime, the rail refines it: the same composition as the App route
-  const variant = base.variants.find((v) => v.id === variantId) ?? null;
-  const effPasses = variant?.overrides.nPasses ?? nPasses;
-  const effSr = variant?.overrides.sr ?? sr;
-
-  const run = useMemo(() => simulate(
-    configFor(base, 42, {
-      stacking, reclaim, nPasses: effPasses, sr: effSr, reclaimRate,
-      pad: { nx: base.nx, ny: base.ny, cellM: base.cellM, reposeDeg: repose,
-        reposeCoarseDeg: base.reposeCoarseDeg, bulkDensityTpm3: 1.9 },
-    }),
-    dumpsFor(base, 42),
-  ), [base, stacking, reclaim, effPasses, effSr, reclaimRate, repose]);
-
-  // The focus view opened on the FINAL state, which is the pad AFTER the reclaimer drained it: a true
-  // picture of the wrong moment. It opens at the fullest the pile ever was, and the rail scrubs.
-  const peak = useMemo(() => {
-    let best = 0;
-    let bestSum = -1;
-    run.snapshots.forEach((s0, i) => {
-      let t = 0;
-      for (let k = 0; k < s0.h.length; k++) t += s0.h[k];
-      if (t > bestSum) { bestSum = t; best = i; }
-    });
-    return best;
-  }, [run]);
-  const nSnap = run.snapshots.length;
-  const pos = scrub ?? peak / Math.max(1, nSnap - 1);
-  const frame = Math.min(nSnap - 1, Math.max(0, Math.round(pos * (nSnap - 1))));
-  const shown = run.snapshots[frame].h;
-  const apexNow = shown.reduce((a, b) => (b > a ? b : a), 0);
-
-  const m = run.metrics;
-  const regime = blendingRegime(m, es);
-
-  const hud = [
-    { v: Number.isFinite(m.vrr) ? m.vrr.toFixed(3) : '--', l: 'VRR' },
-    { v: Number.isFinite(m.vrrIdeal) ? m.vrrIdeal.toFixed(3) : '--', l: es ? 'ideal 1/N' : '1/N ideal' },
-    { v: `${(m.efficiency * 100).toFixed(0)} %`, l: es ? 'de lo ideal' : 'of ideal' },
-    { v: m.nLayersMean.toFixed(1), l: es ? 'capas/corte' : 'layers/cut' },
-    { v: `${apexNow.toFixed(1)} m`, l: es ? 'apice' : 'apex' },
-    { v: m.segregationIndex.toFixed(3), l: es ? 'segregación' : 'segregation' },
-  ];
+  const m = sc?.manifest;
 
   return (
-    <div className="stf">
-      <div className="stf-stage">
-        <PileView3D pad={run.pad} height={shown} grade={run.gradeFinal}
-          coarse={run.coarseFinal} columnLots={run.columnLots} scalar={scalar}
-          cutAt={cutAt < 1 ? cutAt : undefined} onExaggeration={setVex} es={es} />
+    <div className="fx-root">
+      <section className="fx-stage">
+        {sc ? (
+          <SiteView3D
+            field={sc.field}
+            plan={sc.plan}
+            loads={sc.loads}
+            colourBy={colour}
+            through={through}
+            showPaths={showPaths}
+            showCrest={showCrest}
+            showPlan={showPlan}
+            dark={dark}
+            height={stageH}
+          />
+        ) : (
+          <p className="fx-loading">Loading the scenario ...</p>
+        )}
 
-        {/* the transport sits ON the stage, so the instrument keeps the height a bar would take */}
-        <div className="st-overbar" style={{ left: 'auto', right: 14, top: 56, width: '46%' }}>
-          <span className="st-muted" style={{ fontSize: '0.68rem' }}>
-            {es ? 'Línea de tiempo' : 'Timeline'}
-          </span>
-          <input type="range" min={0} max={1} step={0.01} value={pos}
-            onChange={(e) => setScrub(Number(e.target.value))}
-            aria-label={es ? 'Línea de tiempo' : 'Timeline'} />
-          <span className="st-mono" style={{ fontSize: '0.68rem' }}>
-            {(run.snapshots[frame].tS / 3600).toFixed(1)} h
-          </span>
-        </div>
-        <div className="st-stage-legend" style={{ left: 14, right: 14 }}>
-          <span className="st-muted" style={{ fontSize: '0.64rem' }}>
-            {es
-              ? `Escala vertical exagerada ${vex.toFixed(1)}x sobre una losa de ${(run.pad.nx * run.pad.cellM).toFixed(0)} x ${(run.pad.ny * run.pad.cellM).toFixed(0)} m. Las lecturas al pasar el cursor son alturas REALES. La linea de tiempo abre en el momento de maximo inventario.`
-              : `Vertical scale exaggerated ${vex.toFixed(1)}x on a ${(run.pad.nx * run.pad.cellM).toFixed(0)} by ${(run.pad.ny * run.pad.cellM).toFixed(0)} m pad. Hover readouts are TRUE heights. The timeline opens at peak inventory.`}
-          </span>
-        </div>
-
-        {/* the stage is LABELLED IN PLACE: the regime named, plus one plain sentence, so the view can
-            teach on its own without the reader looking anywhere else */}
-        <div className="stf-badge">
-          <div className="stf-badge-t">{regime.label}</div>
-          <div className="stf-badge-d">{regime.text}</div>
-        </div>
-
-        <div className="stf-hud">
-          {hud.map((k) => (
-            <div className="stf-hud-i" key={k.l}>
-              <div className="stf-hud-v">{k.v}</div>
-              <div className="stf-hud-l">{k.l}</div>
+        {/* Clause 3: the readouts live ON the stage. */}
+        {m && v && seg && (
+          <div className="fx-hud">
+            <div>
+              <b>{v.vrr.toFixed(3)}</b>
+              <span>variance reduction</span>
             </div>
-          ))}
-        </div>
+            <div className={v.boundReliable ? '' : 'muted'}>
+              <b>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</b>
+              <span>{v.boundReliable ? 'ideal 1/N bound' : 'bound not reliable here'}</span>
+            </div>
+            {v.boundReliable && (
+              <div>
+                <b>{(v.efficiency * 100).toFixed(0)}%</b>
+                <span>of the ideal</span>
+              </div>
+            )}
+            <div>
+              <b>{m.build.loads_placed}</b>
+              <span>loads placed</span>
+            </div>
+            <div>
+              <b>{(m.build.refusal_rate * 100).toFixed(1)}%</b>
+              <span>tips refused</span>
+            </div>
+            <div>
+              <b>{m.build.peak_m.toFixed(1)} m</b>
+              <span>peak height</span>
+            </div>
+            <div className={m.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
+              <b>{m.gate.pairs_over_repose}</b>
+              <span>pairs over repose</span>
+            </div>
+          </div>
+        )}
 
-        <Link className="st-btn stf-exit" to="/">
-          <Minimize2 size={13} /> {es ? 'Volver al taller' : 'Back to the workbench'}
-        </Link>
-      </div>
+        {/* Clause 4: a visible return control at the top right of the stage. */}
+        <button type="button" className="fx-return" onClick={back} aria-label="Return to the App">
+          <Minimize2 size={15} aria-hidden />
+          <span>Return</span>
+        </button>
 
-      <aside className="stf-rail">
-        <div>
-          <h2>{base.id}</h2>
-          <p className="st-muted" style={{ margin: '0.2rem 0 0' }}>{base.reason}</p>
-        </div>
+        {m && (
+          <p className="fx-caption">
+            <strong>{m.title.en}.</strong> {m.summary.en}
+          </p>
+        )}
+      </section>
 
-        <div className="st-chips">
-          <button type="button" className={`chip${advanced ? '' : ' on'}`} onClick={() => setAdvanced(false)}>
-            {es ? 'Básico' : 'Basic'}
-          </button>
-          <button type="button" className={`chip${advanced ? ' on' : ''}`} onClick={() => setAdvanced(true)}>
-            {es ? 'Avanzado' : 'Advanced'}
-          </button>
-        </div>
-
-        <label className="st-ctl">
-          <span className="st-ctl-h"><span>{es ? 'Método de apilado' : 'Stacking method'}</span></span>
-          <select className="st-select" value={stacking}
-            onChange={(e) => setStacking(e.target.value as StackingMethod)}>
-            {STACKING_METHODS.map((s) => (
-              <option key={s} value={s}>{es ? STACKING_LABELS[s].es : STACKING_LABELS[s].en}</option>
-            ))}
-          </select>
-        </label>
-
-        <label className="st-ctl">
-          <span className="st-ctl-h"><span>{es ? 'Recuperación' : 'Reclaim'}</span></span>
-          <select className="st-select" value={reclaim}
-            onChange={(e) => setReclaim(e.target.value as ReclaimMethod)}>
-            {RECLAIM_METHODS.map((r) => (
-              <option key={r} value={r}>
-                {es ? RECLAIM_GEOMETRY[r].machineEs : RECLAIM_GEOMETRY[r].machine}
+      {/* Clause 2: ONE parameter column, on the right, scrolling independently. */}
+      <aside className="fx-rail">
+        <label className="fx-field">
+          <span>Scenario</span>
+          <select value={sid} onChange={(e) => nav(`/focus/${e.target.value}`)}>
+            {(index?.scenarios ?? []).map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.title.en}
               </option>
             ))}
           </select>
         </label>
 
-        <VariantBar
-          variants={base.variants}
-          active={variantId}
-          onPick={setVariantId}
-          es={es}
-        />
+        <label className="fx-field">
+          <span>Colour the material by</span>
+          <select value={colour} onChange={(e) => setColour(e.target.value as ColourBy)}>
+            <option value="grade">grade</option>
+            <option value="coarse">coarse fraction</option>
+            <option value="thickness">thickness above ground</option>
+          </select>
+        </label>
 
-        <Ctl label={es ? 'Pasadas (capas)' : 'Passes (layers)'} value={effPasses}
-          min={4} max={80} step={1}
-          onChange={(v) => { setVariantId(null); setNPasses(v); }} />
-        <Ctl label={es ? 'Número de segregación Sr' : 'Segregation number Sr'} value={effSr}
-          min={0} max={8} step={0.1} onChange={(v) => { setVariantId(null); setSr(v); }} fmt={(v) => v.toFixed(1)} />
+        <label className="fx-field">
+          <span>
+            Truck paths shown, through load{' '}
+            <b>{sc ? Math.round(sc.loads.length * through) : 0}</b>
+          </span>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.02}
+            value={through}
+            onChange={(e) => setThrough(Number(e.target.value))}
+          />
+        </label>
 
-        {advanced && (
-          <>
-            <Ctl label={es ? 'Ángulo de reposo' : 'Angle of repose'} value={repose}
-              min={28} max={50} step={0.5} onChange={setRepose} fmt={(v) => `${v.toFixed(1)} deg`} />
-            <Ctl label={es ? 'Tasa de recuperación' : 'Reclaim rate'} value={reclaimRate}
-              min={0.2} max={3} step={0.1} onChange={setReclaimRate} fmt={(v) => `${v.toFixed(1)} x`} />
-            <Ctl label={es ? 'Plano de corte' : 'Cutaway plane'} value={cutAt}
-              min={0.15} max={1} step={0.01} onChange={setCutAt} fmt={(v) => `${(v * 100).toFixed(0)} %`} />
-            <label className="st-ctl">
-              <span className="st-ctl-h"><span>{es ? 'Escalar' : 'Scalar'}</span></span>
-              <select className="st-select" value={scalar} onChange={(e) => setScalar(e.target.value as Scalar)}>
-                <option value="height">{es ? 'Altura' : 'Height'}</option>
-                <option value="grade">{es ? 'Ley de columna' : 'Column grade'}</option>
-                <option value="coarse">{es ? 'Fracción gruesa' : 'Coarse fraction'}</option>
-                <option value="origin">{es ? 'Evento de origen' : 'Source event'}</option>
-              </select>
-            </label>
-          </>
-        )}
+        <fieldset className="fx-toggles">
+          <legend>Overlays</legend>
+          <label>
+            <input type="checkbox" checked={showPaths} onChange={(e) => setShowPaths(e.target.checked)} />
+            truck approach and departure
+          </label>
+          <label>
+            <input type="checkbox" checked={showCrest} onChange={(e) => setShowCrest(e.target.checked)} />
+            crest, which every edge dump was aimed at
+          </label>
+          <label>
+            <input type="checkbox" checked={showPlan} onChange={(e) => setShowPlan(e.target.checked)} />
+            planned area boundaries
+          </label>
+        </fieldset>
 
-        <p className="st-muted" style={{ fontSize: '0.7rem', lineHeight: 1.5 }}>
-          {es
-            ? 'Relajación con ángulo de reposo impuesto (Bak, Tang y Wiesenfeld 1987 como regla de vuelco, no como afirmación de criticidad); segregación por cribado cinético según Gray y Thornton 2005, ecuación (3.20); libro mayor de lotes por celda al estilo de Zhao et al. 2015. VRR = var_salida / var_entrada, menor es mejor.'
-            : 'Relaxation with an imposed angle of repose (Bak, Tang and Wiesenfeld 1987 as the toppling rule, not as a criticality claim); kinetic-sieving segregation from Gray and Thornton 2005, equation (3.20); a per-cell lot ledger after Zhao et al. 2015. VRR = var_out / var_in, lower is better.'}
-        </p>
+        {/* READOUTS, not controls. Each of these would need a re-bake, and ADR-0070 forbids
+            presenting a parameter that cannot respond live as though it could. */}
+        {m && (
+          <div className="fx-readouts">
+            <h3>This scenario</h3>
+            <p className="fx-hint">
+              These are fixed by the bake. Changing one re-runs the simulation, which routes every
+              load over the trafficable surface and relaxes after every operation, so it is an offline
+              operation rather than a slider.
+            </p>
+            <dl>
+              <div>
+                <dt>ground</dt>
+                <dd>{m.pad.nx} x {m.pad.ny} cells at {m.pad.cell_m} m</dd>
+              </div>
+              <div>
+                <dt>angle of repose</dt>
+                <dd>{m.material.repose_deg} deg dry</dd>
+              </div>
+              <div>
+                <dt>loose density</dt>
+                <dd>{m.material.loose_density_t_m3} t/m3</dd>
+              </div>
+              <div>
+                <dt>loads offered</dt>
+                <dd>{m.stream.n_loads}</dd>
+              </div>
+              <div>
+                <dt>shovel dwell</dt>
+                <dd>{m.stream.loads_per_block} loads per dig block</dd>
+              </div>
+              <div>
+                <dt>stream range, measured</dt>
+                <dd>{m.stream.measured_range_t.toFixed(0)} t</dd>
+              </div>
+              <div>
+                <dt>dozer passes</dt>
+                <dd>{m.build.dozer_passes}</dd>
+              </div>
+              <div>
+                <dt>mean dozer displacement</dt>
+                <dd>{m.build.mean_displacement_m.toFixed(1)} m</dd>
+              </div>
+            </dl>
 
-        <div>
-          <div className="st-card-t">{es ? 'Otros casos' : 'Other cases'}</div>
-          <div className="st-chips">
-            {CASES.map((c) => (
-              <Link key={c.id} to={`/focus/${c.id}`}
-                className={`chip${c.id === base.id ? ' on' : ''}`} style={{ textDecoration: 'none' }}>
-                {c.id.split('_')[0]}
-              </Link>
-            ))}
+            <h3>Dump profiles produced</h3>
+            <dl>
+              {Object.entries(m.build.profiles).map(([k, n]) => (
+                <div key={k}>
+                  <dt>{k.replace('_', ' ')}</dt>
+                  <dd>{n}</dd>
+                </div>
+              ))}
+            </dl>
+
+            {seg && (
+              <>
+                <h3>Size segregation</h3>
+                <dl>
+                  <div>
+                    <dt>loads sorted on a face</dt>
+                    <dd>{seg.nSorted}</dd>
+                  </div>
+                  <div>
+                    <dt>coarse fraction, range</dt>
+                    <dd>
+                      {seg.coarseMin.toFixed(3)} to {seg.coarseMax.toFixed(3)}
+                    </dd>
+                  </div>
+                </dl>
+              </>
+            )}
+
+            <p className="fx-hint">
+              The stream range is REPORTED, not set: it is a consequence of how long the shovel dwells
+              in one dig block, because consecutive trucks load from the same block.
+            </p>
           </div>
-        </div>
+        )}
       </aside>
     </div>
   );

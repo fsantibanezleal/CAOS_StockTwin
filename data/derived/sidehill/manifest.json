@@ -1,18 +1,18 @@
 {
   "build": {
-    "dozer_passes": 18,
-    "loads_placed": 233,
-    "mean_displacement_m": 20.07,
+    "dozer_passes": 35,
+    "loads_placed": 326,
+    "mean_displacement_m": 20.05,
     "peak_m": 19.82,
     "profiles": {
-      "comet": 31,
-      "oval": 50,
-      "paddock": 126,
-      "rectangular": 22,
-      "sloughed_heap": 4
+      "comet": 44,
+      "oval": 77,
+      "paddock": 164,
+      "rectangular": 32,
+      "sloughed_heap": 9
     },
-    "refusal_rate": 0.0292,
-    "volume_m3": 24091.6
+    "refusal_rate": 0.3731,
+    "volume_m3": 34076.3
   },
   "engine": "bedblend",
   "files": [
@@ -25,11 +25,11 @@
   "gate": {
     "kill_criterion": "No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 240,
-    "loads_placed": 233,
+    "loads_offered": 520,
+    "loads_placed": 326,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.0292,
+    "refusal_rate": 0.3731,
     "worst_local_slope_deg": 37.0
   },
   "id": "sidehill",
@@ -45,14 +45,14 @@
   "reason": "Building on relief is what exposed two defects a flat pad physically cannot reveal: a dozer that selected material by elevation and so excavated the hill, and a relaxation that treated elevation as free-floating and eroded bedrock. The case exists so those stay fixed.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 8048.9
+    "tonnes": 10561.0
   },
   "seed": 20260802,
   "stream": {
     "loads_per_block": 20,
-    "measured_range_t": 5984.5,
-    "n_loads": 240,
-    "var_in": 0.03437501
+    "measured_range_t": 6327.3,
+    "n_loads": 520,
+    "var_in": 0.02987177
   },
   "summary": {
     "en": "The same stockpile built against a hillside instead of on a prepared pad. Only one of the five published stockpile fill types is flat ground; the rest are sidehill, valley, cross-valley and ridge-crest fill. Relief is not scenery here: it decides which ground equipment can occupy before a single load is placed, so the plan, the access and the shape of the finished pile all change.",

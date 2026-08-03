@@ -702,7 +702,7 @@ export function ReclaimPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
         </div>
         <div>
           <dt>efficiency against the bound</dt>
-          <dd>{(v.efficiency * 100).toFixed(0)} %</dd>
+          <dd>{v.boundReliable ? `${(v.efficiency * 100).toFixed(0)} %` : 'not reliable'}</dd>
         </div>
         <div>
           <dt>mean sources per cut</dt>
@@ -716,6 +716,16 @@ export function ReclaimPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
         bed achieves and a ratio quoted alone reads far more flattering than it is. Both numbers are
         computed in this page from the load log and the cut log, not read from the file.
       </p>
+      {!v.boundReliable && (
+        <p className="st-note">
+          <strong>The bound is withheld for this case, and that is a known gap rather than a
+          result.</strong> The achieved reduction comes out better than one over the number of
+          independent sources counted from cut provenance, which is arithmetically impossible: it
+          says the source count is being underestimated, not that the pile beat the theoretical
+          limit. Until that is root-caused the efficiency is not shown, because a headline claiming
+          several thousand percent of the ideal would be worse than no headline at all.
+        </p>
+      )}
     </div>
   );
 }

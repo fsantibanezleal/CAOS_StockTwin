@@ -340,3 +340,8 @@
     margin-left: 0.5rem;
   }
 }
+
+.st-hud .muted b,
+.st-hud .muted span {
+  opacity: 0.55;
+}

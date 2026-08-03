@@ -1,17 +1,18 @@
 {
   "build": {
-    "dozer_passes": 18,
-    "loads_placed": 207,
-    "mean_displacement_m": 26.44,
-    "peak_m": 6.07,
+    "dozer_passes": 32,
+    "loads_placed": 298,
+    "mean_displacement_m": 25.35,
+    "peak_m": 10.8,
     "profiles": {
-      "comet": 30,
-      "oval": 52,
-      "paddock": 104,
-      "rectangular": 21
+      "comet": 37,
+      "oval": 70,
+      "paddock": 161,
+      "rectangular": 29,
+      "sloughed_heap": 1
     },
-    "refusal_rate": 0.1375,
-    "volume_m3": 19773.8
+    "refusal_rate": 0.4269,
+    "volume_m3": 33644.0
   },
   "engine": "bedblend",
   "files": [
@@ -24,11 +25,11 @@
   "gate": {
     "kill_criterion": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
     "ledger_agrees_with_terrain": true,
-    "loads_offered": 240,
-    "loads_placed": 207,
+    "loads_offered": 520,
+    "loads_placed": 298,
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
-    "refusal_rate": 0.1375,
+    "refusal_rate": 0.4269,
     "worst_local_slope_deg": 37.0
   },
   "id": "single",
@@ -44,14 +45,14 @@
   "reason": "The reference case for the physics. One area, one material class, nothing competing for attention, so the two construction phases and the four dump profiles can actually be seen.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 10246.7
+    "tonnes": 4914.4
   },
   "seed": 20260802,
   "stream": {
     "loads_per_block": 20,
-    "measured_range_t": 5984.5,
-    "n_loads": 240,
-    "var_in": 0.03570507
+    "measured_range_t": 6327.3,
+    "n_loads": 520,
+    "var_in": 0.03059345
   },
   "summary": {
     "en": "A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.",

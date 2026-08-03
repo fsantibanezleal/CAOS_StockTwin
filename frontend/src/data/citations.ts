@@ -10,6 +10,30 @@ import type { Citation } from '@fasl-work/caos-app-shell';
 
 export const CITATIONS: Citation[] = [
   {
+    id: 'young2021',
+    label: 'Young and Rogers (2021)',
+    citation: 'Young, A. and Rogers, W.P. Modelling Large Heaped Fill Stockpiles Using FMS Data. Minerals 11(6), 636, 2021. The only academic treatment of the object this product models: a large, truck-dumped, pre-crusher run-of-mine stockpile. Source of the two-phase construction model, the five fill types, and the dump-location-polygon data schema.',
+    doi: '10.3390/min11060636',
+  },
+  {
+    id: 'young2022',
+    label: 'Young and Rogers (2022)',
+    citation: 'Young, A. and Rogers, W.P. A High-Fidelity Modelling Method for Mine Haul Truck Dumping Process. Mining 2(1), 86-102, 2022. Twenty-eight individual CAT 793F dumps surveyed by UAV photogrammetry, classified into four profile types. Table 5 is the envelope this engine calibrates its dump geometry against.',
+    doi: '10.3390/mining2010006',
+  },
+  {
+    id: 'youngdata2021',
+    label: 'Young (2021), dataset',
+    citation: 'Young, A. Mine Haul Truck Rear Dump Profiles. Zenodo, 2021. The 3-D CAD surfaces behind the measurements above, CC BY 4.0. Cited as the underlying evidence; this engine calibrates against the published table rather than against the surfaces themselves.',
+    doi: '10.5281/zenodo.5789951',
+  },
+  {
+    id: 'moraga2017',
+    label: 'Moraga and others (2017)',
+    citation: 'Methodology for a dump design optimization in large-scale open pit mines. Cogent Engineering 4(1), 1387955, 2017. Source of the lift-and-ramp construction: a footprint is built by deep dumping and then ramped up by a determined lift height, with access to successive lifts by ramps of suitable width and gradient.',
+    doi: '10.1080/23311916.2017.1387955',
+  },
+  {
     id: 'bak1987',
     label: 'Bak, Tang and Wiesenfeld (1987)',
     citation: 'Bak, P., Tang, C. and Wiesenfeld, K. Self-organized criticality: an explanation of the 1/f noise. Physical Review Letters 59(4), 381-384, 1987.',

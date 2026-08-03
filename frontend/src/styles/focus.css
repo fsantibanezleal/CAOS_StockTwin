@@ -1,0 +1,245 @@
+/* The focus route, laid out against ADR-0070.
+ *
+ * "The stage owns at least 80% of the viewport area. Edge to edge, no card, no border, no padding
+ * around it." So this escapes every shell container and takes the whole window: a focus view that
+ * sits inside the page chrome is just the App with fewer tabs.
+ *
+ * One parameter column on the right, scrolling independently of the stage. KPIs overlaid on the
+ * stage as a HUD. A visible return control at the top right. All four are clauses, not preferences.
+ */
+
+.fx-root {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  /* The rail is sized so the STAGE clears the ADR-0070 eighty percent floor, not so the controls
+     look comfortable. Measured at 21rem the stage came out at 78.3 percent on a 1600px viewport,
+     which fails; 18rem leaves it above the floor with room to spare on narrower screens too. */
+  grid-template-columns: minmax(0, 1fr) 18rem;
+  background: var(--st-bg, #0e1319);
+  color: inherit;
+  overflow: hidden;
+}
+
+/* -- the stage --------------------------------------------------------------------------------- */
+
+.fx-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.fx-loading {
+  padding: 2rem;
+  opacity: 0.75;
+}
+
+.fx-err {
+  padding: 2rem;
+  color: #d1495b;
+}
+
+/* -- the HUD, ON the stage --------------------------------------------------------------------- */
+
+.fx-hud {
+  position: absolute;
+  top: 0.9rem;
+  left: 0.9rem;
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--st-bg, #0e1319) 70%, transparent);
+  backdrop-filter: blur(7px);
+  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  pointer-events: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.fx-hud > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  line-height: 1.15;
+}
+
+.fx-hud b {
+  font-size: 1.2rem;
+  min-width: 4.6rem;
+  text-align: right;
+}
+
+.fx-hud span {
+  font-size: 0.72rem;
+  opacity: 0.78;
+}
+
+.fx-hud .ok b {
+  color: #2f9e59;
+}
+
+.fx-hud .bad b {
+  color: #d1495b;
+}
+
+/* -- the return control, top right of the stage ------------------------------------------------ */
+
+.fx-return {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
+  background: color-mix(in srgb, var(--st-bg, #0e1319) 72%, transparent);
+  backdrop-filter: blur(7px);
+  color: inherit;
+  cursor: pointer;
+}
+
+.fx-return:hover {
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+
+/* One sentence of plain language, so a reader can learn the concept from the view alone. */
+.fx-caption {
+  position: absolute;
+  left: 0.9rem;
+  right: 22rem;
+  bottom: 0.7rem;
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.82;
+  pointer-events: none;
+  text-shadow: 0 1px 3px color-mix(in srgb, var(--st-bg, #0e1319) 85%, transparent);
+}
+
+/* -- the one parameter column ------------------------------------------------------------------ */
+
+.fx-rail {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;            /* scrolls independently of the stage */
+  padding: 0.9rem 1rem 2rem;
+  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  font-size: 0.82rem;
+}
+
+.fx-field {
+  display: grid;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+}
+
+.fx-field > span {
+  opacity: 0.78;
+  font-size: 0.76rem;
+}
+
+.fx-field select,
+.fx-field input[type='range'] {
+  font: inherit;
+  width: 100%;
+}
+
+.fx-field select {
+  padding: 0.3rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  background: transparent;
+  color: inherit;
+}
+
+.fx-toggles {
+  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem 0.7rem;
+  margin: 0 0 1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.fx-toggles legend {
+  font-size: 0.72rem;
+  opacity: 0.7;
+  padding: 0 0.3rem;
+}
+
+.fx-toggles label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  line-height: 1.3;
+  font-size: 0.76rem;
+}
+
+.fx-readouts h3 {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.65;
+  margin: 1.1rem 0 0.4rem;
+}
+
+.fx-readouts dl {
+  display: grid;
+  gap: 0.28rem;
+  margin: 0 0 0.6rem;
+}
+
+.fx-readouts dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.fx-readouts dt {
+  opacity: 0.7;
+  font-size: 0.74rem;
+  min-width: 0;
+}
+
+.fx-readouts dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  font-size: 0.78rem;
+}
+
+.fx-hint {
+  font-size: 0.72rem;
+  line-height: 1.45;
+  opacity: 0.65;
+  margin: 0.5rem 0 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .fx-root {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .fx-rail {
+    border-left: 0;
+    border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    max-height: 38vh;
+  }
+  .fx-caption {
+    right: 0.9rem;
+  }
+}
+
+.fx-hud .muted b,
+.fx-hud .muted span {
+  opacity: 0.5;
+}
