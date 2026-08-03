@@ -32,12 +32,39 @@ const EMPTY = 1e-4;
  *  before this existed, the table-led views ran at 14 to 26 percent, which is the ADR's own
  *  description of "showing chrome with a picture in it". A table is a readout, not an instrument, so
  *  each of these views now LEADS with a chart and keeps its table underneath. */
+/** A chart host whose height comes from the layout and can never come from its own canvas.
+ *
+ *  THE CANVAS IS ABSOLUTELY POSITIONED INSIDE IT, so it is out of flow and cannot push the host.
+ *  Measuring the immediate parent of an in-flow canvas is a feedback loop: a taller canvas makes a
+ *  taller parent, the next measurement reads the taller parent and makes the canvas taller again,
+ *  and the chart grows without bound. That shipped, and it is what "the graph grows to infinity"
+ *  was. The host takes the remaining flex space of the panel, which is definite.
+ */
+export function ChartBox({ children, grow = 1 }: { children: React.ReactNode; grow?: number }) {
+  return (
+    <div className="st-chartbox" style={{ flexGrow: grow }}>
+      {children}
+    </div>
+  );
+}
+
 function stageChartHeight(el?: HTMLElement | null): number {
-  // MEASURE THE BOX. A fraction of the window ignores the header, the scenario deck, the tab strip
-  // and the footer, which together are most of a laptop screen; the charts came out taller than the
-  // space they had and the panel scrolled when it should have fitted.
-  const box = el?.parentElement?.clientHeight ?? 0;
-  return Math.max(320, Math.round(box > 120 ? box - 96 : window.innerHeight * 0.52));
+  // MEASURE A BOX WHOSE HEIGHT CANNOT DEPEND ON THIS CANVAS, and that qualifier is the whole
+  // function. It used to measure `el.parentElement`, which CONTAINS the canvas: making the canvas
+  // taller made the parent taller, the next resize read the larger parent and made the canvas
+  // taller again, and the chart grew without bound until the tab was unusable. A feedback loop, not
+  // a sizing bug.
+  //
+  // The scroller is the tab panel. Its height is set by the page layout and it scrolls its content,
+  // so it is definite no matter what is inside it. What the chart may have is that height less
+  // whatever else the panel is drawing, which is measured as the panel's content minus the canvas.
+  const host = el?.parentElement;
+  if (host && host.classList.contains('st-chartbox')) {
+    // The host is a flex child with the canvas out of flow, so its height is what the layout gave
+    // it and nothing the canvas does can change it.
+    return Math.max(180, Math.round(host.clientHeight));
+  }
+  return Math.max(320, Math.round(window.innerHeight * 0.52));
 }
 
 function ramp(t: number): string {
@@ -165,7 +192,7 @@ export function PlanPanel({
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: '#0f7a3d' }} /> paddock tip
         <span className="st-key" style={{ background: '#b35c00' }} /> edge tip
@@ -313,7 +340,7 @@ function FieldMap({
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%', imageRendering: 'pixelated' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" style={{ imageRendering: 'pixelated' }} /></ChartBox>
       <p className="st-legend">
         <span className="st-scale" />
         <span>
@@ -410,7 +437,7 @@ function EnvelopeChart({
     if (cv.parentElement) ro.observe(cv.parentElement);
     return () => ro.disconnect();
   }, [stats, dark]);
-  return <canvas ref={ref} style={{ display: 'block', width: '100%' }} />;
+  return <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>;
 }
 
 
@@ -610,7 +637,7 @@ export function SectorPanel({ sectors, dark = false }: { sectors: Sector[]; dark
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: '#b35c00' }} /> whole area
         <span className="st-key" style={{ background: '#0a6ea8' }} /> its quadrants
@@ -751,7 +778,7 @@ export function ReclaimPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: 'rgba(30,90,150,0.6)' }} /> grade in, per load
         <span className="st-key" style={{ background: '#b35c00' }} /> grade out, per cut
@@ -823,7 +850,7 @@ export function VariogramPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
     if (!cv || !vg.centres.length) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = Math.round(stageChartHeight(cv) * 0.62);
+      const cssH = stageChartHeight(cv);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;
@@ -871,7 +898,7 @@ export function VariogramPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-note">
         The semivariogram of the incoming stream, computed here from the load log. Its range is a
         CONSEQUENCE of how long the shovel dwells in one dig block, not a setting: consecutive trucks

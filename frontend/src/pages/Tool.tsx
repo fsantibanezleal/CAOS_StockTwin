@@ -33,6 +33,7 @@ import {
 } from '../lib/scenario';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
 import PlayBar from '../viz/PlayBar';
+import InsidePanel from '../viz/InsidePanel';
 import {
   DumpDetailPanel,
   FieldPanel,
@@ -256,6 +257,13 @@ export default function Tool() {
       id: 'field',
       label: t('Raw field', 'Campo crudo'),
       content: sc ? <FieldPanel field={sc.field} dark={dark} /> : null,
+    },
+    {
+      // SECOND, not last. What is inside the pile is the subject of the product, so it sits beside
+      // the site view rather than at the end of a row of analyses.
+      id: 'inside',
+      label: t('Inside the pile', 'Dentro de la pila'),
+      content: sc ? <InsidePanel sc={sc} dark={dark} lang={lang} /> : null,
     },
     {
       id: 'dump',

@@ -66,6 +66,16 @@ export interface Load {
   profile?: 'paddock' | 'oval' | 'comet' | 'rectangular' | 'sloughed_heap' | null;
   d_crest?: number;
   head?: number;
+  /** The multi-element assay, generated around the copper grade from shared geological factors. */
+  cu?: number;
+  mo?: number;
+  au?: number;
+  ag?: number;
+  fe?: number;
+  clay?: number;
+  ph?: number;
+  moisture?: number;
+  recovery?: number;
   len?: number;
   wid?: number;
   thick?: number;
@@ -92,6 +102,34 @@ export interface Field {
 
 /** Surface snapshots through the build, so the pile can be watched growing rather than only
  *  inspected once finished. */
+/** The pile as a block model: one deposition event per voxel, on a fixed vertical grid.
+ *
+ *  THIS IS THE PRODUCT. Only the surface used to ship, so the app could say what the top of the pile
+ *  looks like and nothing at all about what is inside it, which is the wrong half of a stockpile.
+ *  A column is `[k0, events]`: the lowest occupied voxel index and the events above it, contiguous.
+ *  `null` is a column with no material. The assay is joined by event from the load log, so adding a
+ *  variable costs nothing here and cannot desynchronise from the geometry. */
+export interface Volume {
+  nx: number;
+  ny: number;
+  nz: number;
+  cell_m: number;
+  dz_m: number;
+  base_m: number;
+  z0: number[];
+  columns: ([number, number[]] | null)[];
+}
+
+/** One assay variable, declared by the generator so the selector and the units cannot drift. */
+export interface AssayVar {
+  key: string;
+  label: string;
+  unit: string;
+  lo: number;
+  hi: number;
+  decimals: number;
+}
+
 export interface Frames {
   nx: number;
   ny: number;
@@ -140,6 +178,8 @@ export interface Manifest {
   summary: { en: string; es: string };
   reason: string;
   tags: string[];
+  /** The assay variable table, declared by the generator that produced the loads. */
+  assay_variables?: AssayVar[];
   seed: number;
   pad: { nx: number; ny: number; cell_m: number };
   material: { repose_deg: number; loose_density_t_m3: number };
@@ -179,6 +219,7 @@ export interface Scenario {
   field: Field;
   cuts: Cut[];
   sectors: { areas: Sector[] };
+  volume: Volume | null;
 }
 
 export interface TopographyRow {
@@ -212,7 +253,7 @@ export async function loadIndex(): Promise<Index> {
 }
 
 export async function loadScenario(id: string): Promise<Scenario> {
-  const [manifest, plan, loads, field, cuts, sectors, frames] = await Promise.all([
+  const [manifest, plan, loads, field, cuts, sectors, frames, volume] = await Promise.all([
     get<Manifest>(`${id}/manifest.json`),
     get<Plan>(`${id}/plan.json`),
     get<Load[]>(`${id}/loads.json`),
@@ -223,8 +264,9 @@ export async function loadScenario(id: string): Promise<Scenario> {
     // just cannot be played. Failing the whole page over a missing animation would be the wrong
     // trade.
     get<Frames>(`${id}/frames.json`).catch(() => null),
+    get<Volume>(`${id}/volume.json`).catch(() => null),
   ]);
-  return { manifest, plan, loads, field, cuts, sectors, frames };
+  return { manifest, plan, loads, field, cuts, sectors, frames, volume };
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -580,4 +622,22 @@ export function expandFrame(f: Frames, index: number): number[] | null {
     }
   }
   return out;
+}
+
+
+/** Assay value for one deposition event, or null if the event is not in the log.
+ *
+ *  The volume stores an event per voxel and the assay lives on the load. Joining them here rather
+ *  than baking the assay into every voxel is what keeps the artifact at a hundred kilobytes instead
+ *  of tens of megabytes, and it means a new variable never requires a re-bake of the geometry.
+ */
+export function assayIndex(loads: Load[]): Map<number, Load> {
+  const m = new Map<number, Load>();
+  for (const l of loads) if (l.placed) m.set(l.seq, l);
+  return m;
+}
+
+/** Elevation of the centre of voxel `k`, in pad metres. */
+export function voxelZ(vol: Volume, k: number): number {
+  return vol.base_m + (k + 0.5) * vol.dz_m;
 }

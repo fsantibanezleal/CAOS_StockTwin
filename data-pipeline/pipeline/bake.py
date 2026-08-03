@@ -26,6 +26,7 @@ rather than writing a pretty artifact.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import math
 import sys
@@ -41,8 +42,10 @@ from bedblend.sectors import quadrants, rollup
 from bedblend.stream import dig_sequence, measured_range_t, payloads_from
 from bedblend.terrain import Terrain
 from bedblend.topography import FillType, buildable_fraction, ground, relief_stats
-from bedblend.truck import Fleet
+from bedblend.truck import Fleet, passable_mask
 
+from .assay import VARIABLES as ASSAY_VARIABLES
+from .assay import assay_for
 from .scenarios import Scenario, by_id, class_thresholds, route_to_area
 
 ROUND = 3       # metres and grades are meaningless past a millimetre or a thousandth of a percent
@@ -94,7 +97,8 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
 
     terrain = scn.terrain()
     plan = scn.plan()
-    fleet = Fleet.of(scn.n_trucks, scn.truck(), scn.shovel_xy, repose_deg=scn.repose_deg)
+    shovel = _sited_shovel(terrain, plan, scn)
+    fleet = Fleet.of(scn.n_trucks, scn.truck(), shovel, repose_deg=scn.repose_deg)
     material = Material(repose_dry_deg=scn.repose_deg)
 
     seq = dig_sequence(
@@ -108,9 +112,15 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
     if len(scn.classes) > 1:
         cuts_ = class_thresholds(scn)
         classes = scn.classes
+        # The decision is made on the ESTIMATE. Seeded from the scenario seed so the same run
+        # reproduces byte for byte, and independent of the grade itself so the error is an error and
+        # not a rescaling.
+        err = _estimate_noise(len(loads), scn.estimate_error_sd, seed)
+        seen = itertools.count()
 
         def router(p):  # noqa: ANN001, ANN202
-            return route_to_area(p.grade, cuts_, classes)
+            k = next(seen)
+            return route_to_area(p.grade + err[k % len(err)], cuts_, classes)
 
     res = build(
         terrain, plan, fleet, loads,
@@ -152,6 +162,62 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
 
     gate = _gate(scn, res, cuts, loads)
     return BakeResult(scenario=scn, result=res, cuts=cuts, gate=gate)
+
+
+def _sited_shovel(terrain, plan, scn) -> tuple[float, float]:
+    """The nominal loading point, moved to the nearest ground a truck can actually stand on.
+
+    A LOADING POINT IS SITED, NOT DECREED. On a flat pad the nominal position is fine and this
+    returns it unchanged. On a landform it may land on a valley wall, and the flood fill seeds from
+    the shovel: if the seed cell is not standable the mask comes back empty for the WHOLE pad, every
+    tip is unreachable, and the build places nothing at all with no indication of why. Measured on
+    the valley scenario: shovel at 20.4 m on the wall, 0 of 3600 cells reachable.
+
+    The search stays outside every dump area, because a loading point inside one gets buried.
+    """
+    max_grade = math.tan(math.radians(scn.repose_deg)) / 1.5
+    ok = passable_mask(terrain, max_grade)
+    sx, sy = scn.shovel_xy
+    c = terrain.cell_at(sx, sy)
+    if c is not None and ok[c] and not any(a.contains(sx, sy) for a in plan.areas):
+        return scn.shovel_xy
+
+    best: tuple[float, tuple[float, float]] | None = None
+    for k in range(terrain.n_cells):
+        if not ok[k]:
+            continue
+        x, y = terrain.xy(k)
+        if any(a.contains(x, y) for a in plan.areas):
+            continue
+        d = math.hypot(x - sx, y - sy)
+        if best is None or d < best[0]:
+            best = (d, (x, y))
+    if best is None:
+        raise AssertionError(
+            f"{scn.id}: there is nowhere on this pad a truck can stand that is outside every dump "
+            f"area. The landform or the layout is wrong, not the loading point."
+        )
+    return best[1]
+
+
+def _estimate_noise(n: int, sd: float, seed: int) -> list[float]:
+    """Per-load error on the grade the ore-control system reports, Box-Muller from a seeded LCG."""
+    if sd <= 0.0:
+        return [0.0] * n
+    out: list[float] = []
+    x = (seed * 6364136223846793005 + 1442695040888963407) & ((1 << 64) - 1)
+
+    def u() -> float:
+        nonlocal x
+        x = (x * 6364136223846793005 + 1442695040888963407) & ((1 << 64) - 1)
+        return ((x >> 11) + 0.5) / float(1 << 53)
+
+    while len(out) < n:
+        a, b = u(), u()
+        r = math.sqrt(-2.0 * math.log(a))
+        out.append(sd * r * math.cos(2.0 * math.pi * b))
+        out.append(sd * r * math.sin(2.0 * math.pi * b))
+    return out[:n]
 
 
 def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict:
@@ -236,7 +302,50 @@ def _plan_json(scn: Scenario) -> dict:
     }
 
 
-def _loads_json(res: BuildResult) -> list[dict]:
+VOXEL_DZ_M = 0.5
+
+
+def _volume_json(res: BuildResult) -> dict:
+    """The pile resampled onto a fixed vertical grid, one event identifier per voxel.
+
+    Columns are emitted as ``[k0, [event, ...]]``: the index of the lowest occupied voxel and the
+    events above it, contiguous. An empty column is ``null``. That is compact without being a format
+    anyone has to decode, and it slices in either direction with plain indexing.
+    """
+    model = res.model
+    top = max((c[-1].z1_m for c in model.columns if c), default=0.0)
+    base = min((c[0].z0_m for c in model.columns if c), default=0.0)
+    nz = max(1, int(math.ceil((top - base) / VOXEL_DZ_M)))
+
+    cols: list[list | None] = []
+    for col in model.columns:
+        if not col:
+            cols.append(None)
+            continue
+        k0 = int((col[0].z0_m - base) / VOXEL_DZ_M)
+        k1 = int(math.ceil((col[-1].z1_m - base) / VOXEL_DZ_M))
+        events: list[int] = []
+        pi = 0
+        for k in range(k0, k1):
+            zc = base + (k + 0.5) * VOXEL_DZ_M
+            while pi + 1 < len(col) and col[pi].z1_m <= zc:
+                pi += 1
+            events.append(col[pi].event_id)
+        cols.append([k0, events] if events else None)
+
+    return {
+        "nx": res.terrain.nx,
+        "ny": res.terrain.ny,
+        "nz": nz,
+        "cell_m": res.terrain.cell_m,
+        "dz_m": VOXEL_DZ_M,
+        "base_m": _r(base, 2),
+        "z0": [_r(v, 2) for v in res.terrain.z0],
+        "columns": cols,
+    }
+
+
+def _loads_json(res: BuildResult, seed: int) -> list[dict]:
     """The event log. One row per load, which is what a fleet-management export looks like."""
     out = []
     for r in res.loads:
@@ -245,6 +354,10 @@ def _loads_json(res: BuildResult) -> list[dict]:
             "truck": r.truck_id, "grade": _r(r.grade, 4),
             "block": r.source_block, "placed": r.placed,
         }
+        # THE FULL ASSAY, not a grade. Copper comes from the dig sequence, because it carries the
+        # shovel-dwell autocorrelation the whole blending argument rests on; the rest is generated
+        # around it from the same block-level geological factors.
+        row.update(assay_for(r.grade, block=r.source_block, seed=seed).as_dict())
         if r.placed:
             row.update(
                 {
@@ -307,7 +420,7 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
     d = out_dir / scn.id
     d.mkdir(parents=True, exist_ok=True)
 
-    loads = _loads_json(res)
+    loads = _loads_json(res, scn.seed)
     grades_in = [r.grade for r in res.placed]
     var_in = tonnage_weighted_variance(grades_in, [1.0] * len(grades_in)) if grades_in else 0.0
 
@@ -332,6 +445,24 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         ),
         encoding="utf-8",
     )
+    # THE PILE AS A VOLUME. This is the artifact the product exists to produce and it was missing.
+    # The ledger has held per-column parcel stacks all along, each one a vertical interval with the
+    # deposition event it came from, and none of it reached the browser: only the surface shipped, so
+    # the app could show what the top of the pile looks like and nothing about what is inside it.
+    # That is the wrong half. A stockpile is characterised by its contents at depth.
+    #
+    # IT IS VOXELISED, NOT DUMPED RAW. Relaxation splits a parcel every time material crosses a cell
+    # boundary, so the raw stacks are slivers: measured on the reference scenario, 1,027,319 parcels
+    # with one column holding 85,766 of them, and 26 MB of JSON. Resampling onto a fixed vertical
+    # grid gives the same information at the resolution anyone can actually look at, and it is the
+    # form a block model is in anyway.
+    #
+    # Each voxel carries the EVENT it came from, and the assay is joined in the browser, so a new
+    # assay variable costs nothing in the artifact and cannot desynchronise from the geometry.
+    (d / "volume.json").write_text(
+        json.dumps(_volume_json(res), separators=(",", ":")), encoding="utf-8"
+    )
+
     # THE FRAMES. ONE PER PLACED LOAD, so the app plays the build truck by truck rather than jumping
     # four loads at a time. Rounded to a decimetre and sampled at a coarse stride, which is what makes
     # a few hundred of them affordable; the browser interpolates them back onto the full grid.
@@ -376,6 +507,7 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         "tags": list(scn.tags),
         "seed": scn.seed,
         "engine": "bedblend",
+        "assay_variables": ASSAY_VARIABLES,
         "pad": {"nx": scn.pad_nx, "ny": scn.pad_ny, "cell_m": scn.cell_m},
         "material": {
             "repose_deg": scn.repose_deg,
@@ -412,7 +544,8 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         },
         "reclaim": {"n_cuts": len(bake.cuts), "tonnes": _r(sum(c.tonnes for c in bake.cuts), 1)},
         "gate": bake.gate,
-        "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json", "frames.json"],
+        "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json",
+                  "frames.json", "volume.json"],
         "frames": len(res.snapshots),
     }
     (d / "manifest.json").write_text(

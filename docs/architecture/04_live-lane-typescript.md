@@ -1,59 +1,95 @@
 # The live lane, in TypeScript
 
-The whole pile loop runs in the browser and recomputes on every control change: the relaxation
-cascade, the five stacking paths, the four reclaim geometries, the lot ledger, the Gray-Thornton
-segregation solver, the variance reduction ratio, the variograms and the residence-time distribution.
+The browser recomputes the VERDICTS on every load: the variance reduction ratio, the independent-layer
+bound, the experimental variograms, the sector rollups with their confidence intervals, the
+segregation summary and the residence-time distribution. All of them are derived in the page from the
+loads and cuts it also displays.
 
-## Why TypeScript and not Pyodide
+## What is deliberately NOT live
 
-The two hot algorithms are a height-field relaxation and a per-column hyperbolic solve, both trivially
-expressible over typed arrays, and both of which must answer inside a 100 ms budget on every slider
-move. A Pyodide cold start plus per-frame marshalling cannot meet that. SimLab's Pyodide lane is right
-for its problem and wrong for this one, and the gate records the measured runtime that justifies the
-choice, so the decision is evidence rather than preference.
+The simulation. It routes every load over the trafficable surface with an A-star search, floods the
+pad for reachability, relaxes the whole height field after every operation, and sorts each cascading
+load by size down a real face. That is tens of seconds for a few hundred loads.
 
-Measured on the default case at 1600 by 900: about 145 ms for a full build-and-reclaim of 320 dumps,
-inside the interaction budget with the recompute debounced by React's own batching.
+Running it in a page means one of two things: a frozen tab, or a model simple enough to be fast, which
+means simple enough to be wrong. **The previous version of this product chose the second**, and shipped
+a pile with 446 cell pairs standing at up to 55.9 degrees against an imposed 37, which rendered as
+spikes. The simulation is baked offline by [`bedblend`](https://pypi.org/project/bedblend/) and the
+browser reads its trace.
 
-## Three performance corrections, each with its cause
+## Why the verdicts are live and not baked
 
-The relaxation went through three implementations. The first two were correct and unusably slow, both
-for the same underlying reason: simultaneous sweeps let a cell receive from several neighbours at once
-and overshoot above the neighbour it had just fed, so the pair traded material back and forth. A cone
-that should relax in about eight steps took over a hundred sweeps.
+A trace that shipped a variance reduction ratio would be a slide, and its number would be
+unfalsifiable: a reader could not tell a real result from a typo. Recomputing in the page means the
+reader can switch scenario, watch the number move, and know it was derived.
 
-1. **A priority cascade instead of sweeps.** Process the highest unstable cell first and apply its
-   transfer immediately. The relaxation then marches monotonically downhill, and it delivers the
-   transfers in downslope order, which is exactly what the segregation solver needs. The fix improved
-   the physics coupling as well as the speed.
-2. **Coalescing same-event lots on push.** Every transfer splits the straddling lot, so a column
-   accumulated thousands of slivers of the same event and the simulation went quadratic. Merging two
-   lots of the SAME event is exactly lossless for provenance.
-3. **Precomputing the neighbour table per pad geometry.** Allocating a fresh eight-element list per
-   cell, per sweep, per dump dominated everything the science was doing.
+The trace therefore carries EVENTS and GEOMETRY and no verdicts, and that is enforced by the artifact
+schema having nowhere to put one.
 
-And a truck load is not a point source: dropping 220 tonnes on a two-metre cell puts a thirty-metre
-spike on the pad that the relaxation then has to demolish. Spreading it over a nine-metre disc is both
-faster and what actually happens.
+## Why TypeScript and not Pyodide for that
 
-## Four rendering defects the verification gate caught
+The verdicts are reductions over a few thousand events, expressible over typed arrays, and they have
+to answer within an interaction budget as the reader switches case. A Pyodide cold start plus
+per-load marshalling cannot meet that for work this small. SimLab's Pyodide lane is right for its
+problem and wrong for this one.
+
+## The playback lane
+
+Surface snapshots, one per placed load, stored at a coarse cell stride and interpolated back onto the
+full grid in the browser. That is what makes one frame per truck affordable: at full resolution a few
+hundred frames is megabytes for something that is watched rather than measured.
+
+**The expansion is not optional, and there is a reason to say so.** The renderer indexes the surface
+as `z[j * nx + i]`, so a short array does not merely look coarse, it reads the wrong cells entirely.
+An earlier version guarded with a length check and fell back to the finished pile, which meant the
+transport moved, the load counter counted, and every frame showed the same surface. The visual gate
+now scrubs to the first frame and compares canvas pixels against the finished pile, because nothing
+short of that catches it.
+
+## A load is an event with a duration
+
+The player runs a continuous clock in units of loads and hands the scene a fractional position: which
+load is being worked, and how far through it. The scene walks the truck along the route the engine
+solved, tips the tray at the moment the material appears, and drives it out on the departure path.
+
+Treating a load as an instant produced exactly what it sounds like: material appearing out of nothing,
+the truck somewhere different every tick, and nothing connecting the two.
+
+## Rendering
+
+Two effects, not one. The first builds the renderer, the camera and the two surface meshes once per
+scenario; the second rewrites what is on them. When everything lived in one effect a frame change tore
+down the WebGL context and built a new one, which no browser will do fifteen times a second, and it
+reset the camera every time a checkbox moved.
+
+The material skin's geometry is allocated once and written in place. Rebuilding a plane geometry and
+its colour attribute per frame is avoidable garbage at playback rates.
+
+## Rendering defects the verification gate caught
 
 Each of these passed every check except a pixel sample, which is why the gate takes one.
 
-* **The mesh effect omitted `host` from its dependency array.** The host arrives through a callback
-  ref, so the first commit ran both effects with `host` still null and both returned early; the second
-  commit created the renderer, but the mesh effect's other dependencies were unchanged so it never
-  re-ran. No mesh was ever added and the canvas stayed at its cleared colour.
 * **WebGL clears its drawing buffer after every render** unless `preserveDrawingBuffer` is set, so
-  `toDataURL` and page screenshots both read an empty buffer even when the scene drew correctly.
-* **`THREE.Color` cannot parse the shell's palette tokens** and silently falls back to white, so the
-  dark theme rendered a white stage. The renderer is now alpha with a transparent clear and the
-  container's own CSS background shows through, which is correct in both themes by construction.
-* **The timeline defaulted to the end of the run**, which is the pad AFTER the reclaimer drained it: a
-  true picture of the wrong moment. It opens at peak inventory.
+  `readPixels` and page screenshots both read an empty buffer even when the scene drew correctly. A
+  blank-canvas check reported a false failure on a scene that had rendered perfectly well.
+* **An empty pad coloured as material at grade zero read as a full pile.** A cell with no material is
+  drawn as ground, never as a ramp value. This shipped once and was caught by looking at the deployed
+  site rather than by any test.
+* **The camera framed the pad rather than the work.** The pad is deliberately larger than the dump
+  areas because trucks have to drive somewhere, and centring on it put the pile in a corner with three
+  quarters of the screen given to empty ground. It looks at the middle of the planned areas and sits
+  back by their extent.
+* **The colour ramp had no numbers on it.** The range moves with both the scenario and the variable,
+  so it cannot be written into a caption; it is rendered beside the stage.
 
-## Vertical exaggeration, stated rather than applied quietly
+## Where it fails
 
-A pile eight metres tall on a pad a hundred and ninety metres long is a sheet of paper at true scale.
-The stage applies a vertical exaggeration chosen so the apex is about a fifth of the pad length, the
-factor is printed on the legend, and the hover readouts report TRUE heights.
+**The grade field shown during playback is the FINAL composition.** Only the elevation moves. That is
+honest for a replay, because the ledger records the final grade per column and pretending to know an
+intermediate one would be inventing data the bake did not record. It does mean the colours during
+playback are the answer rather than the state at that moment.
+
+**True scale, no vertical exaggeration.** A pile of 14 m on a pad 150 m across is low, and it is drawn
+that way. An earlier version exaggerated the vertical and printed the factor on the legend; that is
+defensible, but the honest picture of a stockpile is that it is wide and low, and the fix for it being
+hard to read is to frame it properly rather than to stretch it.

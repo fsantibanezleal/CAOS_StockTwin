@@ -595,9 +595,8 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
   gap: 0.3rem;
 }
 
-.st-pair figure canvas {
-  min-height: 0;
-  object-fit: contain;
+.st-pair figure .st-chartbox {
+  height: clamp(300px, 52vh, 620px);
 }
 
 .st-pair figcaption {
@@ -635,4 +634,37 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
 .st-scalebar .st-scale {
   width: 7rem;
   height: 0.6rem;
+}
+
+/* THE CHART HOST. Its height is the flex remainder of the panel; the canvas is out of flow inside
+   it so it can never feed back into that height. See ChartBox for the loop this replaced. */
+.st-chartbox {
+  position: relative;
+  min-width: 0;
+  /* A DEFINITE HEIGHT FROM THE VIEWPORT, not a measurement of anything that contains the canvas.
+     A flex remainder would be better if every panel were a two-element column, but they are not:
+     the charts sit several levels down inside tables, legends and stat lists, and a remainder that
+     has to survive that nesting is a rule that breaks the first time a panel gains a paragraph.
+     This cannot feed back, cannot collapse to a floor, and is readable on any screen. The tab panel
+     scrolls internally, so a panel taller than its box never reaches the footer. */
+  height: clamp(300px, 46vh, 560px);
+}
+
+.st-chartcanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+
+/* Inside the pile: the section takes the height, the controls and the note take what they need. */
+.st-inside {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.3rem;
+}
+
+.st-sectionbox {
+  height: clamp(320px, 54vh, 640px);
 }

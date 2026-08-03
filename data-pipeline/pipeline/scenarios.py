@@ -53,33 +53,29 @@ class Scenario:
     category: str = "physics"
 
     # Site
-    pad_nx: int = 56
-    pad_ny: int = 56
+    pad_nx: int = 60
+    pad_ny: int = 60
     cell_m: float = 2.5
-    shovel_xy: tuple[float, float] = (120.0, 122.0)
+    shovel_xy: tuple[float, float] = (135.0, 138.0)
 
     # Yard
     n_areas: int = 1
-    # NARROW AND TALL, not broad and flat. A wide footprint spreads the same tonnage into a sheet:
-    # the crest barely rises, the cascade has no face worth the name, and the pile is dull to watch
-    # and weak to measure. A compact area with tall benches builds UPWARD, which is what a real ROM
-    # stockpile does and what makes the two construction phases legible.
-    # FOOTPRINT AND BENCH HEIGHT ARE COUPLED THROUGH THE RAMP, and the coupling is unforgiving. A
-    # lift of H metres needs roughly H/0.5 metres of ramp at the equipment gradient, and that ramp
-    # has to fit beside the pile inside the same footprint. Measured while trying to make the piles
-    # narrower and taller: 55 m with 22 m benches refused 79 percent of its tips and stalled at
-    # 7.8 m; 70 m with 14 m benches refused 69 percent and stalled at 6.7 m. 90 m with 18 m benches
-    # is what actually builds, and it is the configuration these numbers were verified on.
+    # NARROW AND TALL, and it is now affordable to be. A broad footprint spreads the same tonnage
+    # into a sheet: the crest barely rises, the cascade has no face worth the name, and the pile is
+    # dull to watch and weak to measure. Height is placed volume over footprint, so a 90 m square
+    # needs about 1700 placed loads to stand 25 m and a 60 m square needs 760, and the second is
+    # both the better picture and a third of the compute.
+    #
+    # FOOTPRINT AND BENCH HEIGHT ARE COUPLED THROUGH THE RAMP. A lift of H metres needs about
+    # H / 0.43 metres of ramp run at the working gradient, and the corridor spans the area, so a
+    # 60 m area serves roughly 26 m of lift. That is the constraint the geometry below is sized to,
+    # and it is why an earlier attempt at 55 m with 22 m benches refused 79 percent of its tips: at
+    # that time the corridor stopped at the area centre and served half as much.
     area_width_m: float = 90.0
     area_length_m: float = 90.0
     gap_m: float = 20.0
-    # BENCH HEIGHT IS NOT COSMETIC. Run-out down the face is the horizontal component of the bench
-    # slope, so it scales directly with this: an 8 m bench cascades about 12 m, which sits BELOW the
-    # 13 to 46 m envelope measured off a 30 m dump crest. It also sits below the 10 to 12 m threshold
-    # at which percolation segregation becomes significant, so a short bench produces a geometry that
-    # is correct for itself and comparable to nothing. 18 m puts both in range.
-    bench_height_m: float = 18.0
-    n_benches: int = 2
+    bench_height_m: float = 26.0   # a 90 m square holds 90,400 m3 at repose: 766 loads, peak 26 m
+    n_benches: int = 1
     classes: tuple[str, ...] = ("ROM",)
     access_xy: tuple[float, float] | None = None
 
@@ -103,6 +99,12 @@ class Scenario:
     mean_grade: float = 0.62
     block_sd: float = 0.16
     bench_trend: float = 0.0
+    # ORE CONTROL IS NOT PERFECT AND THE ROUTER USES THE ESTIMATE, NOT THE TRUTH. Published
+    # misclassification runs 5 to 20 percent before the truck moves, and blast movement adds 9 to 19
+    # percent ore loss on top. This is the standard deviation of the error on the grade estimate the
+    # routing decision is made from; the load still CARRIES its true grade, so a misrouted load is a
+    # real and reportable outcome rather than a bookkeeping error.
+    estimate_error_sd: float = 0.0
     seed: int = 20260802
 
     # Reclaim
@@ -143,6 +145,7 @@ class Scenario:
             n_benches=self.n_benches,
             gap_m=self.gap_m,
             classes=list(self.classes),
+            repose_deg=self.repose_deg,
         )
         p.row_spacing_m = self.row_spacing_m
         p.tip_spacing_m = self.tip_spacing_m
@@ -190,7 +193,7 @@ SINGLE = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=2200,
+    n_loads=900,
     tags=("basic", "physics"),
 )
 
@@ -224,9 +227,9 @@ YARD = Scenario(
         "more than their own 95 percent intervals, and the repose and mass invariants of the single "
         "case must still hold across all three areas."
     ),
-    pad_nx=124,
-    pad_ny=56,
-    shovel_xy=(155.0, 122.0),
+    pad_nx=148,
+    pad_ny=60,
+    shovel_xy=(185.0, 138.0),
     n_areas=3,
     area_width_m=90.0,
     area_length_m=90.0,
@@ -236,7 +239,7 @@ YARD = Scenario(
     # holding 0.32 and "low grade" on the pile holding 0.82, which the sector chart showed
     # immediately and no table would have.
     classes=("low grade", "mid grade", "high grade"),
-    n_loads=3600,
+    n_loads=2700,
     block_sd=0.20,
     n_trucks=6,
     n_cuts=30,
@@ -274,14 +277,14 @@ SIDEHILL = Scenario(
         "ground steeper than repose untouched, and material volume must be measured against the "
         "original surface rather than against zero."
     ),
-    pad_nx=56,
-    pad_ny=56,
-    shovel_xy=(120.0, 122.0),
+    pad_nx=60,
+    pad_ny=60,
+    shovel_xy=(135.0, 138.0),
     n_areas=1,
     area_width_m=90.0,
     area_length_m=90.0,
     classes=("ROM",),
-    n_loads=2200,
+    n_loads=900,
     fill=FillType.SIDEHILL,
     relief_m=18.0,
     roughness_m=0.5,
@@ -317,7 +320,7 @@ VALLEY = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=2200,
+    n_loads=900,
     fill=FillType.VALLEY,
     relief_m=26.0,
     roughness_m=0.6,
@@ -352,7 +355,7 @@ RIDGE = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=2200,
+    n_loads=900,
     fill=FillType.RIDGE_CREST,
     relief_m=24.0,
     roughness_m=0.5,
@@ -387,7 +390,7 @@ SHORT_DWELL = Scenario(
     ),
     n_areas=1,
     classes=("ROM",),
-    n_loads=2200,
+    n_loads=900,
     loads_per_block=4,
     tags=("stream", "contrast"),
 )
@@ -397,13 +400,12 @@ SHORT_DWELL = Scenario(
 # ---------------------------------------------------------------------------------------------
 # THE REST OF THE MATRIX.
 #
-# Six scenarios is a demonstration, not an experiment. What follows varies one thing at a time
-# along the axes that actually change the answer, so a reader can see WHAT WAS COMPARED WITH WHAT
-# rather than a list of names: the landform (all five published fill types, not three), the feed
-# structure that decides whether a stockpile can help at all, the yard layout and its routing, and
-# the operating choices a planner actually controls.
+# The axes are the things that change the answer, and each one carries SEVERAL cases rather than a
+# single specimen, because one point on an axis is an illustration and three are a comparison. A
+# reader should be able to hold the landform fixed and vary the feed, or hold the feed fixed and
+# vary the landform, and see which of the two the result actually follows.
 #
-# Each one still has to say why it is here and what result would mean the code is wrong.
+# Every case still says why it is here and what result would mean the code is wrong.
 # ---------------------------------------------------------------------------------------------
 
 CROSS_VALLEY = Scenario(
@@ -423,19 +425,81 @@ CROSS_VALLEY = Scenario(
     ),
     reason=(
         "The taxonomy has five members and a product that ships three is choosing which physics to "
-        "show. This one is the awkward case: confinement and drainage at right angles, so the crest "
-        "advances along one axis and the toe runs away along the other."
+        "show. This is the awkward case: confinement and drainage at right angles."
     ),
     kill_criterion=(
         "Buildable ground before any load is placed must differ measurably from both the flat pad "
         "and the valley. If the three report the same fraction the landform is not entering the "
         "calculation and the fill type is a label."
     ),
-    n_loads=2200,
+    n_loads=900,
     fill=FillType.CROSS_VALLEY,
     relief_m=24.0,
     roughness_m=0.5,
     tags=("topography", "cross-valley"),
+)
+
+
+STEEP_SIDEHILL = Scenario(
+    id="steep_sidehill",
+    category="landform",
+    title_en="Steep sidehill, relief doubled",
+    title_es="Ladera empinada, relieve duplicado",
+    summary_en=(
+        "The same sidehill with twice the relief. A uniform slope is comfortable for a truck up to a "
+        "point, and this case exists to find where that stops being true and buildable ground starts "
+        "disappearing."
+    ),
+    summary_es=(
+        "La misma ladera con el doble de relieve. Una pendiente uniforme es comoda para un camion "
+        "hasta cierto punto, y este caso existe para encontrar donde eso deja de ser cierto y el "
+        "terreno construible empieza a desaparecer."
+    ),
+    reason=(
+        "Relief and difficulty are not the same thing: a 30 m sidehill is fully buildable at 13.6 "
+        "degrees while a 29 m valley is only 72 percent buildable at 30.5. Doubling the relief on "
+        "the easy landform is how you find out which of the two numbers is doing the work."
+    ),
+    kill_criterion=(
+        "Buildable ground must fall below the gentle sidehill's. If doubling the relief on the same "
+        "landform changes nothing, the slope is not being computed from the ground."
+    ),
+    n_loads=900,
+    fill=FillType.SIDEHILL,
+    relief_m=58.0,
+    roughness_m=0.6,
+    tags=("topography", "sidehill"),
+)
+
+
+ROUGH_GROUND = Scenario(
+    id="rough_ground",
+    category="landform",
+    title_en="Rough ground, no prepared pad",
+    title_es="Terreno rugoso, sin plataforma preparada",
+    summary_en=(
+        "Flat on average and rough in detail: an unprepared surface rather than a graded pad. The "
+        "relief is small and the local slopes are not, which is the condition a prepared pad exists "
+        "to remove."
+    ),
+    summary_es=(
+        "Plano en promedio y rugoso en detalle: una superficie sin preparar en vez de una plataforma "
+        "nivelada. El relieve es pequeno y las pendientes locales no lo son, que es justo la "
+        "condicion que una plataforma preparada existe para eliminar."
+    ),
+    reason=(
+        "Every other case assumes someone graded the ground first. This one asks what that "
+        "preparation is worth, on a landform whose average is identical to the reference."
+    ),
+    kill_criterion=(
+        "Buildable ground must be below the flat pad's 100 percent while the relief stays small. A "
+        "surface that is rough and fully buildable means roughness is not reaching the slope."
+    ),
+    n_loads=900,
+    fill=FillType.HEAPED,
+    relief_m=3.0,
+    roughness_m=1.6,
+    tags=("topography", "rough"),
 )
 
 
@@ -445,26 +509,26 @@ LONG_DWELL = Scenario(
     title_en="Long shovel dwell, strongly correlated feed",
     title_es="Permanencia larga de la pala, alimentacion muy correlacionada",
     summary_en=(
-        "The opposite end of the axis from the short-dwell case: the shovel stays in one dig block "
-        "for sixty loads. Every other parameter is identical to the reference. This is the feed a "
-        "stockpile can do least about, because whole regions of the pile share one grade."
+        "The shovel stays in one dig block for sixty loads. Every other parameter is identical to "
+        "the reference. This is the feed a stockpile can do least about, because whole regions of "
+        "the pile share one grade."
     ),
     summary_es=(
-        "El extremo opuesto del caso de permanencia corta: la pala permanece sesenta cargas en un "
-        "mismo bloque. Todo lo demas es identico a la referencia. Es la alimentacion con la que un "
-        "acopio menos puede ayudar, porque regiones enteras de la pila comparten una sola ley."
+        "La pala permanece sesenta cargas en un mismo bloque. Todo lo demas es identico a la "
+        "referencia. Es la alimentacion con la que un acopio menos puede ayudar, porque regiones "
+        "enteras de la pila comparten una sola ley."
     ),
     reason=(
         "Two points define a line and three define a trend. With the reference at twenty loads per "
-        "block and the short-dwell case at four, this is the third point, and it is the one that "
-        "shows the blending benefit collapsing rather than merely weakening."
+        "block and the short-dwell case at four, this is the third point, and the one that shows "
+        "the blending benefit collapsing rather than merely weakening."
     ),
     kill_criterion=(
-        "The measured stream range must be LONGER than the reference case built with the same seed "
-        "and geometry, and the variance reduction worse. If a longer dwell does not hurt, the "
-        "stream model is not carrying the dig sequence."
+        "The measured stream range must be LONGER than the reference built with the same seed and "
+        "geometry. If a longer dwell does not hurt, the stream model is not carrying the dig "
+        "sequence."
     ),
-    n_loads=2200,
+    n_loads=900,
     loads_per_block=60,
     tags=("stream", "contrast"),
 )
@@ -476,14 +540,13 @@ TRENDING = Scenario(
     title_en="Trending feed, grade drifting through the campaign",
     title_es="Alimentacion con tendencia, ley que deriva durante la campana",
     summary_en=(
-        "Grade drifts steadily from the first bench to the last, which is what a real dig sequence "
-        "through a zoned ore body produces. A drift is not noise: no amount of mixing removes it, "
-        "and a stockpile built through one delivers a reclaim stream that drifts too."
+        "Grade drifts steadily from the first bench to the last, which is what a dig sequence "
+        "through a zoned ore body produces. A drift is not noise: no amount of mixing removes it."
     ),
     summary_es=(
         "La ley deriva de forma sostenida desde el primer banco hasta el ultimo, que es lo que "
-        "produce una secuencia real a traves de un cuerpo zonificado. Una deriva no es ruido: "
-        "ninguna mezcla la elimina, y el flujo recuperado tambien deriva."
+        "produce una secuencia a traves de un cuerpo zonificado. Una deriva no es ruido: ninguna "
+        "mezcla la elimina."
     ),
     reason=(
         "Variance reduction is measured against the input variance, and a trend inflates that "
@@ -491,13 +554,172 @@ TRENDING = Scenario(
         "way the metric flatters a bed, and the product should show it rather than avoid it."
     ),
     kill_criterion=(
-        "Variance reduction must come out BETTER than the reference case while the reclaim stream "
-        "still visibly drifts. A number that improves while the problem gets worse is the point of "
-        "the scenario; if the number does not improve, the trend is not reaching the input."
+        "Variance reduction must come out BETTER than the reference while the reclaim stream still "
+        "visibly drifts. A number that improves while the problem gets worse is the point; if the "
+        "number does not improve, the trend is not reaching the input."
     ),
-    n_loads=2200,
+    n_loads=900,
     bench_trend=0.35,
     tags=("stream", "trend"),
+)
+
+
+ERRATIC_FEED = Scenario(
+    id="erratic_feed",
+    category="feed",
+    title_en="Erratic feed, high block-to-block variance",
+    title_es="Alimentacion erratica, alta varianza entre bloques",
+    summary_en=(
+        "The dig sequence jumps between blocks of very different grade. High input variance is the "
+        "condition under which a stockpile has the most to offer, and it is the case where the "
+        "variance reduction ratio looks best for reasons that have nothing to do with the pile."
+    ),
+    summary_es=(
+        "La secuencia de extraccion salta entre bloques de leyes muy distintas. La alta varianza de "
+        "entrada es la condicion en la que un acopio mas puede aportar, y es el caso en que la razon "
+        "de reduccion de varianza se ve mejor por razones ajenas a la pila."
+    ),
+    reason=(
+        "The metric is a RATIO. Doubling the input spread improves it without the pile doing "
+        "anything differently, and a reader who is shown only the ratio cannot tell the two apart. "
+        "This case exists so the absolute output spread can be read alongside it."
+    ),
+    kill_criterion=(
+        "Output variance must be HIGHER than the reference in absolute terms while the ratio "
+        "improves. If both move the same way the metric is not a ratio of what it claims."
+    ),
+    n_loads=900,
+    block_sd=0.34,
+    tags=("stream", "variance"),
+)
+
+
+INTENSIVE_FEED = Scenario(
+    id="intensive_feed",
+    category="campaign",
+    title_en="Intensive feeding, the whole budget into one area",
+    title_es="Alimentacion intensiva, todo el presupuesto en una sola area",
+    summary_en=(
+        "Twice the campaign into the same footprint, without pause. The pile is pushed to the limit "
+        "of what its own geometry can hold at repose, and past the point where the plan has tips "
+        "left to offer."
+    ),
+    summary_es=(
+        "El doble de campana en la misma huella, sin pausa. La pila se lleva al limite de lo que su "
+        "propia geometria puede sostener en reposo, y mas alla del punto en que el plan tiene "
+        "puntos de descarga que ofrecer."
+    ),
+    reason=(
+        "The footprint has a geometric capacity: a square of side W holds a solid whose peak cannot "
+        "exceed about 0.38 W at repose, whatever the fleet delivers. Offering twice the material is "
+        "how that ceiling is demonstrated rather than asserted."
+    ),
+    kill_criterion=(
+        "Placed volume must approach the designed frustum volume and then STOP, with the surplus "
+        "reported as refused. A pile that keeps growing past its geometric capacity is not standing "
+        "at repose."
+    ),
+    n_loads=1800,
+    tags=("campaign", "capacity"),
+)
+
+
+INTENSIVE_DRAIN = Scenario(
+    id="intensive_drain",
+    category="campaign",
+    title_en="Intensive draining, the pile taken back down",
+    title_es="Drenaje intensivo, la pila desarmada",
+    summary_en=(
+        "The same pile, reclaimed hard: many small cuts rather than a few large ones, run until the "
+        "pile is substantially gone. Reclaim is where the blending actually happens, and a campaign "
+        "that stops at a quarter of the pile has only sampled the top of it."
+    ),
+    summary_es=(
+        "La misma pila, recuperada con fuerza: muchos cortes pequenos en vez de pocos grandes, hasta "
+        "desarmar buena parte de la pila. La recuperacion es donde ocurre la mezcla, y una campana "
+        "que se detiene en un cuarto de la pila solo ha muestreado su parte superior."
+    ),
+    reason=(
+        "A cut crosses the layers it can reach, and how many that is depends on how deep the "
+        "campaign goes. Variance reduction measured over a shallow campaign is a different quantity "
+        "from the same metric over a full one, and the difference is not small."
+    ),
+    kill_criterion=(
+        "Delivered tonnage must be several times the reference campaign's, and no cut may report "
+        "negative or NaN tonnage as the pile empties. A campaign that drains a pile it has already "
+        "exhausted is not tracking the material."
+    ),
+    n_loads=900,
+    cut_tonnes=900.0,
+    n_cuts=90,
+    tags=("campaign", "reclaim"),
+)
+
+
+LIGHT_DRAIN = Scenario(
+    id="light_drain",
+    category="campaign",
+    title_en="Light draining, a few large cuts",
+    title_es="Drenaje ligero, pocos cortes grandes",
+    summary_en=(
+        "The opposite reclaim campaign: six cuts of five thousand tonnes instead of ninety of nine "
+        "hundred. Each cut is large enough to cross a lot of the pile at once, which is a different "
+        "kind of mixing from taking it in thin slices."
+    ),
+    summary_es=(
+        "La campana opuesta: seis cortes de cinco mil toneladas en vez de noventa de novecientas. "
+        "Cada corte es lo bastante grande para cruzar buena parte de la pila de una vez, que es un "
+        "tipo de mezcla distinto al de tomarla en rebanadas finas."
+    ),
+    reason=(
+        "Cut size is a real operating choice and it is the one the reclaim geometry actually "
+        "controls. Ninety small cuts against six large ones, on the same pile, is the comparison "
+        "that says whether it matters."
+    ),
+    kill_criterion=(
+        "The number of independent layers a cut crosses must be HIGHER than the intensive campaign's, "
+        "and the variance reduction correspondingly better per cut. If cut size does not change what "
+        "a cut crosses, the face is not engaging the layers."
+    ),
+    n_loads=900,
+    cut_tonnes=5000.0,
+    n_cuts=6,
+    tags=("campaign", "reclaim"),
+)
+
+
+TWO_PHASE = Scenario(
+    id="two_phase",
+    category="campaign",
+    title_en="Two sub-areas worked in sequence",
+    title_es="Dos sub-areas trabajadas en secuencia",
+    summary_en=(
+        "One material class, two adjacent areas, worked one after the other rather than together. "
+        "The first is finished and left; the second is started from bare ground beside it. This is "
+        "how a yard grows when the fleet cannot serve two tip heads at once."
+    ),
+    summary_es=(
+        "Una sola clase de material, dos areas contiguas, trabajadas una despues de la otra en vez "
+        "de a la vez. La primera se termina y se deja; la segunda parte de terreno limpio al lado. "
+        "Asi crece un patio cuando la flota no puede atender dos frentes a la vez."
+    ),
+    reason=(
+        "Sequential and simultaneous construction put the same tonnage in the same place and produce "
+        "different piles, because the grade arriving at any moment goes to whichever area is open. "
+        "It is the cheapest lever an operation has over what each pile contains."
+    ),
+    kill_criterion=(
+        "The two areas must differ measurably in mean grade, because each received a different "
+        "stretch of the dig sequence. Two areas that come out the same mean the sequence is not "
+        "reaching the piles."
+    ),
+    pad_nx=148,
+    pad_ny=60,
+    shovel_xy=(185.0, 138.0),
+    n_areas=2,
+    classes=("phase one", "phase two"),
+    n_loads=1800,
+    tags=("campaign", "sequencing"),
 )
 
 
@@ -507,9 +729,9 @@ YARD_FIVE = Scenario(
     title_en="Five-area yard, finer ore-control classes",
     title_es="Patio de cinco areas, clases de control de leyes mas finas",
     summary_en=(
-        "The same routed campaign split five ways instead of three. Finer classes mean tighter "
-        "piles and a better-defined product, and they also mean more misroutes, longer hauls and "
-        "more areas competing for the same fleet."
+        "The same routed campaign split five ways instead of three. Finer classes mean tighter piles "
+        "and a better-defined product, and they also mean more misroutes, longer hauls and more "
+        "areas competing for the same fleet."
     ),
     summary_es=(
         "La misma campana enrutada dividida en cinco clases en vez de tres. Clases mas finas dan "
@@ -518,22 +740,56 @@ YARD_FIVE = Scenario(
     ),
     reason=(
         "How many stockpiles to run is the decision an ore-control engineer actually makes, and it "
-        "is a trade rather than an optimisation. Three against five, same ore, same fleet, is the "
-        "comparison that shows the trade instead of asserting it."
+        "is a trade rather than an optimisation. Three against five, same ore, same fleet."
     ),
     kill_criterion=(
-        "Within-area grade spread must be TIGHTER than the three-area yard, because that is the "
-        "only thing finer classes buy. If it is not, the router is not separating and the extra "
-        "areas cost without returning."
+        "Within-area grade spread must be TIGHTER than the three-area yard. If it is not, the router "
+        "is not separating and the extra areas cost without returning."
     ),
-    pad_nx=228,
-    pad_ny=56,
-    shovel_xy=(265.0, 122.0),
+    pad_nx=236,
+    pad_ny=60,
+    shovel_xy=(295.0, 138.0),
     n_areas=5,
-    gap_m=20.0,
     classes=("very low", "low grade", "mid grade", "high grade", "very high"),
-    n_loads=5000,
+    n_loads=4500,
     block_sd=0.22,
+    tags=("core", "sectors", "routing"),
+)
+
+
+MISROUTED = Scenario(
+    id="misrouted",
+    category="yard",
+    title_en="Ore-control misclassification",
+    title_es="Clasificacion erronea en control de leyes",
+    summary_en=(
+        "The same three-area yard routed on a noisy estimate rather than a clean one. A load sent to "
+        "the wrong pile lands there and stays there: the decision is made before placement and "
+        "nothing corrects it afterwards."
+    ),
+    summary_es=(
+        "El mismo patio de tres areas enrutado con una estimacion ruidosa en vez de limpia. Una "
+        "carga enviada a la pila equivocada aterriza ahi y ahi se queda: la decision se toma antes "
+        "de colocar y nada la corrige despues."
+    ),
+    reason=(
+        "Published ore-control misclassification runs 5 to 20 percent before the truck moves, and "
+        "blast movement adds 9 to 19 percent ore loss on top. A routing model that assumes a perfect "
+        "estimate is modelling a mine that does not exist."
+    ),
+    kill_criterion=(
+        "Within-area grade spread must be WIDER than the clean three-area yard, and the separation "
+        "between area means smaller. If misclassification costs nothing, the router is not routing "
+        "on the estimate."
+    ),
+    pad_nx=148,
+    pad_ny=60,
+    shovel_xy=(185.0, 138.0),
+    n_areas=3,
+    classes=("low grade", "mid grade", "high grade"),
+    n_loads=2700,
+    block_sd=0.20,
+    estimate_error_sd=0.10,
     tags=("core", "sectors", "routing"),
 )
 
@@ -544,14 +800,13 @@ SHORT_BENCH = Scenario(
     title_en="Short benches, more lifts",
     title_es="Bancos bajos, mas levantes",
     summary_en=(
-        "The same tonnage into the same footprint, built as four nine-metre lifts instead of two "
-        "eighteens. More lifts mean more paddock campaigns, more dozer work and a shorter cascade "
-        "down every face."
+        "The same footprint built as three nine-metre lifts instead of one twenty-six. More benches "
+        "mean more paddock campaigns, more dozer work and a shorter cascade down every face."
     ),
     summary_es=(
-        "El mismo tonelaje en la misma huella, construido como cuatro levantes de nueve metros en "
-        "vez de dos de dieciocho. Mas levantes significan mas campanas de paddock, mas trabajo de "
-        "bulldozer y una cascada mas corta en cada cara."
+        "La misma huella construida como tres levantes de nueve metros en vez de uno de veintiseis. "
+        "Mas bancos significan mas campanas de paddock, mas trabajo de bulldozer y una cascada mas "
+        "corta en cada cara."
     ),
     reason=(
         "Bench height is the main lever a dump designer has and it drives the physics directly: "
@@ -559,45 +814,13 @@ SHORT_BENCH = Scenario(
         "segregation only becomes significant above roughly ten to twelve metres of drop."
     ),
     kill_criterion=(
-        "The spread of the coarse fraction must be NARROWER than the reference case. A nine-metre "
-        "bench cascades about fourteen metres, at the bottom of the measured envelope; if "
-        "segregation is unchanged it is not being driven by the face at all."
+        "The spread of the coarse fraction must be NARROWER than the reference. A nine-metre bench "
+        "cascades about fourteen metres, at the bottom of the measured envelope; if segregation is "
+        "unchanged it is not being driven by the face at all."
     ),
-    n_loads=2200,
+    n_loads=900,
     bench_height_m=9.0,
-    n_benches=4,
-    tags=("operations", "bench"),
-)
-
-
-TALL_BENCH = Scenario(
-    id="tall_bench",
-    category="operations",
-    title_en="Tall benches, long cascade",
-    title_es="Bancos altos, cascada larga",
-    summary_en=(
-        "One twenty-eight-metre lift. The longest face the footprint can carry, which is the "
-        "condition under which kinetic sieving does the most work and the toe ends up most "
-        "different from the crest."
-    ),
-    summary_es=(
-        "Un solo levante de veintiocho metros. La cara mas larga que la huella puede sostener, que "
-        "es la condicion en la que el cribado cinetico hace mas trabajo y el pie termina lo mas "
-        "distinto posible de la cresta."
-    ),
-    reason=(
-        "The other end of the bench-height lever, and the case that tests the access mechanic "
-        "hardest: a lift of twenty-eight metres needs roughly sixty-five metres of ramp at the "
-        "working gradient, which is most of the area."
-    ),
-    kill_criterion=(
-        "Zero pairs over repose and no cell below its original ground, at a peak measurably above "
-        "the reference case. A tall bench that does not stand taller means the loads are not "
-        "reaching the working level and the ramp is failing silently."
-    ),
-    n_loads=2200,
-    bench_height_m=28.0,
-    n_benches=1,
+    n_benches=3,
     tags=("operations", "bench"),
 )
 
@@ -609,24 +832,24 @@ NARROW_RAMP = Scenario(
     title_es="Rampa de acceso angosta",
     summary_en=(
         "A twelve-metre corridor instead of twenty-five: single-lane access with no room to pass. "
-        "The ramp still has to be cut and maintained out of the fill, but there is far less of it "
-        "to work with."
+        "The ramp still has to be cut and maintained out of the fill, with far less of it to work "
+        "with."
     ),
     summary_es=(
         "Un corredor de doce metros en vez de veinticinco: acceso de una pista sin lugar para "
-        "cruzarse. La rampa igual debe cortarse y mantenerse en el relleno, pero hay mucho menos "
-        "con que trabajar."
+        "cruzarse. La rampa igual debe cortarse y mantenerse en el relleno, con mucho menos con que "
+        "trabajar."
     ),
     reason=(
-        "Ramp width is a dump-design parameter with a real cost: every metre of corridor is "
-        "capacity the footprint does not hold. Whether a narrow ramp actually costs placement is a "
+        "Ramp width is a dump-design parameter with a real cost: every metre of corridor is capacity "
+        "the footprint does not hold. Whether a narrow ramp actually costs placement is a "
         "measurement, not an assumption."
     ),
     kill_criterion=(
-        "The refusal rate must be no better than the reference case. A narrower way in cannot make "
-        "access easier, and if it does the corridor is not the thing controlling access."
+        "The refusal rate must be no better than the reference. A narrower way in cannot make access "
+        "easier, and if it does the corridor is not the thing controlling access."
     ),
-    n_loads=2200,
+    n_loads=900,
     ramp_width_m=12.0,
     tags=("operations", "access"),
 )
@@ -638,27 +861,58 @@ SELDOM_DOZED = Scenario(
     title_en="Dozer on a long cadence",
     title_es="Bulldozer con cadencia larga",
     summary_en=(
-        "One dozer pass every hundred and twenty loads instead of every forty. The blade is what "
-        "turns a field of tipped heaps into a floor a truck can cross, so its cadence is the pace "
-        "at which the working level becomes usable again."
+        "One access pass every sixty loads instead of every twelve. The blade is what turns a field "
+        "of tipped heaps into a floor a truck can cross, so its cadence is the pace at which the "
+        "working level becomes usable again."
     ),
     summary_es=(
-        "Una pasada de bulldozer cada ciento veinte cargas en vez de cada cuarenta. La hoja es lo "
-        "que convierte un campo de montones en un piso que un camion puede cruzar, asi que su "
-        "cadencia marca el ritmo al que el nivel de trabajo vuelve a ser utilizable."
+        "Una pasada de acceso cada sesenta cargas en vez de cada doce. La hoja es lo que convierte "
+        "un campo de montones en un piso que un camion puede cruzar, asi que su cadencia marca el "
+        "ritmo al que el nivel de trabajo vuelve a ser utilizable."
     ),
     reason=(
         "Dozer availability is a real operating constraint and the source is explicit that the "
         "machine works on a cadence rather than continuously. It is also the cheapest lever on "
-        "placement rate, which makes it worth quantifying."
+        "placement rate."
     ),
     kill_criterion=(
-        "The refusal rate must rise against the reference case. Less blade work that placed MORE "
-        "loads would mean the cadence is not connected to access at all."
+        "The refusal rate must rise against the reference. Less blade work that placed MORE loads "
+        "would mean the cadence is not connected to access at all."
     ),
-    n_loads=2200,
-    loads_per_dozer_pass=120,
+    n_loads=900,
+    loads_per_dozer_pass=60,
     tags=("operations", "dozer"),
+)
+
+
+WET_MATERIAL = Scenario(
+    id="wet_material",
+    category="operations",
+    title_en="Wet material, steeper repose",
+    title_es="Material humedo, reposo mas empinado",
+    summary_en=(
+        "The same ore after rain. Capillary bridges between grains add cohesion and the material "
+        "stands steeper, which makes the pile taller on the same footprint and every face harder to "
+        "drive on."
+    ),
+    summary_es=(
+        "El mismo mineral despues de la lluvia. Los puentes capilares entre granos anaden cohesion y "
+        "el material se para mas empinado, lo que hace la pila mas alta sobre la misma huella y cada "
+        "cara mas dificil de transitar."
+    ),
+    reason=(
+        "Repose is not a constant. Handbook values for ores span 34 to 60 degrees and the value "
+        "moves with size, moisture and time since dumping. Everything downstream, the geometry, the "
+        "capacity of the footprint and the truck's gradient limit, follows it."
+    ),
+    kill_criterion=(
+        "Peak height must RISE against the reference on the same footprint and the same load budget, "
+        "because a steeper repose holds more in the same plan area. If it does not, the repose angle "
+        "is not reaching the geometry."
+    ),
+    n_loads=900,
+    repose_deg=43.0,
+    tags=("operations", "material"),
 )
 
 
@@ -667,16 +921,24 @@ SCENARIOS: list[Scenario] = [
     SHORT_DWELL,
     LONG_DWELL,
     TRENDING,
+    ERRATIC_FEED,
     YARD,
     YARD_FIVE,
+    MISROUTED,
     SIDEHILL,
+    STEEP_SIDEHILL,
     VALLEY,
     CROSS_VALLEY,
     RIDGE,
+    ROUGH_GROUND,
+    INTENSIVE_FEED,
+    INTENSIVE_DRAIN,
+    LIGHT_DRAIN,
+    TWO_PHASE,
     SHORT_BENCH,
-    TALL_BENCH,
     NARROW_RAMP,
     SELDOM_DOZED,
+    WET_MATERIAL,
 ]
 
 

@@ -1,4 +1,4 @@
-import { Callout, Cite, Equation, InlineMath, Refs, useShellLang, Tabs } from '@fasl-work/caos-app-shell';
+import { Callout, Cite, Equation, InlineMath, Refs, SubTabs, Tabs, useShellLang } from '@fasl-work/caos-app-shell';
 
 /**
  * The method, in the order material moves through it.
@@ -10,7 +10,7 @@ import { Callout, Cite, Equation, InlineMath, Refs, useShellLang, Tabs } from '@
  */
 export default function Methodology() {
   const es = useShellLang() === 'es';
-  const tabs = [
+  const sections = [
     {
       id: 's0',
       label: es ? 'Terreno y transitabilidad' : 'Terrain and trafficability',
@@ -209,6 +209,23 @@ export default function Methodology() {
     },
   ];
 
+  const pair = (a: number, b: number) => (
+    <SubTabs
+      tabs={[
+        { id: sections[a].id, label: sections[a].label, content: sections[a].content },
+        { id: sections[b].id, label: sections[b].label, content: sections[b].content },
+      ]}
+      ariaLabel={es ? 'Subsecciones' : 'Subsections'}
+    />
+  );
+
+  const grouped = [
+    { id: 'site', label: es ? 'El sitio' : 'The site', content: pair(0, 1) },
+    { id: 'haul', label: es ? 'El camion' : 'The truck', content: pair(2, 3) },
+    { id: 'material', label: es ? 'El material' : 'The material', content: pair(4, 5) },
+    { id: 'out', label: es ? 'Salida' : 'Getting it out', content: pair(6, 7) },
+  ];
+
   return (
     <div className="page-body prose">
       <div className="page-head">
@@ -220,7 +237,11 @@ export default function Methodology() {
         </p>
       </div>
 
-      <Tabs tabs={tabs} ariaLabel={es ? 'Secciones' : 'Sections'} />
+      {/* FOUR TABS, NOT EIGHT. ADR-0071 gives a page ONE tab row and at most six siblings, and
+          eight labels of this length do not fit a 1200px page: they ran past the right edge. The
+          eight sections are unchanged; they are paired under the four things the material passes
+          through, and the pairs are sub-tabs. */}
+      <Tabs tabs={grouped} ariaLabel={es ? 'Secciones' : 'Sections'} />
     </div>
   );
 }

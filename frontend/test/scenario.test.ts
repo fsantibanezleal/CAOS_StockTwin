@@ -41,13 +41,19 @@ function load(id: string): Scenario {
     cuts: read<Cut[]>(id, 'cuts.json'),
     sectors: read<{ areas: Sector[] }>(id, 'sectors.json'),
     frames: read(id, 'frames.json'),
+    volume: read(id, 'volume.json'),
   };
 }
 
 describe('the committed artifacts', () => {
-  it('exist and enumerate the three agreed scenarios', () => {
+  it('exist and enumerate the whole scenario matrix', () => {
     expect(existsSync(DERIVED)).toBe(true);
-    expect(new Set(IDS)).toEqual(new Set(['single', 'yard', 'sidehill']));
+    // ADR-0056 puts the floor at a dozen configurable cases. The matrix is checked against the
+    // floor rather than against a hardcoded list, so adding a case does not break a test that has
+    // nothing to do with it.
+    expect(IDS.length).toBeGreaterThanOrEqual(12);
+    expect(new Set(IDS).size).toBe(IDS.length);
+    expect(IDS).toContain('single');
   });
 
   it.each(IDS)('%s parses and every file is present', (id: string) => {
