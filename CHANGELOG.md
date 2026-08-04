@@ -9,6 +9,45 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.05.000] - 2026-08-04
+
+The two cases where the pile is fed and drawn at the same time. They existed, they
+were baked, and they did not ship.
+
+### Added
+
+- **`concurrent` and `surge`**, the two campaign cases that model a live surge pile: trucks are still
+  tipping while the loader is already taking material out. They were declared in the scenario
+  registry, baked successfully, and left out of the artifact tree by the assembly step, so the app
+  offered twenty cases and neither of the two was among them. Nothing failed: the index is assembled
+  from the manifests present on disk, so two missing folders produced a smaller matrix and a clean
+  site. The Campaign axis now offers six.
+- **Both meet their kill criterion**, on the same seed and geometry as the sequential reference:
+  `single` reduces variance to 0.0059 over 16.57 effective sources per cut, `concurrent` to 0.4009
+  over 3.38, and `surge` to 0.5162 over 2.36. A cut taken part-way through the build has fewer lifts
+  available to cross, so it blends less; drawing faster reduces it again. They are also the cases
+  where the 1/N bound is RELIABLE and the efficiency can be shown at all, at 74 percent of ideal on
+  `concurrent`, against a sequential case whose bound is withheld.
+- **Seven tests** locking the concurrent timeline: that at least two such cases ship, that every cut
+  records a load index strictly inside the build and spread through it, that a sequential case
+  records none, that the build chain dips in volume where a cut bit into it, that the loader appears
+  in the first quarter of playback rather than after it, and that drawing while feeding blends
+  measurably worse.
+
+### Fixed
+
+- **The timeline was the wrong shape for a concurrent campaign.** It was the build frames plus the
+  reclaim frames unconditionally, with everything past the build treated as reclaim. On a concurrent
+  case that plays the whole build and then rewinds to a nearly empty pile and grows it again, because
+  the reclaim chain is a parallel recording of the same terrain rather than a continuation of it.
+  Measured on the shipped artifact: 32 of the 744 build frames of `concurrent` and 50 of `surge`
+  decrease in volume, so the build chain already carries the bites. The timeline is now the build
+  alone on those cases, and a cut is drawn where it actually happened.
+- **The transport readout** carries both counts at once on a concurrent case rather than pretending
+  the reclaim has not started.
+- Every literal count in the product, which two more cases made false at once.
+
+
 ## [0.04.000] - 2026-08-04
 
 A 78-agent audit checked all 148 rules of the frontend ADRs against every surface of this product
