@@ -162,8 +162,8 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
         if c.tonnes <= 0:
             advance(face, terr)
             return
-        # THE TRUCK THAT COMES FOR IT. Routed on the surface the cut just left, over the area's own
-        # access corridor, so an empty truck arrives, is loaded beside the face, and leaves loaded.
+        # THE TRUCK THAT COMES FOR IT. Routed on the surface the cut just left, from the sited
+        # loading point, so an empty truck arrives, is loaded beside the face, and leaves loaded.
         # Without this the material left the ledger and nothing on site carried it away.
         fi = (live["fi"] - 1) % max(1, len(live_exits))
         c.stand, c.approach, c.departure, c.loader = haul_cycle(

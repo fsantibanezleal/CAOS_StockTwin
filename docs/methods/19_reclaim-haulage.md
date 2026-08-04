@@ -39,7 +39,7 @@ fields**: the loader sits on the centroid of the cells the cut engaged, and the 
 nearest cell that is both
 
     passable(c)   the local gradient by central differences is within the truck limit
-    reachable(c)  a flood fill from the area's access corridor reaches it
+    reachable(c)  a flood fill from the sited loading point reaches it
 
 Only cells satisfying both are candidates. A campaign that has cut away its own access therefore
 reports a cut it **cannot serve**, exactly as the build reports a tip it cannot reach, and the
@@ -62,12 +62,19 @@ Both legs use the same per-step rule the build router uses:
 deliberately, so that "a truck can get there" means the same thing in both directions. A reclaim
 truck cannot drive anywhere a haul truck could not.
 
-## The road is the one the plan already reserved
+## The exit is the loading point, not the area corridor
 
-A reclaim truck does not get its own road. It leaves by the area's ACCESS corridor: the one piece of
-ground the plan reserves and the dozer cuts and maintains as a drivable ramp every pass. Routing the
-reclaim over it is what couples the two halves of the operation, and it is why a badly ordered
-campaign can strand its own reclaim.
+A reclaim truck does not get its own road. The exit is the SITED LOADING POINT, outside every dump
+area, and the reachability flood fill is run from there, not from the area access corridor: the
+corridor was the first choice and it was wrong, because it is a point inside the yard that the pile
+grows over. Measured on the finished surfaces, the corridor entrance was not drivable on `yard`,
+`rough_ground`, `seldom_dozed` or `short_bench`, so the flood fill from it reached 0.0 percent of the
+pad and every cut on those four was refused, which says nothing about the pile and only that the exit
+was buried. From the loading point, 72 to 92 percent of the pad is reachable on those same four.
+Reclaimed ore leaving by the point the ore arrived from is also the honest model of a pre-crusher
+stockpile, which sits between the pit and the plant rather than on its own haul network. Routing the
+reclaim over the ground the build already uses is what couples the two halves of the operation, and
+it is why a badly ordered campaign can strand its own reclaim.
 
 ## It is additive to the engine
 

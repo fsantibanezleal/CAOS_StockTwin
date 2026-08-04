@@ -57,8 +57,8 @@ const SOURCES = [
   {
     what: { en: 'Fill-type taxonomy', es: 'Taxonomía de tipos de relleno' },
     detail: {
-      en: 'Five published fill types: heaped, sidehill, valley, cross-valley, ridge crest. Four are in the matrix; the ridge crest is withdrawn',
-      es: 'Cinco tipos publicados de relleno: montículo, ladera, valle, valle transversal y cresta. Cuatro están en la matriz; la cresta está retirada',
+      en: 'Five published fill types: heaped, sidehill, valley, cross-valley, ridge crest. Four are in the matrix; a steep sidehill and the ridge crest are both withdrawn for failing the repose invariant, so the matrix does not cover all five',
+      es: 'Cinco tipos publicados de relleno: montículo, ladera, valle, valle transversal y cresta. Cuatro están en la matriz; una ladera empinada y la cresta están retiradas por fallar el invariante de reposo, así que la matriz no cubre los cinco',
     },
     cite: 'baffinland2017',
   },

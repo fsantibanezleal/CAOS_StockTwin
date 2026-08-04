@@ -40,10 +40,15 @@ n_over, worst = bb.count_over_repose(res.terrain.z, res.terrain.nx, res.terrain.
                                      res.terrain.cell_m, REPOSE, floor=res.terrain.z0)
 print(f"{n_over} cell pairs over repose, worst local slope {worst:.1f} deg")
 
-# Reclaim a vertical face through every lift, which is the only order that blends them.
+# Reclaim a vertical face through every lift, which is the only order that blends them. exit_xy and
+# max_grade add the haul cycle: an empty truck routed in, a loaded truck routed out, held to the
+# same gradient limit as the delivering fleet, tan(37)/1.5 = 0.50. The exit is the SITED LOADING
+# POINT, outside every dump area. Omit them and the material leaves the ledger with nothing on site
+# carrying it away.
 face = bb.ReclaimFace(method=bb.ReclaimMethod.FULL_HEIGHT, depth_m=10.0, width_m=1e6)
 cuts = bb.campaign(res.terrain, res.model, face,
-                   cut_tonnes=1500.0, n_cuts=10, repose_deg=REPOSE)
+                   cut_tonnes=1500.0, n_cuts=10, repose_deg=REPOSE,
+                   exit_xy=(130.0, 12.0), max_grade=0.50)
 
 # Every reclaimed tonne traces back to the dig blocks that made it, WITH the distance a dozer has
 # shoved it since. Provenance quoted without that displacement claims a precision no operation has.

@@ -149,7 +149,7 @@ def main() -> None:
         # A cut used to record a tonnage and a centroid and nothing else: the ore left the ledger and
         # no vehicle on site carried it away, so the pile lost volume with no machine in the picture.
         # Every cut now carries its haul cycle, an empty truck in and a loaded truck out over the
-        # area's access corridor. A cut with no `stand` is a real refusal, the campaign having cut
+        # sited loading point. A cut with no `stand` is a real refusal, the campaign having cut
         # away its own access, and a whole scenario of them means the reclaim is unserved.
         served = [c for c in cuts if c.get("stand")]
         if not served:

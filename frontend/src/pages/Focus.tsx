@@ -549,8 +549,8 @@ export default function Focus() {
         {/* The provenance note the ADR's rail order puts before the scenario switcher. */}
         <p className="fx-prov">
           {t(
-            'Engine: bedblend 0.05.002, MIT. Dump geometry calibrated to 28 UAV-surveyed dumps (Young and Rogers, Mining 2022, 10.3390/mining2010006). Segregation: Gray and Thornton kinetic sieving. The multi-element assay is synthetic, sourced to published porphyry ranges, and calibrated to no deposit.',
-            'Motor: bedblend 0.05.002, MIT. Geometría de descarga calibrada contra 28 descargas levantadas con UAV (Young y Rogers, Mining 2022, 10.3390/mining2010006). Segregación: tamizado cinético de Gray y Thornton. El ensayo multielemento es sintético, con rangos tomados de literatura de pórfidos, y no está calibrado a ningún yacimiento.',
+            'Engine: bedblend 0.6.0, MIT. Dump geometry calibrated to 28 UAV-surveyed dumps (Young and Rogers, Mining 2022, 10.3390/mining2010006). Segregation: Gray and Thornton kinetic sieving. The multi-element assay is synthetic, sourced to published porphyry ranges, and calibrated to no deposit.',
+            'Motor: bedblend 0.6.0, MIT. Geometría de descarga calibrada contra 28 descargas levantadas con UAV (Young y Rogers, Mining 2022, 10.3390/mining2010006). Segregación: tamizado cinético de Gray y Thornton. El ensayo multielemento es sintético, con rangos tomados de literatura de pórfidos, y no está calibrado a ningún yacimiento.',
           )}
         </p>
 

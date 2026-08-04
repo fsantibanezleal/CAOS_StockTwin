@@ -31,7 +31,7 @@ Each has a numerical kill criterion, stated in advance.
   cut's coarse fraction must equal the provenance-weighted mix of its source dumps. Applied at lot
   level, where it is exact, this caught a real modelling error by a quarter of the full range: an
   early version wrote the solver's absolute composition onto lots that had come from earlier dumps.
-* **C03, starvation.** Driving the reclaimer three times faster than the stacker must empty the pile
+* **C03, starvation.** Reclaiming three times faster than the trucks deliver must empty the pile
   and report starvation, with no negative or NaN tonnage at the boundary.
 
 ## The four benchmark assertions

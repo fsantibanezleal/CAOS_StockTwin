@@ -170,7 +170,7 @@ export interface Cut {
    *  `x`/`y` above is the LOADER, which sits on the cut. A loader digs a face; a truck cannot stand
    *  on one, and that is why the two are separate. */
   stand?: XY;
-  /** The route the empty truck drove in, from the area's access corridor. */
+  /** The route the empty truck drove in, from the sited loading point off the pad. */
   in?: XY[];
   /** The route it drove back out, loaded. Solved separately from the way in, because the cut has
    *  just been taken and the face relaxed, so the surface is not the same one. */

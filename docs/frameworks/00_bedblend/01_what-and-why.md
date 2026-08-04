@@ -3,7 +3,8 @@
 ## What it is
 
 The bed-blending physics itself: repose-angle deposition, Gray-Thornton kinetic size
-segregation, the per-cell lot ledger with provenance, five stacking and four reclaim geometries, and
+segregation, the per-cell lot ledger with provenance, the LIFO, FIFO and full-height reclaim methods
+with the haul cycle that carries each cut off site, and
 the blending metrics. MIT, published at pypi.org/project/bedblend.
 
 This is the product's own engine, and it is a dependency rather than a folder inside this repository

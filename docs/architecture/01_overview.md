@@ -10,21 +10,22 @@ without opening a browser once.
 ## The shape
 
 ```
-data-pipeline/stlab/
-  model/      the shared analytic core: heightfield, segregation, pile, stacking, blending, rtd, stream, run
-  io/         contract.py (CONTRACT 1), schema.py, formats.py
-  core/       rng.py, trace.py, manifest.py (CONTRACT 2), gate.py
-  stages/     the ten named pipeline stages
-  cases/      the seventeen-case matrix with its kill criteria
-  pipeline.py the orchestrator and CLI
+bedblend/                 THE ENGINE, a separately published package consumed pinned. Not in
+                          this repository: terrain, truck, design, dump, relax, dozer,
+                          facesegregation, blocks, sectors, reclaim, blending, rtd, stream.
+data-pipeline/
+  run.py                  invoked BY PATH; this repo declares no package of its own
+  pipeline/scenarios.py   the twenty-two-scenario matrix with its kill criteria
+  pipeline/bake.py        the bake, the gate and the artifact writer (CONTRACT 2)
+  pipeline/assay.py       the multi-element assay, generated per load
+  pipeline/io/contract.py the ingestion gate (CONTRACT 1)
 frontend/src/
-  engine/     the TypeScript mirror of model/, plus the GENERATED case registry
-  pages/      the six pages and the focus route
-  viz/        the 3-D pile, the uPlot wrapper, the Sankey, the panels
-  lib/        artifact fetchers and the TypeScript mirror of CONTRACT 2
-data/derived/ the committed traces, metrics and manifests
-tests/        the invariant suite
-docs/         this wiki
+  lib/scenario.ts         artifact fetchers, the TypeScript mirror of CONTRACT 2, and EVERY verdict
+  pages/                  the six pages and the focus route
+  viz/                    the 3-D pile and block model, the uPlot wrapper, the panels
+data/derived/             the committed artifacts, one folder per scenario, plus the index
+tests/                    the invariant suite
+docs/                     this wiki
 ```
 
 ## The rework boundary

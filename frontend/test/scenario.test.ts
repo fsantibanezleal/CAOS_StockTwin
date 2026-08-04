@@ -397,7 +397,6 @@ describe('something comes for the reclaimed material', () => {
 
   it('a reclaim moment puts BOTH machines on the stage, and the truck leaves loaded', () => {
     const sc = load('single');
-    const n = timelineLength(sc);
     const nBuild = sc.frames!.frames.length;
     // Walk one whole cut: drive in, load, drive out.
     const seen = new Set<string>();
@@ -422,6 +421,7 @@ describe('something comes for the reclaimed material', () => {
       const marks = cutMarks(sc);
       expect(marks.length, `${id} marks no cuts`).toBeGreaterThan(0);
       const n = timelineLength(sc);
+      expect(n).toBeGreaterThan(0);
       for (const m of marks) {
         expect(m).toBeGreaterThanOrEqual(0);
         expect(m).toBeLessThan(n);
