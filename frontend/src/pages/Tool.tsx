@@ -16,19 +16,20 @@
  * So: `CaseSelector` for the scenario deck, `Tabs` for the views, `.page-body.st-layout` for width,
  * and the readouts overlaid on the stage rather than stacked beneath it.
  */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Maximize2 } from 'lucide-react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CaseSelector, Tabs, useShellLang } from '@fasl-work/caos-app-shell';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { Tabs, useShellLang } from '@fasl-work/caos-app-shell';
 import type { CaseDef } from '@fasl-work/caos-app-shell';
 
 import {
+  type AssayVar,
   type Index,
   type Scenario,
   playState,
   loadIndex,
   loadScenario,
   segregationSummary,
+  surfaceValues,
   verdict,
 } from '../lib/scenario';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
@@ -80,6 +81,8 @@ function useBoxHeight<T extends HTMLElement>(): [React.RefObject<T | null>, numb
 }
 
 /** Human labels for the matrix axes, in both languages. */
+const CATEGORY_ORDER = ['reference', 'feed', 'yard', 'landform', 'campaign', 'operations', 'physics'];
+
 const CATEGORY: Record<string, { en: string; es: string }> = {
   reference: { en: 'Reference', es: 'Referencia' },
   feed: { en: 'Feed structure', es: 'Estructura de alimentacion' },
@@ -89,19 +92,37 @@ const CATEGORY: Record<string, { en: string; es: string }> = {
   physics: { en: 'Physics', es: 'Fisica' },
 };
 
+/** The case the reader last looked at, so the top-level Focus route can open it. */
+function readRememberedCase(): string {
+  try {
+    return window.localStorage.getItem('stocktwin.case') || 'single';
+  } catch {
+    return 'single';
+  }
+}
+
 export default function Tool() {
   const lang = useShellLang() === 'es' ? 'es' : 'en';
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const dark = useDark();
-  const nav = useNavigate();
   const [params] = useSearchParams();
   const [stageRef, stageH] = useBoxHeight<HTMLDivElement>();
 
   const [index, setIndex] = useState<Index | null>(null);
   // The round trip from the focus route carries the scenario back, per ADR-0070 clause 5.
-  const [sid, setSid] = useState(() => params.get('case') ?? params.get('scenario') ?? 'single');
+  const [sid, setSid] = useState(
+    () => params.get('case') ?? params.get('scenario') ?? readRememberedCase(),
+  );
+
+  // THE URL IS AUTHORITATIVE WHEN IT CHANGES. Returning from the focus route navigates to
+  // `/?case=<id>` without remounting this component, so initialising the state once from the query
+  // is not enough: the address bar said one case and the page showed another.
+  useEffect(() => {
+    const q = params.get('case') ?? params.get('scenario');
+    if (q && q !== sid) setSid(q);
+  }, [params, sid]);
   const [sc, setSc] = useState<Scenario | null>(null);
-  const [colour, setColour] = useState<ColourBy>('grade');
+  const [colour, setColour] = useState<string>('cu');
   const [showPaths, setShowPaths] = useState(true);
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
@@ -118,12 +139,20 @@ export default function Tool() {
     setSc(null);
     setPos(-1);
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
+    // Remembered so the top-level Focus route opens the case the reader was looking at. ADR-0070
+    // requires the round trip to preserve the scenario, and with the entry in the nav rather than
+    // beside the selector, that state has to live somewhere both routes can see.
+    try {
+      window.localStorage.setItem('stocktwin.case', sid);
+    } catch {
+      /* private mode; the route falls back to the default case */
+    }
   }, [sid]);
 
   const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
 
-  const cases: CaseDef[] = useMemo(
+  const cases: (CaseDef & { axis: string })[] = useMemo(
     () =>
       (index?.scenarios ?? []).map((s) => ({
         id: s.id,
@@ -133,17 +162,27 @@ export default function Tool() {
         // save vertical space when there were only three cases, which was the right call then and
         // is the wrong one for fourteen, where an ungrouped deck says nothing about what is being
         // compared with what.
-        category: CATEGORY[s.category ?? 'physics']?.[lang] ?? s.category,
+        axis: s.category ?? 'physics',
         kind: 'synthetic' as const,
         anchor: `${s.build.loads_placed} loads placed, peak ${s.build.peak_m.toFixed(1)} m`,
       })),
     [index, lang],
   );
 
-  const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
 
   // The surface being drawn, and the load being worked: a build frame while scrubbing, the
   // finished pile otherwise.
+  const assayVars = useMemo<AssayVar[]>(
+    () => (sc?.manifest.assay_variables as AssayVar[] | undefined) ?? [],
+    [sc],
+  );
+  // The colour field for the stage: a joined assay surface, or null to let the view use its own.
+  const surfaceVals = useMemo(
+    () => (sc && assayVars.some((a) => a.key === colour) ? surfaceValues(sc, colour) : null),
+    [sc, colour, assayVars],
+  );
+  const activeVar = assayVars.find((a) => a.key === colour);
+
   const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
   const surface = play?.z ?? null;
 
@@ -164,7 +203,8 @@ export default function Tool() {
             surface={surface}
             plan={sc.plan}
             loads={sc.loads}
-            colourBy={colour}
+            colourBy={(colour === 'coarse' || colour === 'thickness' ? colour : 'grade') as ColourBy}
+            values={surfaceVals}
             showPaths={showPaths}
             showCrest={showCrest}
             showPlan={showPlan}
@@ -179,20 +219,32 @@ export default function Tool() {
       <div className="st-controls">
         <label className="st-sel">
           <span>{t('Colour by', 'Colorear por')}</span>
-          <select value={colour} onChange={(e) => setColour(e.target.value as ColourBy)}>
-            <option value="grade">{t('grade', 'ley')}</option>
-            <option value="coarse">{t('coarse fraction', 'fracción gruesa')}</option>
-            <option value="thickness">{t('thickness', 'espesor')}</option>
+          {/* THE WHOLE ASSAY, not just copper. The field carries a grade and a coarse fraction per
+              column; everything else lives on the load, and the volume says which load is on top of
+              each column, so the two join into a surface for any of the nine variables. */}
+          <select value={colour} onChange={(e) => setColour(e.target.value)}>
+            <optgroup label={t('geometry', 'geometría')}>
+              <option value="coarse">{t('coarse fraction', 'fracción gruesa')}</option>
+              <option value="thickness">{t('thickness', 'espesor')}</option>
+            </optgroup>
+            <optgroup label={t('assay at the surface', 'ensayo en la superficie')}>
+              {assayVars.map((a) => (
+                <option key={a.key} value={a.key}>
+                  {a.label}
+                  {a.unit ? ` (${a.unit})` : ''}
+                </option>
+              ))}
+            </optgroup>
           </select>
         </label>
         {/* THE SCALE, WITH NUMBERS ON IT. A ramp the reader cannot read is decoration, and the
             range moves with the scenario and the variable, so it cannot be written into a caption. */}
         {range && (
           <span className="st-scalebar" aria-label={t('Colour scale', 'Escala de color')}>
-            <b>{range.lo.toFixed(colour === 'thickness' ? 1 : 3)}</b>
+            <b>{range.lo.toFixed(activeVar?.decimals ?? (colour === 'thickness' ? 1 : 3))}</b>
             <i className="st-scale" />
-            <b>{range.hi.toFixed(colour === 'thickness' ? 1 : 3)}</b>
-            <em>{colour === 'grade' ? 'g/t' : colour === 'thickness' ? 'm' : ''}</em>
+            <b>{range.hi.toFixed(activeVar?.decimals ?? (colour === 'thickness' ? 1 : 3))}</b>
+            <em>{activeVar?.unit ?? (colour === 'thickness' ? 'm' : '')}</em>
           </span>
         )}
         <div className="st-toggles">
@@ -289,69 +341,65 @@ export default function Tool() {
 
   return (
     <div className="page-body st-layout">
-      {/* THE LEFT RAIL: pick the case here, read the answer here. Both belong on one surface,
-          because choosing a scenario and seeing what it produced is a single act. The focus entry
-          sits with them, per ADR-0070. */}
+      {/* THE LEFT RAIL: one control to choose the case, then the readings for it.
+       *
+       * A DROPDOWN, NOT CHIPS, and that is ADR-0071 clause 7 verbatim: "A one-of-N choice from a
+       * categorised set is a `select` with `optgroup`, not N buttons under N headings." Twenty cases
+       * as chips under six headings is about twenty-six rows of rail for what one row expresses, and
+       * clause 6 of the same ADR says a rail that has to scroll before the user can reach a control
+       * is a sizing failure. It was doing both.
+       *
+       * The shell has no dropdown variant of CaseSelector, so this is the native control the ADR
+       * names rather than a re-implementation of a shell primitive. */}
       <aside className="st-rail">
-        <CaseSelector
-          cases={cases}
-          selectedId={sid}
-          onSelect={setSid}
-          lang={lang}
-          deepLink
-          ariaLabel={t('Scenario', 'Escenario')}
-        />
+        <label className="st-case">
+          <span>{t('Scenario', 'Escenario')}</span>
+          <select
+            value={sid}
+            onChange={(e) => setSid(e.target.value)}
+            aria-label={t('Scenario', 'Escenario')}
+          >
+            {CATEGORY_ORDER.filter((k) => cases.some((c) => c.axis === k)).map((k) => (
+              <optgroup key={k} label={CATEGORY[k]?.[lang] ?? k}>
+                {cases
+                  .filter((c) => c.axis === k)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+              </optgroup>
+            ))}
+          </select>
+        </label>
 
-        <button type="button" className="st-focus" onClick={toFocus}>
-          <Maximize2 size={14} aria-hidden />
-          <span>{t('Focus view', 'Vista enfocada')}</span>
-        </button>
+        {sc && <p className="st-caseblurb">{sc.manifest.summary[lang]}</p>}
 
         {sc && v && seg && (
           <dl className="st-kpis">
-            <div>
-              <dt>{t('variance reduction', 'reducción de varianza')}</dt>
-              <dd>{v.vrr.toFixed(3)}</dd>
-            </div>
-            <div className={v.boundReliable ? undefined : 'muted'}>
-              <dt>{v.boundReliable ? t('ideal 1/N bound', 'cota ideal 1/N') : t('bound not reliable', 'cota no confiable')}</dt>
-              <dd>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</dd>
-            </div>
-            <div>
-              <dt>{t('loads placed', 'cargas colocadas')}</dt>
-              <dd>{sc.manifest.build.loads_placed}</dd>
-            </div>
-            <div>
-              <dt>{t('tips refused', 'puntos rechazados')}</dt>
-              <dd>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</dd>
-            </div>
-            <div>
-              <dt>{t('peak height', 'altura máxima')}</dt>
-              <dd>{sc.manifest.build.peak_m.toFixed(1)} m</dd>
-            </div>
-            <div>
-              <dt>{t('material placed', 'material colocado')}</dt>
-              {/* The locale is pinned to the UI language, not left to the browser. Unpinned,
-                  `toLocaleString()` on a Spanish-locale machine rendered 33644 as "33.644" inside an
-                  English page, where it reads as thirty-three point six. */}
-              <dd>{Math.round(sc.manifest.build.volume_m3).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')} m3</dd>
-            </div>
-            <div>
-              <dt>{t('dozer displacement', 'desplazamiento del bulldozer')}</dt>
-              <dd>{sc.manifest.build.mean_displacement_m.toFixed(1)} m</dd>
-            </div>
-            <div>
-              <dt>{t('stream range, measured', 'rango del flujo, medido')}</dt>
-              <dd>{sc.manifest.stream.measured_range_t.toFixed(0)} t</dd>
-            </div>
-            <div>
-              <dt>{t('loads sorted on a face', 'cargas clasificadas en cara')}</dt>
-              <dd>{seg.nSorted}</dd>
-            </div>
-            <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
-              <dt>{t('pairs over repose', 'pares sobre reposo')}</dt>
-              <dd>{sc.manifest.gate.pairs_over_repose}</dd>
-            </div>
+            {[
+              { k: t('variance reduction', 'reducción varianza'), v: v.vrr.toFixed(3), hint: t('var out / var in, lower is better', 'var salida / var entrada, menor es mejor') },
+              v.boundReliable
+                ? { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: v.ideal.toFixed(3) }
+                : { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: 'n/a', muted: true, hint: t('withheld: the independent-source count is not reliable here', 'omitida: el conteo de fuentes independientes no es confiable aqui') },
+              { k: t('loads placed', 'cargas colocadas'), v: sc.manifest.build.loads_placed.toLocaleString(lang === 'es' ? 'es-CL' : 'en-US') },
+              { k: t('tips refused', 'puntos rechazados'), v: `${(sc.manifest.build.refusal_rate * 100).toFixed(1)}%` },
+              { k: t('peak height', 'altura máxima'), v: `${sc.manifest.build.peak_m.toFixed(1)} m` },
+              { k: t('material placed', 'material colocado'), v: `${Math.round(sc.manifest.build.volume_m3).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')} m3` },
+              { k: t('dozer travel', 'arrastre bulldozer'), v: `${sc.manifest.build.mean_displacement_m.toFixed(1)} m` },
+              { k: t('stream range', 'rango del flujo'), v: `${sc.manifest.stream.measured_range_t.toFixed(0)} t` },
+              { k: t('sorted on a face', 'clasificadas en cara'), v: String(seg.nSorted) },
+              { k: t('pairs over repose', 'pares sobre reposo'), v: String(sc.manifest.gate.pairs_over_repose), good: sc.manifest.gate.pairs_over_repose === 0 },
+            ].map((r) => (
+              <div
+                key={r.k}
+                className={[r.muted ? 'muted' : '', r.good ? 'ok' : ''].filter(Boolean).join(' ')}
+                title={r.hint}
+              >
+                <dt>{r.k}</dt>
+                <dd>{r.v}</dd>
+              </div>
+            ))}
           </dl>
         )}
       </aside>

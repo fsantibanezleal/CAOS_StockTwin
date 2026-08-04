@@ -246,9 +246,30 @@ const base = (import.meta as { env?: { BASE_URL?: string } }).env?.BASE_URL ?? '
  *  failure mode that looks like a rendering bug and is not one. */
 const V = (import.meta as { env?: { VITE_APP_VERSION?: string } }).env?.VITE_APP_VERSION ?? 'dev';
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${base}data/${path}?v=${V}`);
-  if (!res.ok) throw new Error(`could not load ${path}: HTTP ${res.status}`);
+/** Statuses worth trying again. A 503 from a static host is the CDN, not the artifact. */
+const TRANSIENT = new Set([408, 425, 429, 500, 502, 503, 504]);
+
+async function get<T>(path: string, attempt = 0): Promise<T> {
+  // RETRY THE TRANSIENT ONES. A scenario is seven files and a reader switching cases asks for seven
+  // more; a static host will occasionally answer one of them with a 503, and the page was turning
+  // that into "Could not load the scenario data" and showing nothing. Observed live. The artifact is
+  // fine and the next request proves it, so the loader asks again with a short backoff rather than
+  // failing a whole page over one blip.
+  let res: Response;
+  try {
+    res = await fetch(`${base}data/${path}?v=${V}`);
+  } catch (e) {
+    if (attempt >= 3) throw e;
+    await new Promise((r) => setTimeout(r, 250 * 2 ** attempt));
+    return get<T>(path, attempt + 1);
+  }
+  if (!res.ok) {
+    if (TRANSIENT.has(res.status) && attempt < 3) {
+      await new Promise((r) => setTimeout(r, 250 * 2 ** attempt));
+      return get<T>(path, attempt + 1);
+    }
+    throw new Error(`could not load ${path}: HTTP ${res.status}`);
+  }
   return (await res.json()) as T;
 }
 
@@ -676,4 +697,29 @@ export function assayIndex(loads: Load[]): Map<number, Load> {
 /** Elevation of the centre of voxel `k`, in pad metres. */
 export function voxelZ(vol: Volume, k: number): number {
   return vol.base_m + (k + 0.5) * vol.dz_m;
+}
+
+
+/** A per-cell surface value for any assay variable, taken from the topmost voxel in each column.
+ *
+ *  WHY THIS EXISTS. The field carries a grade and a coarse fraction per column and nothing else, so
+ *  the site view could colour the pile by copper and by size and by thickness, and by nothing else.
+ *  The assay lives on the LOAD, and the volume says which load is on top of each column, so the two
+ *  join into a surface for any of the nine variables. What the reader sees is the material actually
+ *  exposed at the surface, which is also what a grade-control sample of the pile would hit.
+ */
+export function surfaceValues(sc: Scenario, key: string): (number | null)[] | null {
+  const vol = sc.volume;
+  if (!vol) return null;
+  const by = assayIndex(sc.loads);
+  const out: (number | null)[] = new Array(vol.nx * vol.ny).fill(null);
+  for (let c = 0; c < out.length; c++) {
+    const col = vol.columns[c];
+    if (!col) continue;
+    const ev = col[1][col[1].length - 1];
+    const l = by.get(ev) as (Load & Record<string, number | undefined>) | undefined;
+    const v = l ? l[key] : undefined;
+    out[c] = typeof v === 'number' && Number.isFinite(v) ? v : null;
+  }
+  return out;
 }

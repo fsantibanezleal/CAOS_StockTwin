@@ -10,6 +10,27 @@ import { type Index, loadIndex } from '../lib/scenario';
  * this page changes with it, because a page that restates the code by hand goes quietly wrong on the
  * first edit and a reader trusts it anyway.
  */
+const AXES = [
+  { key: 'reference', en: 'Reference', es: 'Referencia',
+    blurbEn: 'The case every other one is a variation on: one area, one material class, a prepared pad.',
+    blurbEs: 'El caso del que todos los demas son una variacion: un area, una clase de material, una plataforma preparada.' },
+  { key: 'feed', en: 'Feed structure', es: 'Alimentacion',
+    blurbEn: 'What arrives, and in what order. A stockpile can only help to the extent that consecutive trucks differ, and how much they differ is set by how long the shovel stays in one dig block.',
+    blurbEs: 'Que llega, y en que orden. Un acopio solo puede ayudar en la medida en que camiones consecutivos difieran, y cuanto difieren lo fija cuanto permanece la pala en un bloque.' },
+  { key: 'yard', en: 'Yard and routing', es: 'Patio y ruteo',
+    blurbEn: 'How many piles to run, and what happens when the ore-control estimate that routes a load is wrong.',
+    blurbEs: 'Cuantas pilas operar, y que pasa cuando la estimacion de control de leyes que enruta una carga es incorrecta.' },
+  { key: 'landform', en: 'Landform', es: 'Relieve',
+    blurbEn: 'The ground underneath. Only one of the five published fill types is a flat pad, and relief and difficulty are not the same thing.',
+    blurbEs: 'El terreno debajo. Solo uno de los cinco tipos publicados de relleno es una plataforma plana, y relieve y dificultad no son lo mismo.' },
+  { key: 'campaign', en: 'Campaign', es: 'Campana',
+    blurbEn: 'How hard the pile is fed and how hard it is taken back down, and what happens when two areas are worked one after the other instead of together.',
+    blurbEs: 'Con cuanta intensidad se alimenta la pila y con cuanta se desarma, y que pasa cuando dos areas se trabajan una tras otra en vez de a la vez.' },
+  { key: 'operations', en: 'Operating choices', es: 'Decisiones operativas',
+    blurbEn: 'The levers a planner actually has: bench height, ramp width, dozer cadence, and the material arriving wet.',
+    blurbEs: 'Las palancas que un planificador realmente tiene: altura de banco, ancho de rampa, cadencia del bulldozer, y material que llega humedo.' },
+];
+
 export default function Experiments() {
   const es = useShellLang() === 'es';
   const [index, setIndex] = useState<Index | null>(null);
@@ -17,23 +38,6 @@ export default function Experiments() {
   useEffect(() => {
     loadIndex().then(setIndex).catch((e) => setErr(String(e)));
   }, []);
-
-  const tabs = [
-    {
-      id: 's0',
-      label: es ? 'Sobre los rechazos' : 'On refusals',
-      content: (
-        <>
-
-        <p>
-          {es
-            ? 'Una tasa de rechazo distinta de cero no es un defecto: es el modelo informando que el plan pidio algo que la pila ya no permite. El material recien colocado se para en su angulo de reposo y un camion trabaja hasta unos dos tercios de eso, de modo que la pila crece sobre su propio acceso a menos que el plan reserve un corredor y ordene el trabajo desde lo mas lejano hacia la salida. La tasa es una medida real de que tan bueno es el plan de descarga, y por eso se muestra en vez de suprimirse.'
-            : 'A non-zero refusal rate is not a defect: it is the model reporting that the plan asked for something the pile no longer allows. Freshly placed material stands at its angle of repose and a truck works to roughly two thirds of that, so the pile grows over its own access unless the plan reserves a corridor and orders the work from furthest-away back toward the exit. The rate is a real measure of how good the dump plan is, which is why it is shown rather than suppressed.'}
-        </p>
-        </>
-      ),
-    },
-  ];
 
   return (
     <div className="page-body prose">
@@ -46,13 +50,48 @@ export default function Experiments() {
         </p>
       </div>
 
+      <p className="measure">
+        {es
+          ? 'Una tasa de rechazo distinta de cero no es un defecto: es el modelo informando que el plan pidio algo que la pila ya no permite. El material recien colocado se para en su angulo de reposo y un camion trabaja hasta unos dos tercios de eso, de modo que la pila crece sobre su propio acceso a menos que el plan reserve un corredor y ordene el trabajo desde lo mas lejano hacia la salida. La tasa es una medida real de que tan bueno es el plan de descarga, y por eso se muestra en vez de suprimirse.'
+          : 'A non-zero refusal rate is not a defect: it is the model reporting that the plan asked for something the pile no longer allows. Freshly placed material stands at its angle of repose and a truck works to roughly two thirds of that, so the pile grows over its own access unless the plan reserves a corridor and orders the work from furthest-away back toward the exit. The rate is a real measure of how good the dump plan is, which is why it is shown rather than suppressed.'}
+      </p>
+
       {err && <p className="st-bad">Could not load the scenario index: {err}</p>}
 
-      {index?.scenarios.map((s) => (
+      {/* GROUPED BY AXIS, ONE TAB EACH. Twenty scenarios stacked is a page a reader scrolls past
+          rather than reads, and it hides the thing the registry exists to show: that the cases are
+          organised as an experiment, one axis varied at a time. ADR-0016 section 6 puts major
+          sections of a page behind the shell's Tabs. */}
+      <Tabs
+        tabs={AXES.filter((a) => (index?.scenarios ?? []).some((s) => (s.category ?? '') === a.key)).map(
+          (a) => ({
+            id: a.key,
+            label: es ? a.es : a.en,
+            content: (
+              <>
+                <p className="measure">{es ? a.blurbEs : a.blurbEn}</p>
+                {(index?.scenarios ?? [])
+                  .filter((s) => (s.category ?? '') === a.key)
+                  .map((s) => scenarioSection(s, es))}
+              </>
+            ),
+          }),
+        )}
+        ariaLabel={es ? 'Ejes' : 'Axes'}
+      />
+
+    </div>
+  );
+}
+
+
+/** One scenario: what it measured, and what would have killed it. */
+function scenarioSection(s: Index['scenarios'][number], es: boolean) {
+  return (
         <section key={s.id}>
           <h2>{s.title[es ? 'es' : 'en']}</h2>
           <p>{s.summary[es ? 'es' : 'en']}</p>
-
+  
           <div className="st-tablewrap">
             <table className="st-table">
               <thead>
@@ -105,14 +144,10 @@ export default function Experiments() {
               </tbody>
             </table>
           </div>
-
+  
           <Callout variant="honest" title={es ? 'Criterio de descarte' : 'Kill criterion'}>
             {s.gate.kill_criterion}
           </Callout>
         </section>
-      ))}
-
-      <Tabs tabs={tabs} ariaLabel={es ? 'Secciones' : 'Sections'} />
-    </div>
   );
 }
