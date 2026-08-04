@@ -58,7 +58,7 @@
   <rect class="bx" x="14" y="242" width="852" height="72" rx="6"/>
   <text class="ttl" x="28" y="262">One folder per case, plus a rolled-up index</text>
   <text class="mono" x="28" y="278">data/derived/&lt;case&gt;/{manifest,plan,loads,field,cuts,sectors,frames,volume}.json</text>
-  <text class="it" x="28" y="298">20 cases, 21,168 placed loads. Frames are delta encoded and the volume is voxelised at 0.5 m: 110 MB becomes 34 MB.</text>
+  <text class="it" x="28" y="298">22 cases, 22,656 placed loads. Frames are delta encoded and the volume is voxelised at 0.5 m: 117 MB becomes 36 MB.</text>
 
   <path class="flow-hi" d="M 440 318 L 440 370"/>
   <text class="lbl" x="448" y="340">fetched by the page, cached by the CDN</text>

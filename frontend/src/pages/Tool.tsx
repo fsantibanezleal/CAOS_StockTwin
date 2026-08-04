@@ -485,7 +485,7 @@ export default function Tool() {
 
         {/* BOUNDED. The blurb is the only variable-height thing in this rail, and its 81-to-179px
             range is exactly the amount by which the rail overflowed a 1280x800 viewport on three of
-            the twenty scenarios. Four lines fit every one of them; the rest is one click away. */}
+            the twenty-two scenarios. Four lines fit every one of them; the rest is one click away. */}
         {sc && (
           <div className={`st-caseblurb${blurbOpen ? ' open' : ''}`}>
             <p>{sc.manifest.summary[lang]}</p>

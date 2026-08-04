@@ -129,8 +129,8 @@ export default function Introduction() {
           <Equation
             tex="\max_{(i,j)\,\text{adj}} \arctan\!\left(\dfrac{\lvert z_i - z_j\rvert}{\Delta x}\right) \le \theta_r \qquad\text{and}\qquad \eta = 1 - \dfrac{n_{\text{placed}}}{n_{\text{offered}}}"
             caption={t(
-              'The invariant every bake must satisfy, and the number it is honest about. Zero cell pairs may stand over the angle of repose, on all twenty scenarios. The refusal rate is reported rather than suppressed, because it is the real measure of a plan laid out once against a pile that grows away from it.',
-              'El invariante que todo horneado debe satisfacer, y el número sobre el que es honesto. Cero pares de celdas pueden quedar sobre el ángulo de reposo, en los veinte escenarios. La tasa de rechazo se reporta en vez de suprimirse, porque es la medida real de un plan trazado una vez contra una pila que crece alejándose.',
+              'The invariant every bake must satisfy, and the number it is honest about. Zero cell pairs may stand over the angle of repose, on all twenty-two scenarios. The refusal rate is reported rather than suppressed, because it is the real measure of a plan laid out once against a pile that grows away from it.',
+              'El invariante que todo horneado debe satisfacer, y el número sobre el que es honesto. Cero pares de celdas pueden quedar sobre el ángulo de reposo, en los veintidós escenarios. La tasa de rechazo se reporta en vez de suprimirse, porque es la medida real de un plan trazado una vez contra una pila que crece alejándose.',
             )}
           />
 
