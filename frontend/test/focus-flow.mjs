@@ -62,7 +62,13 @@ try {
     await entry.click();
     await page.waitForSelector('.fx-root', { timeout: 20000 });
     check(page.url().includes(`/focus/${target}`), `[${theme}] clicking it lands on /focus/${target}`);
-    check(await page.locator('.fx-stage canvas').isVisible(), `[${theme}] the focus stage rendered`);
+    // WAIT FOR THE CANVAS, do not sample for it. The scenario is re-fetched on the focus route and
+    // the WebGL context is built after it resolves, so asking whether the canvas is visible the
+    // instant the root mounts is a race: it passed locally and failed on a slower CI runner, which
+    // is the worst kind of green.
+    const stage = page.locator('.fx-stage canvas');
+    await stage.waitFor({ state: 'visible', timeout: 30000 }).catch(() => {});
+    check(await stage.isVisible(), `[${theme}] the focus stage rendered`);
 
     // 3. Parameter state came across.
     const fxColour = await page.locator('.fx-field select').nth(0).inputValue();
