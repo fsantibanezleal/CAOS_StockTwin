@@ -65,8 +65,12 @@ main.page:has(> .page-body.st-layout) { padding-block: 0; }
       one, which is why the visualization read as a thumbnail across the whole line. */
 .app-shell { height: 100dvh; min-height: 100dvh; overflow: hidden; }
 .app-shell > .page { flex: 1 1 auto; min-height: 0; display: flex; }
+/* MEASURED, at 1280x800, by the click-through gate: with 1rem of vertical page padding the
+   instrument came out at 48.1 percent against the ADR-0071 floor of 50. Padding above and below a
+   full-bleed workbench is chrome the instrument pays for on every render; the horizontal padding
+   stays, because a canvas flush to the window edge reads as a rendering bug. */
 .page-body.st-layout { max-width: none; width: 100%; flex: 1 1 auto; min-height: 0;
-  padding: 1rem 1.25rem; align-items: stretch; }
+  padding: 0.35rem 1rem; align-items: stretch; }
 html, body { overflow-x: hidden; }
 /* 1b. THE VIEWPORT LOCK IS FOR THE WORKBENCH ROUTE ONLY.
       Rule 1 locks the shell so the INSTRUMENT owns the viewport. Applied to the whole shell it also

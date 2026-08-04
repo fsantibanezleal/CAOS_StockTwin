@@ -71,6 +71,14 @@ Cut size is a real operating choice and it is the one the reclaim geometry actua
 
 Sequential and simultaneous construction put the same tonnage in the same place and produce different piles, because the grade arriving at any moment goes to whichever area is open. It is the cheapest lever an operation has over what each pile contains.
 
+### [`concurrent`](concurrent.md), Fed and drawn at the same time
+
+Every other scenario fills the pile and then takes it down, which is one operating mode and not the common one. A surge pile between the pit and the crusher is drawn from continuously, and that changes the answer rather than the picture: a cut taken early cannot contain material that has not been delivered yet, so the blending a pile achieves depends on how long material is allowed to sit in it.
+
+### [`surge`](surge.md), Tight surge pile, drawn almost as fast as it is fed
+
+Residence time is the variable, isolated. A stockpile blends by holding material long enough for a cut to cross several deliveries; drawing it down as fast as it fills leaves nothing to cross. This is the far end of that axis and the case that shows the mechanism by removing it.
+
 ### [`short_bench`](short_bench.md), Short benches, more lifts
 
 Bench height is the main lever a dump designer has and it drives the physics directly: run-out down a face is the horizontal component of the bench slope, and percolation segregation only becomes significant above roughly ten to twelve metres of drop.
@@ -107,6 +115,8 @@ Repose is not a constant. Handbook values for ores span 34 to 60 degrees and the
 | [`intensive_drain`](intensive_drain.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim |
 | [`light_drain`](light_drain.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim |
 | [`two_phase`](two_phase.md) | heaped | 2 | 1 | 1800 | 4 | campaign, sequencing |
+| [`concurrent`](concurrent.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim, concurrent |
+| [`surge`](surge.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim, concurrent |
 | [`short_bench`](short_bench.md) | heaped | 1 | 3 | 900 | 4 | operations, bench |
 | [`narrow_ramp`](narrow_ramp.md) | heaped | 1 | 1 | 900 | 4 | operations, access |
 | [`seldom_dozed`](seldom_dozed.md) | heaped | 1 | 1 | 900 | 4 | operations, dozer |

@@ -1,10 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 510" width="880" class="arch-svg" role="img">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 512" width="880" class="arch-svg" role="img">
+  <!-- Hand-authored. RE-AUTHORED IN FULL. The previous version described a conveyor-stacked blending
+       bed: chevron, windrow, cone shell, strata and chevcon stacking geometries, bucket-wheel and
+       end reclaim, and "seventeen cases". None of those exist in this product, which is truck-built
+       and ships twenty cases across six axes. The matrix below is the one in data/derived/index.json,
+       and the module paths exist. -->
   <style>
     .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
     .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
-    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
-    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
-    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn); stroke-width: 1.2; stroke-dasharray: 5 3; }
     .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
     .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
     .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
@@ -23,60 +28,97 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
     </marker>
   </defs>
-  <text class="hdr" x="14" y="20">CONTRACT 1 · INGESTION · THE BRING-YOUR-OWN-DATA GATE</text>
-  <rect class="bx-hi" x="14" y="28" width="852" height="132" rx="6"/>
+
+  <text class="hdr" x="14" y="20">CONTRACT 1 - INGESTION - THE BRING-YOUR-OWN-DATA GATE</text>
+  <rect class="bx-hi" x="14" y="28" width="410" height="118" rx="6"/>
   <text class="ttl" x="28" y="48">A truck dump log, validated column by column</text>
-  <text class="mono" x="28" y="63">stlab/io/contract.py::validate_rows()</text>
-  <text class="it" x="28" y="82">- REJECT on a hard range, with the reason recorded and counted. Nothing is silently coerced:</text>
-  <text class="it" x="28" y="97">- a coerced row looks like data and is not. Out-of-order timestamps and off-pad dumps are rejected too.</text>
-  <text class="it" x="28" y="112">- FLAG on a soft check: kept, counted, carried into the manifest, and rendered with a marker.</text>
-  <text class="it" x="28" y="127">- The soft checks are a grade beyond four robust sigmas of the file median, and moisture above</text>
-  <text class="it" x="28" y="142">- 20 percent, because the dry angle of repose stops being valid for wet handling.</text>
-  <text class="mu" x="28" y="154">The table on the Implementation page is GENERATED from this code, so documentation cannot drift from behaviour.</text>
-  <text class="hdr" x="14" y="190">CONTRACT 2 · ARTIFACT · PROCESSING TO WEB</text>
-  <rect class="bx-off" x="14" y="198" width="418" height="132" rx="6"/>
-  <text class="ttl" x="28" y="218">The manifest</text>
-  <text class="mono" x="28" y="233">stlab/core/manifest.py</text>
-  <text class="it" x="28" y="252">- a PURE function of parameters and seed</text>
-  <text class="it" x="28" y="267">- no wall-clock, no host name, no absolute path</text>
-  <text class="it" x="28" y="282">- case, reason, expected band, kill criterion</text>
-  <text class="it" x="28" y="297">- artifact sha256 and bytes, lane verdict, budgets</text>
-  <text class="it" x="28" y="312">- flags, metrics with their band, regen command</text>
-  <rect class="bx-off" x="448" y="198" width="418" height="132" rx="6"/>
-  <text class="ttl" x="462" y="218">The compact trace</text>
-  <text class="mono" x="462" y="233">stlab/core/trace.py</text>
-  <text class="it" x="462" y="252">- EVENTS and geometry only: the dumps, the cuts,</text>
-  <text class="it" x="462" y="267">- the provenance fractions, the height snapshots</text>
-  <text class="it" x="462" y="282">- NO verdicts. The ratio, the variograms, the</text>
-  <text class="it" x="462" y="297">- efficiency and the recommendation are all</text>
-  <text class="it" x="462" y="312">- recomputed in the browser from those events.</text>
-  <text class="hdr" x="14" y="360">THE CASES ARE THE VALIDATION DESIGN</text>
-  <rect class="bx" x="14" y="368" width="156" height="90" rx="6"/>
-  <text class="ttl" x="24" y="388">Stacking geometry</text>
-  <text class="mono" x="24" y="404">5 cases</text>
-  <text class="it" x="24" y="422">chevron, windrow, cone</text>
-  <text class="it" x="24" y="434">shell, strata, chevcon</text>
-  <rect class="bx" x="188" y="368" width="156" height="90" rx="6"/>
-  <text class="ttl" x="198" y="388">Reclaim method</text>
-  <text class="mono" x="198" y="404">3 cases</text>
-  <text class="it" x="198" y="422">bucket wheel, end,</text>
-  <text class="it" x="198" y="434">loader; full-face is the</text>
-  <text class="it" x="198" y="446">reference</text>
-  <rect class="bx" x="362" y="368" width="156" height="90" rx="6"/>
-  <text class="ttl" x="372" y="388">Input variability</text>
-  <text class="mono" x="372" y="404">4 cases</text>
-  <text class="it" x="372" y="422">short range, long range,</text>
-  <text class="it" x="372" y="434">trending, bimodal</text>
-  <rect class="bx" x="536" y="368" width="156" height="90" rx="6"/>
-  <text class="ttl" x="546" y="388">Segregation regime</text>
-  <text class="mono" x="546" y="404">2 cases</text>
-  <text class="it" x="546" y="422">strong kinetic sieving,</text>
-  <text class="it" x="546" y="434">the stratifying regime</text>
-  <rect class="bx-gate" x="710" y="368" width="156" height="90" rx="6"/>
-  <text class="ttl" x="720" y="388">Controls</text>
-  <text class="mono" x="720" y="404">3 cases</text>
-  <text class="it" x="720" y="422">perfect mixer, zero</text>
-  <text class="it" x="720" y="434">segregation, starvation</text>
-  <text class="mu" x="14" y="480">Splits are by seed AND input structure: splitting by seed alone would leak the shape of the stream. All seventeen cases are held out.</text>
-  <text class="mu" x="14" y="496">Real lane: MineLib block models are fetched at RUNTIME into browser memory. Never committed, never bundled, never fetched by CI.</text>
+  <text class="mono" x="28" y="64">data-pipeline/pipeline/io/contract.py</text>
+  <text class="it" x="28" y="84">REJECT on a hard range, with the reason recorded and</text>
+  <text class="it" x="28" y="99">counted. Nothing is silently coerced: a coerced row</text>
+  <text class="it" x="28" y="114">looks like data and is not. Out-of-order timestamps</text>
+  <text class="it" x="28" y="129">and off-pad dumps are rejected too.</text>
+
+  <path class="flow" d="M 428 87 L 464 87"/>
+  <text class="lbl" x="430" y="80">validated rows</text>
+
+  <rect class="bx-hi" x="468" y="28" width="398" height="118" rx="6"/>
+  <text class="ttl" x="482" y="48">Flagged, not dropped, and rendered as flagged</text>
+  <text class="it" x="482" y="68">A soft check keeps the row, counts it, carries it into</text>
+  <text class="it" x="482" y="83">the manifest and draws it with a marker. The two soft</text>
+  <text class="it" x="482" y="98">checks: a grade beyond four robust sigmas of the file</text>
+  <text class="it" x="482" y="113">median, and moisture over 20 percent, because the dry</text>
+  <text class="it" x="482" y="128">angle of repose stops being valid for wet handling.</text>
+
+  <path class="flow" d="M 220 150 L 220 186"/>
+  <text class="lbl" x="228" y="172">accepted rows and their flags</text>
+
+  <text class="hdr" x="14" y="176">CONTRACT 2 - ARTIFACT - PROCESSING TO WEB</text>
+  <rect class="bx-off" x="14" y="184" width="410" height="126" rx="6"/>
+  <text class="ttl" x="28" y="204">The manifest</text>
+  <text class="mono" x="28" y="220">data-pipeline/pipeline/bake.py</text>
+  <text class="it" x="28" y="240">- a PURE function of parameters and seed</text>
+  <text class="it" x="28" y="255">- no wall-clock, no host name, no absolute path</text>
+  <text class="it" x="28" y="270">- case, category, reason, bilingual kill criterion</text>
+  <text class="it" x="28" y="285">- pad, material, stream, build and gate results</text>
+  <text class="it" x="28" y="300">- the assay variable table, with units and decimals</text>
+
+  <path class="flow" d="M 428 247 L 464 247"/>
+  <text class="lbl" x="430" y="240">same seed, same bytes</text>
+
+  <rect class="bx-off" x="468" y="184" width="398" height="126" rx="6"/>
+  <text class="ttl" x="482" y="204">The compact trace</text>
+  <text class="mono" x="482" y="220">plan - loads - field - cuts - sectors - frames - volume</text>
+  <text class="it" x="482" y="240">- EVENTS and geometry only: the located dumps with</text>
+  <text class="it" x="482" y="255">- their routes, the cuts with their provenance, the</text>
+  <text class="it" x="482" y="270">- pile as a voxel volume, delta-encoded playback</text>
+  <text class="it" x="482" y="285">- NO verdicts. The ratio, the bound, the variogram and</text>
+  <text class="it" x="482" y="300">- the sector intervals are recomputed in the browser.</text>
+
+  <path class="flow-hi" d="M 440 314 L 440 350"/>
+  <text class="lbl" x="448" y="336">one artifact per case, gated before it ships</text>
+
+  <text class="hdr" x="14" y="346">THE CASES ARE THE VALIDATION DESIGN: 20 ACROSS SIX AXES</text>
+
+  <rect class="bx" x="14" y="356" width="136" height="96" rx="6"/>
+  <text class="ttl" x="24" y="376">Reference</text>
+  <text class="mono" x="24" y="392">1 case</text>
+  <text class="it" x="24" y="410">single</text>
+
+  <rect class="bx" x="160" y="356" width="136" height="96" rx="6"/>
+  <text class="ttl" x="170" y="376">Feed structure</text>
+  <text class="mono" x="170" y="392">4 cases</text>
+  <text class="it" x="170" y="410">short_dwell, long_dwell,</text>
+  <text class="it" x="170" y="424">trending, erratic_feed</text>
+
+  <rect class="bx" x="306" y="356" width="136" height="96" rx="6"/>
+  <text class="ttl" x="316" y="376">Yard and routing</text>
+  <text class="mono" x="316" y="392">3 cases</text>
+  <text class="it" x="316" y="410">yard, yard_five,</text>
+  <text class="it" x="316" y="424">misrouted</text>
+
+  <rect class="bx" x="452" y="356" width="136" height="96" rx="6"/>
+  <text class="ttl" x="462" y="376">Landform</text>
+  <text class="mono" x="462" y="392">4 cases</text>
+  <text class="it" x="462" y="410">sidehill, valley,</text>
+  <text class="it" x="462" y="424">cross_valley,</text>
+  <text class="it" x="462" y="438">rough_ground</text>
+
+  <rect class="bx" x="598" y="356" width="136" height="96" rx="6"/>
+  <text class="ttl" x="608" y="376">Campaign</text>
+  <text class="mono" x="608" y="392">4 cases</text>
+  <text class="it" x="608" y="410">intensive_feed,</text>
+  <text class="it" x="608" y="424">intensive_drain,</text>
+  <text class="it" x="608" y="438">light_drain, two_phase</text>
+
+  <rect class="bx-gate" x="744" y="356" width="122" height="96" rx="6"/>
+  <text class="ttl" x="754" y="376">Operations</text>
+  <text class="mono" x="754" y="392">4 cases</text>
+  <text class="it" x="754" y="410">short_bench,</text>
+  <text class="it" x="754" y="424">narrow_ramp,</text>
+  <text class="it" x="754" y="438">seldom_dozed,</text>
+  <text class="it" x="754" y="452">wet_material</text>
+
+  <text class="mu" x="14" y="478">Every case states its reason and a kill criterion BEFORE the bake, and the gate evaluates it on the ARTIFACT rather than on the code.</text>
+  <text class="mu" x="14" y="494">Two cases FAILED theirs and were withdrawn: a steep sidehill left 22 pairs at 45.9 degrees and a ridge crest 1 at 41.5, against an imposed 37. Finding F-020.</text>
+  <text class="mu" x="14" y="510">Refusals are part of the record: 19.2 percent of planned tips on the reference case, reported rather than smoothed away.</text>
 </svg>

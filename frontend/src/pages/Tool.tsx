@@ -155,8 +155,8 @@ export default function Tool() {
   );
   const [range, setRange] = useState<{ lo: number; hi: number } | null>(null);
   const [blurbOpen, setBlurbOpen] = useState(false);
-  /** Which of the two fixed-by-the-bake ledger sections the rail is showing. */
-  const [ledger, setLedger] = useState<1 | 2>(1);
+  /** Which rail pane is showing beneath the headline result. */
+  const [pane, setPane] = useState<'tune' | 'built' | 'route'>('tune');
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -498,9 +498,33 @@ export default function Tool() {
             browser on every move, and every one of them is a decision a plant actually makes about
             a pile it did not build. What changes what is BUILT stays a readout, because rebuilding
             routes every load and relaxes the whole field, which is tens of seconds of Python. */}
+        {/* THE RAIL SECTIONS, ONE PANE AT A TIME. ADR-0071 clause 6 asks that the rail show its
+            controls without scrolling and names sectioning as the fix when the content does not
+            fit. Measured by the click-through gate at 1280x800: the whole stack overflowed by
+            135px. The headline result, the group the knobs move, is always on screen; the knobs
+            and the two fixed-by-the-bake ledgers take turns. */}
         {sc && v && gt && (
+          <div className="st-railtabs" role="tablist" aria-label={t('Rail sections', 'Secciones del panel')}>
+            {([
+              ['tune', t('tune', 'ajustar')],
+              ['built', t('built', 'construido')],
+              ['route', t('route', 'ruta')],
+            ] as const).map(([k, lbl]) => (
+              <button
+                key={k}
+                type="button"
+                role="tab"
+                aria-selected={pane === k}
+                onClick={() => setPane(k)}
+              >
+                {lbl}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {sc && v && gt && pane === 'tune' && (
           <div className="st-knobs">
-            <h3>{t('downstream of the pile', 'aguas abajo de la pila')}</h3>
             <label
               title={t(
                 'How many consecutive reclaim cuts the downstream surge capacity averages before the mill sees them. Averaging k cuts multiplies the effective number of independent sources by k, so the ideal bound moves with it.',
@@ -605,30 +629,9 @@ export default function Tool() {
               // in 744 usable pixels. The group the knobs move stays on screen always, because it is
               // the answer; the two describing the built pile, which do not change while the reader
               // works, share a switcher. Nothing is deleted and nothing is more than one click away.
-              gi === 0 || gi === ledger ? (
+              gi === 0 || (gi === 1 && pane === 'built') || (gi === 2 && pane === 'route') ? (
                 <section key={g.head}>
-                  {gi === 0 ? (
-                    <h3>{g.head}</h3>
-                  ) : (
-                    <div className="st-ledgertabs" role="tablist" aria-label={t('Ledger', 'Registro')}>
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={ledger === 1}
-                        onClick={() => setLedger(1)}
-                      >
-                        {t('what was built', 'lo que se construyó')}
-                      </button>
-                      <button
-                        type="button"
-                        role="tab"
-                        aria-selected={ledger === 2}
-                        onClick={() => setLedger(2)}
-                      >
-                        {t('how it got there', 'cómo llegó ahí')}
-                      </button>
-                    </div>
-                  )}
+                  <h3>{g.head}</h3>
                   <div className="st-tiles">
                     {g.rows.map((r) => (
                       <div
