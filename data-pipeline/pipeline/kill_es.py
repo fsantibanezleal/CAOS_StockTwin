@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """The Spanish half of every kill criterion, keyed by scenario id.
 
 WHY IT LIVES IN ITS OWN FILE. The criteria are the part of a scenario that turns it from a
