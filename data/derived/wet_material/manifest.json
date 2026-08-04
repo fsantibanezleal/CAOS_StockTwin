@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 70,
+    "dozer_passes": 68,
     "loads_placed": 881,
-    "mean_displacement_m": 21.59,
-    "peak_m": 15.66,
+    "mean_displacement_m": 21.5,
+    "peak_m": 15.75,
     "profiles": {
       "comet": 168,
       "oval": 323,
@@ -86,7 +86,7 @@
       "sloughed_heap": 113
     },
     "refusal_rate": 0.0211,
-    "volume_m3": 92936.0
+    "volume_m3": 93194.0
   },
   "category": "operations",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.0211,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 43.0
   },
   "id": "wet_material",
@@ -123,7 +124,7 @@
   "reason": "Repose is not a constant. Handbook values for ores span 34 to 60 degrees and the value moves with size, moisture and time since dumping. Everything downstream, the geometry, the capacity of the footprint and the truck's gradient limit, follows it.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 26932.5
+    "tonnes": 26442.4
   },
   "seed": 20260802,
   "stream": {

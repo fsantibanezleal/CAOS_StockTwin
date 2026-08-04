@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 58,
+    "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 19.77,
-    "peak_m": 13.62,
+    "mean_displacement_m": 19.49,
+    "peak_m": 13.71,
     "profiles": {
       "comet": 136,
       "oval": 255,
@@ -86,7 +86,7 @@
       "sloughed_heap": 123
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 80354.9
+    "volume_m3": 80562.2
   },
   "category": "campaign",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
   "id": "light_drain",
@@ -123,7 +124,7 @@
   "reason": "Cut size is a real operating choice and it is the one the reclaim geometry actually controls. Ninety small cuts against six large ones, on the same pile, is the comparison that says whether it matters.",
   "reclaim": {
     "n_cuts": 6,
-    "tonnes": 19189.8
+    "tonnes": 18795.8
   },
   "seed": 20260802,
   "stream": {

@@ -76,17 +76,17 @@
   "build": {
     "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 19.63,
-    "peak_m": 17.42,
+    "mean_displacement_m": 31.25,
+    "peak_m": 25.48,
     "profiles": {
-      "comet": 129,
-      "oval": 272,
+      "comet": 138,
+      "oval": 268,
       "paddock": 135,
-      "rectangular": 96,
-      "sloughed_heap": 112
+      "rectangular": 101,
+      "sloughed_heap": 102
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 78590.8
+    "volume_m3": 84612.9
   },
   "category": "landform",
   "engine": "bedblend",
@@ -101,7 +101,7 @@
   ],
   "frames": 745,
   "gate": {
-    "kill_criterion": "Buildable ground must be below the flat pad's 100 percent while the relief stays small. A surface that is rough and fully buildable means roughness is not reaching the slope.",
+    "kill_criterion": "Buildable ground before any load is placed must differ measurably from both the flat pad and the valley. If the three report the same fraction the landform is not entering the calculation and the fill type is a label.",
     "ledger_agrees_with_terrain": true,
     "loads_offered": 900,
     "loads_placed": 744,
@@ -111,7 +111,7 @@
     "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
-  "id": "rough_ground",
+  "id": "cross_valley",
   "material": {
     "loose_density_t_m3": 1.957,
     "repose_deg": 37.0
@@ -121,10 +121,10 @@
     "nx": 60,
     "ny": 60
   },
-  "reason": "Every other case assumes someone graded the ground first. This one asks what that preparation is worth, on a landform whose average is identical to the reference.",
+  "reason": "The taxonomy has five members and a product that ships three is choosing which physics to show. This is the awkward case: confinement and drainage at right angles.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 22541.4
+    "tonnes": 11099.4
   },
   "seed": 20260802,
   "stream": {
@@ -134,15 +134,15 @@
     "var_in": 0.02873124
   },
   "summary": {
-    "en": "Flat on average and rough in detail: an unprepared surface rather than a graded pad. The relief is small and the local slopes are not, which is the condition a prepared pad exists to remove.",
-    "es": "Plano en promedio y rugoso en detalle: una superficie sin preparar en vez de una plataforma nivelada. El relieve es pequeno y las pendientes locales no lo son, que es justo la condicion que una plataforma preparada existe para eliminar."
+    "en": "The fifth published fill type, and the one that behaves least like the other four. The ground falls along one axis and rises across it, so the fill is held on two opposite sides while draining along the third.",
+    "es": "El quinto tipo publicado de relleno, y el que menos se parece a los otros cuatro. El terreno baja en un eje y sube en el otro, de modo que el relleno queda contenido en dos lados opuestos mientras drena a lo largo del tercero."
   },
   "tags": [
     "topography",
-    "rough"
+    "cross-valley"
   ],
   "title": {
-    "en": "Rough ground, no prepared pad",
-    "es": "Terreno rugoso, sin plataforma preparada"
+    "en": "Cross-valley fill, confined across the axis",
+    "es": "Relleno transversal, confinado a traves del eje"
   }
 }

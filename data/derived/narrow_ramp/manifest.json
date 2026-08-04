@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 58,
+    "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 16.3,
-    "peak_m": 12.51,
+    "mean_displacement_m": 16.01,
+    "peak_m": 12.52,
     "profiles": {
       "comet": 120,
       "oval": 251,
@@ -86,7 +86,7 @@
       "sloughed_heap": 140
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 78865.7
+    "volume_m3": 78588.7
   },
   "category": "operations",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
   "id": "narrow_ramp",
@@ -123,7 +124,7 @@
   "reason": "Ramp width is a dump-design parameter with a real cost: every metre of corridor is capacity the footprint does not hold. Whether a narrow ramp actually costs placement is a measurement, not an assumption.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 22019.1
+    "tonnes": 22545.4
   },
   "seed": 20260802,
   "stream": {

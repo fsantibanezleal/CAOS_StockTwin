@@ -2,10 +2,10 @@
   "scenarios": [
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.78,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -14,7 +14,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 79081.6
+        "volume_m3": 79329.8
       },
       "category": "reference",
       "gate": {
@@ -25,6 +25,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "single",
@@ -43,10 +44,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.78,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -55,7 +56,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 79081.6
+        "volume_m3": 79329.8
       },
       "category": "feed",
       "gate": {
@@ -66,6 +67,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "short_dwell",
@@ -84,10 +86,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.78,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -96,7 +98,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 79081.6
+        "volume_m3": 79329.8
       },
       "category": "feed",
       "gate": {
@@ -107,6 +109,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "long_dwell",
@@ -125,10 +128,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.78,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -137,7 +140,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 79081.6
+        "volume_m3": 79329.8
       },
       "category": "feed",
       "gate": {
@@ -148,6 +151,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "trending",
@@ -166,10 +170,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.78,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -178,7 +182,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 79081.6
+        "volume_m3": 79329.8
       },
       "category": "feed",
       "gate": {
@@ -189,6 +193,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "erratic_feed",
@@ -207,10 +212,10 @@
     },
     {
       "build": {
-        "dozer_passes": 174,
+        "dozer_passes": 168,
         "loads_placed": 2232,
-        "mean_displacement_m": 20.85,
-        "peak_m": 13.7,
+        "mean_displacement_m": 20.47,
+        "peak_m": 13.97,
         "profiles": {
           "comet": 408,
           "oval": 728,
@@ -219,7 +224,7 @@
           "sloughed_heap": 410
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 238780.5
+        "volume_m3": 238804.5
       },
       "category": "yard",
       "gate": {
@@ -230,6 +235,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "yard",
@@ -249,10 +255,10 @@
     },
     {
       "build": {
-        "dozer_passes": 264,
+        "dozer_passes": 254,
         "loads_placed": 3383,
-        "mean_displacement_m": 21.52,
-        "peak_m": 14.34,
+        "mean_displacement_m": 20.96,
+        "peak_m": 14.4,
         "profiles": {
           "comet": 620,
           "oval": 1126,
@@ -261,7 +267,7 @@
           "sloughed_heap": 537
         },
         "refusal_rate": 0.2482,
-        "volume_m3": 379914.4
+        "volume_m3": 380021.5
       },
       "category": "yard",
       "gate": {
@@ -272,6 +278,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.2482,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "yard_five",
@@ -291,10 +298,10 @@
     },
     {
       "build": {
-        "dozer_passes": 186,
+        "dozer_passes": 180,
         "loads_placed": 2223,
-        "mean_displacement_m": 22.0,
-        "peak_m": 14.47,
+        "mean_displacement_m": 21.62,
+        "peak_m": 14.31,
         "profiles": {
           "comet": 414,
           "oval": 757,
@@ -303,7 +310,7 @@
           "sloughed_heap": 365
         },
         "refusal_rate": 0.1767,
-        "volume_m3": 239160.8
+        "volume_m3": 238933.0
       },
       "category": "yard",
       "gate": {
@@ -314,6 +321,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1767,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "misrouted",
@@ -333,10 +341,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 14.75,
-        "peak_m": 26.78,
+        "mean_displacement_m": 14.52,
+        "peak_m": 27.02,
         "profiles": {
           "comet": 147,
           "oval": 272,
@@ -345,7 +353,7 @@
           "sloughed_heap": 89
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 76389.3
+        "volume_m3": 76641.4
       },
       "category": "landform",
       "gate": {
@@ -356,6 +364,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "valley",
@@ -374,10 +383,52 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.88,
-        "peak_m": 17.33,
+        "mean_displacement_m": 31.25,
+        "peak_m": 25.48,
+        "profiles": {
+          "comet": 138,
+          "oval": 268,
+          "paddock": 135,
+          "rectangular": 101,
+          "sloughed_heap": 102
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 84612.9
+      },
+      "category": "landform",
+      "gate": {
+        "kill_criterion": "Buildable ground before any load is placed must differ measurably from both the flat pad and the valley. If the three report the same fraction the landform is not entering the calculation and the fill type is a label.",
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "cross_valley",
+      "summary": {
+        "en": "The fifth published fill type, and the one that behaves least like the other four. The ground falls along one axis and rises across it, so the fill is held on two opposite sides while draining along the third.",
+        "es": "El quinto tipo publicado de relleno, y el que menos se parece a los otros cuatro. El terreno baja en un eje y sube en el otro, de modo que el relleno queda contenido en dos lados opuestos mientras drena a lo largo del tercero."
+      },
+      "tags": [
+        "topography",
+        "cross-valley"
+      ],
+      "title": {
+        "en": "Cross-valley fill, confined across the axis",
+        "es": "Relleno transversal, confinado a traves del eje"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.63,
+        "peak_m": 17.42,
         "profiles": {
           "comet": 129,
           "oval": 272,
@@ -386,7 +437,7 @@
           "sloughed_heap": 112
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 78669.9
+        "volume_m3": 78590.8
       },
       "category": "landform",
       "gate": {
@@ -397,6 +448,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "rough_ground",
@@ -415,10 +467,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.78,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -427,7 +479,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.5867,
-        "volume_m3": 79081.6
+        "volume_m3": 79329.8
       },
       "category": "campaign",
       "gate": {
@@ -438,6 +490,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.5867,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "intensive_feed",
@@ -456,10 +509,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.6,
-        "peak_m": 13.2,
+        "mean_displacement_m": 19.27,
+        "peak_m": 13.56,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -468,7 +521,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 74317.6
+        "volume_m3": 73619.9
       },
       "category": "campaign",
       "gate": {
@@ -479,6 +532,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "intensive_drain",
@@ -497,10 +551,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 19.77,
-        "peak_m": 13.62,
+        "mean_displacement_m": 19.49,
+        "peak_m": 13.71,
         "profiles": {
           "comet": 136,
           "oval": 255,
@@ -509,7 +563,7 @@
           "sloughed_heap": 123
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 80354.9
+        "volume_m3": 80562.2
       },
       "category": "campaign",
       "gate": {
@@ -520,6 +574,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "light_drain",
@@ -538,10 +593,10 @@
     },
     {
       "build": {
-        "dozer_passes": 116,
+        "dozer_passes": 112,
         "loads_placed": 1488,
-        "mean_displacement_m": 20.14,
-        "peak_m": 14.43,
+        "mean_displacement_m": 19.76,
+        "peak_m": 14.5,
         "profiles": {
           "comet": 280,
           "oval": 514,
@@ -550,7 +605,7 @@
           "sloughed_heap": 243
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 158905.6
+        "volume_m3": 158372.1
       },
       "category": "campaign",
       "gate": {
@@ -561,6 +616,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "two_phase",
@@ -579,10 +635,10 @@
     },
     {
       "build": {
-        "dozer_passes": 398,
+        "dozer_passes": 396,
         "loads_placed": 545,
-        "mean_displacement_m": 75.68,
-        "peak_m": 11.41,
+        "mean_displacement_m": 75.39,
+        "peak_m": 11.55,
         "profiles": {
           "comet": 101,
           "oval": 198,
@@ -591,7 +647,7 @@
           "sloughed_heap": 12
         },
         "refusal_rate": 0.3944,
-        "volume_m3": 57211.5
+        "volume_m3": 57456.7
       },
       "category": "operations",
       "gate": {
@@ -602,6 +658,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.3944,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "short_bench",
@@ -620,10 +677,10 @@
     },
     {
       "build": {
-        "dozer_passes": 58,
+        "dozer_passes": 56,
         "loads_placed": 744,
-        "mean_displacement_m": 16.3,
-        "peak_m": 12.51,
+        "mean_displacement_m": 16.01,
+        "peak_m": 12.52,
         "profiles": {
           "comet": 120,
           "oval": 251,
@@ -632,7 +689,7 @@
           "sloughed_heap": 140
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 78865.7
+        "volume_m3": 78588.7
       },
       "category": "operations",
       "gate": {
@@ -643,6 +700,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "narrow_ramp",
@@ -661,10 +719,10 @@
     },
     {
       "build": {
-        "dozer_passes": 52,
+        "dozer_passes": 50,
         "loads_placed": 744,
-        "mean_displacement_m": 17.27,
-        "peak_m": 12.81,
+        "mean_displacement_m": 17.05,
+        "peak_m": 13.04,
         "profiles": {
           "comet": 132,
           "oval": 270,
@@ -673,7 +731,7 @@
           "sloughed_heap": 110
         },
         "refusal_rate": 0.1733,
-        "volume_m3": 78330.3
+        "volume_m3": 78520.9
       },
       "category": "operations",
       "gate": {
@@ -684,6 +742,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 37.0
       },
       "id": "seldom_dozed",
@@ -702,10 +761,10 @@
     },
     {
       "build": {
-        "dozer_passes": 70,
+        "dozer_passes": 68,
         "loads_placed": 881,
-        "mean_displacement_m": 21.59,
-        "peak_m": 15.66,
+        "mean_displacement_m": 21.5,
+        "peak_m": 15.75,
         "profiles": {
           "comet": 168,
           "oval": 323,
@@ -714,7 +773,7 @@
           "sloughed_heap": 113
         },
         "refusal_rate": 0.0211,
-        "volume_m3": 92936.0
+        "volume_m3": 93194.0
       },
       "category": "operations",
       "gate": {
@@ -725,6 +784,7 @@
         "mass_residual_rel": 0.0,
         "pairs_over_repose": 0,
         "refusal_rate": 0.0211,
+        "stable_tolerance_deg": 1.0,
         "worst_local_slope_deg": 43.0
       },
       "id": "wet_material",

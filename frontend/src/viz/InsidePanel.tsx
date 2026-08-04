@@ -11,6 +11,12 @@
  * are what a reclaim cut crosses, and a vertical slice is the view that makes both legible. Cut it
  * anywhere along either axis and drag through the pile.
  *
+ * THE VERTICAL IS EXAGGERATED AND THE FIGURE SAYS SO. A stockpile is a hundred and fifty metres
+ * across and fourteen tall; at true proportions that is a 120-pixel strip in a 480-pixel box, which
+ * is a correct picture of nothing anyone can read. Stretching the vertical is what a geological
+ * cross-section does, and the only thing that makes it dishonest is not saying so, so the factor is
+ * printed beside the section and the level sets carry their true elevations.
+ *
  * THE VOLUME IS A BLOCK MODEL, not a rendering trick. Each voxel carries the deposition event it
  * came from; the assay is joined from the load log. What is drawn is the material's real composition
  * at that point, at the resolution the bake recorded it.
@@ -31,6 +37,9 @@ const GEOMETRIC: AssayVar[] = [
   { key: '_elev', label: 'elevation', unit: 'm', lo: 0, hi: 1, decimals: 1 },
   { key: '_age', label: 'placement order', unit: 'load', lo: 0, hi: 1, decimals: 0 },
 ];
+
+/** Cap on the vertical stretch. Beyond this a section stops reading as a landform. */
+const MAX_EXAGGERATION = 6;
 
 function ramp(t: number): [number, number, number] {
   const u = Math.min(Math.max(t, 0), 1);
@@ -93,6 +102,10 @@ export default function InsidePanel({
     const ground: number[] = new Array(across).fill(0);
     let lo = Infinity;
     let hi = -Infinity;
+    // The TOP OF THE MATERIAL in this section, not the top of the grid. The voxel grid is sized to
+    // the tallest column anywhere on the pad, so scaling to it left a section of a 14 m pile drawn
+    // into the bottom half of a box built for 27.
+    let kTop = 0;
 
     for (let a = 0; a < across; a++) {
       const i = axis === 'y' ? a : fixed;
@@ -117,12 +130,13 @@ export default function InsidePanel({
         }
         if (v === null || !Number.isFinite(v)) continue;
         vals[k * across + a] = v;
+        if (k > kTop) kTop = k;
         if (v < lo) lo = v;
         if (v > hi) hi = v;
       }
     }
     if (lo === Infinity) return null;
-    return { across, nz, vals, ground, lo, hi, fixed };
+    return { across, nz, vals, ground, lo, hi, fixed, kTop };
   }, [vol, axis, at, key, byEvent]);
 
   useEffect(() => {
@@ -157,30 +171,36 @@ export default function InsidePanel({
       const H = cssH - padB - padT;
       const { across, nz, vals, ground, lo, hi } = slice;
 
-      // TRUE PROPORTIONS. A section is a measurement, and stretching the vertical to make the pile
-      // look impressive would misstate every slope in the picture. The pile is wide and low, and
-      // that is what a stockpile is.
+      // VERTICAL EXAGGERATION, STATED ON THE FIGURE. A stockpile is wide and low: a hundred and
+      // fifty metres across and fourteen tall. At true proportions that is a 120-pixel strip in a
+      // 480-pixel box, which is a correct picture of nothing anyone can read. Exaggerating the
+      // vertical is what a geological cross-section does, and the only thing that makes it dishonest
+      // is not saying so, so the factor is printed next to the section and the level sets carry
+      // their true elevations.
       const mPerCellX = vol.cell_m;
       const spanX = across * mPerCellX;
-      const spanZ = nz * vol.dz_m;
-      const scale = Math.min(W / spanX, H / Math.max(spanZ, 1e-6));
-      const ox = padL + (W - spanX * scale) / 2;
+      // A margin of a couple of voxels above the crest, so the top is not flush with the frame.
+      const spanZ = Math.max((slice.kTop + 3) * vol.dz_m, 4.0);
+      const scaleX = W / spanX;
+      const exaggeration = Math.max(1, Math.min(H / spanZ / scaleX, MAX_EXAGGERATION));
+      const scaleZ = scaleX * exaggeration;
+      const ox = padL + (W - spanX * scaleX) / 2;
       const oy = padT + H;
 
-      const zPix = (zm: number) => oy - (zm - vol.base_m) * scale;
+      const zPix = (zm: number) => oy - (zm - vol.base_m) * scaleZ;
 
       // The ground, drawn first so the material reads as sitting ON something.
       g.fillStyle = dark ? '#232a33' : '#d6dbe2';
       g.beginPath();
       g.moveTo(ox, oy);
-      for (let a = 0; a < across; a++) g.lineTo(ox + a * mPerCellX * scale, zPix(ground[a]));
-      g.lineTo(ox + spanX * scale, oy);
+      for (let a = 0; a < across; a++) g.lineTo(ox + a * mPerCellX * scaleX, zPix(ground[a]));
+      g.lineTo(ox + spanX * scaleX, oy);
       g.closePath();
       g.fill();
 
       // The material, voxel by voxel.
-      const w = Math.max(mPerCellX * scale, 1);
-      const h = Math.max(vol.dz_m * scale, 1);
+      const w = Math.max(mPerCellX * scaleX, 1);
+      const h = Math.max(vol.dz_m * scaleZ, 1);
       for (let k = 0; k < nz; k++) {
         const y = zPix(vol.base_m + (k + 1) * vol.dz_m);
         for (let a = 0; a < across; a++) {
@@ -205,7 +225,7 @@ export default function InsidePanel({
           if (y < padT || y > oy) continue;
           g.beginPath();
           g.moveTo(ox, y);
-          g.lineTo(ox + spanX * scale, y);
+          g.lineTo(ox + spanX * scaleX, y);
           g.stroke();
           g.fillText(`${z} m`, 6, y + 3);
         }
@@ -214,9 +234,12 @@ export default function InsidePanel({
       g.fillStyle = dark ? '#9fb0c3' : '#4a5866';
       g.font = '10px system-ui, sans-serif';
       g.fillText(
-        axis === 'y'
+        (axis === 'y'
           ? `${t('section along x, at y =', 'seccion en x, en y =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`
-          : `${t('section along y, at x =', 'seccion en y, en x =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`,
+          : `${t('section along y, at x =', 'seccion en y, en x =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`) +
+          (exaggeration > 1.05
+            ? `   ${t('vertical exaggeration', 'exageracion vertical')} ${exaggeration.toFixed(1)}x`
+            : `   ${t('true proportions', 'proporciones reales')}`),
         ox,
         cssH - 8,
       );
@@ -280,8 +303,8 @@ export default function InsidePanel({
 
       <p className="st-note">
         {t(
-          'A vertical slice through the pile, at true proportions. Every voxel carries the load it came from, so what is drawn is the material actually there rather than an interpolation of the surface. Drag the section through the pile, and change what it is coloured by: the metals travel together because they came from the same hydrothermal system, iron and pH move against each other because oxidising sulphide is what makes the ground acid, and moisture follows clay because clay is what holds water.',
-          'Un corte vertical de la pila, en proporciones reales. Cada voxel lleva la carga de la que proviene, asi que lo dibujado es el material que realmente esta ahi y no una interpolacion de la superficie. Mueve la seccion por la pila y cambia la variable: los metales viajan juntos porque vienen del mismo sistema hidrotermal, el hierro y el pH se mueven en sentidos opuestos porque el sulfuro oxidandose es lo que acidifica, y la humedad sigue a la arcilla porque la arcilla es la que retiene el agua.',
+          'A vertical slice through the pile. Every voxel carries the load it came from, so what is drawn is the material actually there rather than an interpolation of the surface. The vertical is exaggerated to make the layering readable, by the factor printed on the figure, and the level sets carry true elevations; a stockpile is a hundred and fifty metres across and fourteen tall, and at true proportions that is a strip nobody can read. Drag the section through the pile, and change what it is coloured by: the metals travel together because they came from the same hydrothermal system, iron and pH move against each other because oxidising sulphide is what makes the ground acid, and moisture follows clay because clay is what holds water.',
+          'Un corte vertical de la pila. Cada voxel lleva la carga de la que proviene, asi que lo dibujado es el material que realmente esta ahi y no una interpolacion de la superficie. La vertical se exagera para hacer legible la estratificacion, por el factor impreso en la figura, y las curvas de nivel llevan cotas reales; un acopio mide ciento cincuenta metros de ancho y catorce de alto, y en proporciones reales eso es una franja que nadie puede leer. Mueve la seccion por la pila y cambia la variable: los metales viajan juntos porque vienen del mismo sistema hidrotermal, el hierro y el pH se mueven en sentidos opuestos porque el sulfuro oxidandose es lo que acidifica, y la humedad sigue a la arcilla porque la arcilla es la que retiene el agua.',
         )}
       </p>
     </div>

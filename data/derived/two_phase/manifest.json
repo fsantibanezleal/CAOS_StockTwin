@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 116,
+    "dozer_passes": 112,
     "loads_placed": 1488,
-    "mean_displacement_m": 20.14,
-    "peak_m": 14.43,
+    "mean_displacement_m": 19.76,
+    "peak_m": 14.5,
     "profiles": {
       "comet": 280,
       "oval": 514,
@@ -86,7 +86,7 @@
       "sloughed_heap": 243
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 158905.6
+    "volume_m3": 158372.1
   },
   "category": "campaign",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
   "id": "two_phase",
@@ -123,7 +124,7 @@
   "reason": "Sequential and simultaneous construction put the same tonnage in the same place and produce different piles, because the grade arriving at any moment goes to whichever area is open. It is the cheapest lever an operation has over what each pile contains.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 41807.4
+    "tonnes": 42821.1
   },
   "seed": 20260802,
   "stream": {

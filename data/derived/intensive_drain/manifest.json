@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 58,
+    "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 19.6,
-    "peak_m": 13.2,
+    "mean_displacement_m": 19.27,
+    "peak_m": 13.56,
     "profiles": {
       "comet": 136,
       "oval": 255,
@@ -86,7 +86,7 @@
       "sloughed_heap": 123
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 74317.6
+    "volume_m3": 73619.9
   },
   "category": "campaign",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
   "id": "intensive_drain",
@@ -123,7 +124,7 @@
   "reason": "A cut crosses the layers it can reach, and how many that is depends on how deep the campaign goes. Variance reduction measured over a shallow campaign is a different quantity from the same metric over a full one, and the difference is not small.",
   "reclaim": {
     "n_cuts": 90,
-    "tonnes": 30660.6
+    "tonnes": 31986.3
   },
   "seed": 20260802,
   "stream": {

@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 58,
+    "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 14.75,
-    "peak_m": 26.78,
+    "mean_displacement_m": 14.52,
+    "peak_m": 27.02,
     "profiles": {
       "comet": 147,
       "oval": 272,
@@ -86,7 +86,7 @@
       "sloughed_heap": 89
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 76389.3
+    "volume_m3": 76641.4
   },
   "category": "landform",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
   "id": "valley",
@@ -123,7 +124,7 @@
   "reason": "Confinement is why the fill taxonomy exists at all. A valley holds the same tonnage higher and narrower than a pad does, which changes the drop height, and drop height is one of the three drivers of size segregation. It is the cleanest contrast against the flat case.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 26724.4
+    "tonnes": 26245.3
   },
   "seed": 20260802,
   "stream": {

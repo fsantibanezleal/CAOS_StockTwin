@@ -74,10 +74,10 @@
     }
   ],
   "build": {
-    "dozer_passes": 58,
+    "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 19.78,
-    "peak_m": 13.62,
+    "mean_displacement_m": 19.52,
+    "peak_m": 13.71,
     "profiles": {
       "comet": 136,
       "oval": 255,
@@ -86,7 +86,7 @@
       "sloughed_heap": 123
     },
     "refusal_rate": 0.5867,
-    "volume_m3": 79081.6
+    "volume_m3": 79329.8
   },
   "category": "campaign",
   "engine": "bedblend",
@@ -108,6 +108,7 @@
     "mass_residual_rel": 0.0,
     "pairs_over_repose": 0,
     "refusal_rate": 0.5867,
+    "stable_tolerance_deg": 1.0,
     "worst_local_slope_deg": 37.0
   },
   "id": "intensive_feed",
@@ -123,7 +124,7 @@
   "reason": "The footprint has a geometric capacity: a square of side W holds a solid whose peak cannot exceed about 0.38 W at repose, whatever the fleet delivers. Offering twice the material is how that ceiling is demonstrated rather than asserted.",
   "reclaim": {
     "n_cuts": 24,
-    "tonnes": 21608.9
+    "tonnes": 21137.4
   },
   "seed": 20260802,
   "stream": {
