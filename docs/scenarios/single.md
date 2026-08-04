@@ -22,10 +22,10 @@ plausible artifact.
 
 | parameter | value | what it controls |
 |---|---|---|
-| pad | 72 x 72 cells at 2.5 m | 180 by 180 metres |
+| pad | 60 x 60 cells at 2.5 m | 150 by 150 metres |
 | ground | `heaped` fill | one of the five published stockpile fill types; only `heaped` is a flat pad |
 | relief | 0 m | the vertical range of the landform, which decides whether topography is a detail or the dominant constraint |
-| shovel | 170, 20 m | the loading point, deliberately OUTSIDE every dump area |
+| shovel | 135, 138 m | the loading point, deliberately OUTSIDE every dump area |
 
 ## The plan
 
@@ -33,7 +33,7 @@ plausible artifact.
 |---|---|---|
 | areas | 1 (ROM) | named dump location polygons, which is how a fleet-management system locates a load |
 | area size | 90 x 90 m | the footprint of each |
-| benches | 2 at 18 m | lifts, built upward the way a pit cuts downward |
+| benches | 1 at 26 m | lifts, built upward the way a pit cuts downward |
 | row spacing | 10 m | separation of the paddock rows that lay the base layer |
 | tip spacing | 8 m | separation of loads along a row |
 | dozer cadence | every 40 loads | the published practice is to doze after two rows |
@@ -44,7 +44,7 @@ plausible artifact.
 | parameter | value | what it controls |
 |---|---|---|
 | repose angle | 37 deg dry | not a constant of the ore: it rises with moisture and collapses past saturation |
-| loads | 520 | the size of the campaign |
+| loads | 900 | the size of the campaign |
 | shovel dwell | 20 loads per dig block | THE control on stream autocorrelation. Consecutive trucks load from the same block, so the correlation length is a consequence of this rather than an input |
 | grade | 0.62 mean, 0.16 between blocks | the incoming distribution |
 | trucks | 4 | fleet size |

@@ -1,6 +1,6 @@
 # Method 8: the per-cell lot ledger and reclaim provenance
 
-**Family:** traceability · **Rung:** SOTA · **Tier:** live · `model/pile.py`, `engine/pile.ts`
+**Family:** traceability · **Rung:** SOTA · **Tier:** precomputed · `bedblend/blocks.py`
 
 ## The data structure
 

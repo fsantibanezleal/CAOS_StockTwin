@@ -27,6 +27,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import {
   type Index,
   type Scenario,
+  playState,
   loadIndex,
   loadScenario,
   segregationSummary,
@@ -62,8 +63,8 @@ export default function Focus() {
   const [showPaths, setShowPaths] = useState(true);
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(false);
-  const [through, setThrough] = useState(1);
-  const [frame, setFrame] = useState(-1);
+  const [showHistory, setShowHistory] = useState(false);
+  const [pos, setPos] = useState(-1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function Focus() {
   }, []);
   useEffect(() => {
     setSc(null);
-    setFrame(-1);
+    setPos(-1);
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
   }, [sid]);
 
@@ -87,11 +88,9 @@ export default function Focus() {
     return () => window.removeEventListener('resize', on);
   }, []);
 
-  // The surface being drawn: a build frame while playing, the finished pile otherwise.
-  const surface = useMemo(() => {
-    if (!sc?.frames || frame < 0) return null;
-    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)]?.z ?? null;
-  }, [sc, frame]);
+  // What is on the stage: a moment in the build while playing, the finished pile otherwise.
+  const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
+  const surface = play?.z ?? null;
 
   const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
@@ -114,10 +113,10 @@ export default function Focus() {
           <SiteView3D
             field={sc.field}
             surface={surface}
+            play={showHistory ? null : play}
             plan={sc.plan}
             loads={sc.loads}
             colourBy={colour}
-            through={through}
             showPaths={showPaths}
             showCrest={showCrest}
             showPlan={showPlan}
@@ -174,8 +173,8 @@ export default function Focus() {
           <div className="fx-play">
             <PlayBar
               frames={sc.frames}
-              index={frame < 0 ? (sc.frames?.frames.length ?? 1) - 1 : frame}
-              onIndex={setFrame}
+              pos={pos < 0 ? (sc.frames?.frames.length ?? 1) - 1 : pos}
+              onPos={setPos}
             />
           </div>
         )}
@@ -209,26 +208,20 @@ export default function Focus() {
           </select>
         </label>
 
-        <label className="fx-field">
-          <span>
-            Truck paths shown, through load{' '}
-            <b>{sc ? Math.round(sc.loads.length * through) : 0}</b>
-          </span>
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.02}
-            value={through}
-            onChange={(e) => setThrough(Number(e.target.value))}
-          />
-        </label>
 
         <fieldset className="fx-toggles">
           <legend>Overlays</legend>
           <label>
             <input type="checkbox" checked={showPaths} onChange={(e) => setShowPaths(e.target.checked)} />
             truck approach and departure
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={showHistory}
+              onChange={(e) => setShowHistory(e.target.checked)}
+            />
+            path history, not just the active truck
           </label>
           <label>
             <input type="checkbox" checked={showCrest} onChange={(e) => setShowCrest(e.target.checked)} />

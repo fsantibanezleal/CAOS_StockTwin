@@ -14,7 +14,7 @@ For the offline engines, add `-r requirements-precompute.txt`.
 ## A sandboxed run
 
 ```bash
-python -m stlab.pipeline G01_chevron --output build/smoke --band-seeds 3
+python data-pipeline/run.py single --output build/smoke
 ```
 
 `--output` is mandatory for anything that is not an intentional release bake. A pytest run in another
@@ -23,7 +23,7 @@ repository on this product line once overwrote a committed bake, and two release
 ## The canonical bake
 
 ```bash
-python -m stlab.pipeline
+python data-pipeline/run.py
 ```
 
 This writes `data/derived/<case>/{trace,metrics}.json`, `data/derived/manifests/<case>.json`,
@@ -33,7 +33,7 @@ a few minutes: 17 cases at 31 seeds each.
 ## Validate an existing tree
 
 ```bash
-python -m stlab.pipeline --validate-only
+python data-pipeline/run.py --validate-only
 ```
 
 Checks completeness (every registered case present), integrity (every trace still hashes to what its

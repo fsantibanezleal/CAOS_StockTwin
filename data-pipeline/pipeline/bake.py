@@ -26,6 +26,8 @@ rather than writing a pretty artifact.
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import itertools
 import json
 import math
 import sys
@@ -36,13 +38,15 @@ from bedblend.blending import tonnage_weighted_variance
 from bedblend.build import BuildResult, build
 from bedblend.material import Material
 from bedblend.reclaim import Cut, ReclaimFace, ReclaimMethod, campaign
-from bedblend.relax import count_over_repose
+from bedblend.relax import STABLE_TOL_DEG, count_over_repose
 from bedblend.sectors import quadrants, rollup
 from bedblend.stream import dig_sequence, measured_range_t, payloads_from
 from bedblend.terrain import Terrain
 from bedblend.topography import FillType, buildable_fraction, ground, relief_stats
-from bedblend.truck import Fleet
+from bedblend.truck import Fleet, passable_mask
 
+from .assay import VARIABLES as ASSAY_VARIABLES
+from .assay import assay_for
 from .scenarios import Scenario, by_id, class_thresholds, route_to_area
 
 ROUND = 3       # metres and grades are meaningless past a millimetre or a thousandth of a percent
@@ -63,11 +67,12 @@ class BakeResult:
 
 
 class SnapshotRecorder:
-    """Captures the surface at intervals through the build, so the app can animate its growth.
+    """Captures the surface after each placed load, so the app can animate its growth.
 
-    A snapshot is one float per cell, which is why there are a couple of dozen of them and not one per
-    load. Enough to see the base layer go down, the dozer level it and the crest advance; few enough
-    that the artifact stays a few hundred kilobytes.
+    ONE FRAME PER TRUCK. A snapshot every few loads is a slideshow: the pile jumps and the truck on
+    screen is not the one that made the bump. A frame is one float per cell here, at full resolution;
+    the coarse stride that makes the artifact shippable is applied on the way out, in `_half`, so the
+    recorder stays a plain record of what the terrain looked like.
     """
 
     def __init__(self, scn: Scenario, n_loads: int) -> None:
@@ -86,14 +91,24 @@ class SnapshotRecorder:
         )
 
 
-def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
-    """Execute one scenario end to end, with every invariant checked as it goes."""
+def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -> BakeResult:
+    """Execute one scenario end to end, with every invariant checked as it goes.
+
+    ``n_loads`` overrides the scenario's load budget. It exists for the CI smoke test and nothing
+    else: a bake exercises routing, relaxation, dozing, segregation, reclaim and the gate, and doing
+    that at nine hundred loads takes the better part of half an hour on a runner, which is not a
+    smoke test. The reduced artifact is NOT the scenario and the caller is prevented from writing it
+    to the canonical tree.
+    """
     scn = by_id(scenario_id)
+    if n_loads is not None:
+        scn = dataclasses.replace(scn, n_loads=n_loads)
     seed = scn.seed + seed_offset
 
     terrain = scn.terrain()
     plan = scn.plan()
-    fleet = Fleet.of(scn.n_trucks, scn.truck(), scn.shovel_xy, repose_deg=scn.repose_deg)
+    shovel = _sited_shovel(terrain, plan, scn)
+    fleet = Fleet.of(scn.n_trucks, scn.truck(), shovel, repose_deg=scn.repose_deg)
     material = Material(repose_dry_deg=scn.repose_deg)
 
     seq = dig_sequence(
@@ -107,9 +122,15 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
     if len(scn.classes) > 1:
         cuts_ = class_thresholds(scn)
         classes = scn.classes
+        # The decision is made on the ESTIMATE. Seeded from the scenario seed so the same run
+        # reproduces byte for byte, and independent of the grade itself so the error is an error and
+        # not a rescaling.
+        err = _estimate_noise(len(loads), scn.estimate_error_sd, seed)
+        seen = itertools.count()
 
         def router(p):  # noqa: ANN001, ANN202
-            return route_to_area(p.grade, cuts_, classes)
+            k = next(seen)
+            return route_to_area(p.grade + err[k % len(err)], cuts_, classes)
 
     res = build(
         terrain, plan, fleet, loads,
@@ -153,21 +174,89 @@ def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
     return BakeResult(scenario=scn, result=res, cuts=cuts, gate=gate)
 
 
+def _sited_shovel(terrain, plan, scn) -> tuple[float, float]:
+    """The nominal loading point, moved to the nearest ground a truck can actually stand on.
+
+    A LOADING POINT IS SITED, NOT DECREED. On a flat pad the nominal position is fine and this
+    returns it unchanged. On a landform it may land on a valley wall, and the flood fill seeds from
+    the shovel: if the seed cell is not standable the mask comes back empty for the WHOLE pad, every
+    tip is unreachable, and the build places nothing at all with no indication of why. Measured on
+    the valley scenario: shovel at 20.4 m on the wall, 0 of 3600 cells reachable.
+
+    The search stays outside every dump area, because a loading point inside one gets buried.
+    """
+    max_grade = math.tan(math.radians(scn.repose_deg)) / 1.5
+    ok = passable_mask(terrain, max_grade)
+    sx, sy = scn.shovel_xy
+    c = terrain.cell_at(sx, sy)
+    if c is not None and ok[c] and not any(a.contains(sx, sy) for a in plan.areas):
+        return scn.shovel_xy
+
+    best: tuple[float, tuple[float, float]] | None = None
+    for k in range(terrain.n_cells):
+        if not ok[k]:
+            continue
+        x, y = terrain.xy(k)
+        if any(a.contains(x, y) for a in plan.areas):
+            continue
+        d = math.hypot(x - sx, y - sy)
+        if best is None or d < best[0]:
+            best = (d, (x, y))
+    if best is None:
+        raise AssertionError(
+            f"{scn.id}: there is nowhere on this pad a truck can stand that is outside every dump "
+            f"area. The landform or the layout is wrong, not the loading point."
+        )
+    return best[1]
+
+
+def _estimate_noise(n: int, sd: float, seed: int) -> list[float]:
+    """Per-load error on the grade the ore-control system reports, Box-Muller from a seeded LCG."""
+    if sd <= 0.0:
+        return [0.0] * n
+    out: list[float] = []
+    x = (seed * 6364136223846793005 + 1442695040888963407) & ((1 << 64) - 1)
+
+    def u() -> float:
+        nonlocal x
+        x = (x * 6364136223846793005 + 1442695040888963407) & ((1 << 64) - 1)
+        return ((x >> 11) + 0.5) / float(1 << 53)
+
+    while len(out) < n:
+        a, b = u(), u()
+        r = math.sqrt(-2.0 * math.log(a))
+        out.append(sd * r * math.cos(2.0 * math.pi * b))
+        out.append(sd * r * math.sin(2.0 * math.pi * b))
+    return out[:n]
+
+
 def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict:
     """Check the invariants and the scenario's kill criterion. Raises on violation.
 
     These are the same checks the engine's own tests make, run again on the actual artifact, because
     a passing unit test on a synthetic fixture does not prove the shipped trace is sound.
     """
+    # THE SAME TOLERANCE THE ENGINE ASSERTS, and the residue is reported either way. The angle of
+    # repose is known to a few degrees; asserting a surface to floating-point equality against it
+    # fails builds over material no solver can shift. One degree is far inside that uncertainty and
+    # far outside the defect this exists to catch, which was 446 pairs with the worst at 55.9 against
+    # an imposed 37. The manifest carries the count and the worst angle, so a reader sees the residue
+    # rather than a tolerance that hid it.
     n_over, worst = count_over_repose(
         res.terrain.z, res.terrain.nx, res.terrain.ny, res.terrain.cell_m,
-        scn.repose_deg, floor=res.terrain.z0,
+        scn.repose_deg + STABLE_TOL_DEG, floor=res.terrain.z0,
     )
     if n_over:
         raise AssertionError(
-            f"{scn.id}: {n_over} cell pairs stand over the imposed repose angle of "
-            f"{scn.repose_deg} deg, worst {worst:.1f}. This is the defect that rendered as spikes."
+            f"{scn.id}: {n_over} cell pairs stand more than {STABLE_TOL_DEG:.1f} deg over the "
+            f"imposed repose angle of {scn.repose_deg} deg, worst {worst:.1f}. This is the defect "
+            f"that rendered as spikes."
         )
+    # Reported at the strict angle, so the number in the manifest is the real residue.
+    n_marginal, worst = count_over_repose(
+        res.terrain.z, res.terrain.nx, res.terrain.ny, res.terrain.cell_m,
+        scn.repose_deg, floor=res.terrain.z0,
+    )
     res.model.assert_consistent(res.terrain)
 
     placed = len(res.placed)
@@ -183,7 +272,8 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
         raise AssertionError(f"{scn.id}: the build placed nothing at all")
 
     return {
-        "pairs_over_repose": n_over,
+        "pairs_over_repose": n_marginal,
+        "stable_tolerance_deg": STABLE_TOL_DEG,
         "worst_local_slope_deg": _r(worst, 2),
         "ledger_agrees_with_terrain": True,
         "loads_offered": len(res.loads),
@@ -192,6 +282,44 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
         "mass_residual_rel": _r(abs(got - expected) / expected if expected else 0.0, 9),
         "kill_criterion": scn.kill_criterion,
     }
+
+
+def _frame_deltas(frames: list[tuple[int, int, list[float]]]) -> list[dict]:
+    """First frame complete, the rest as the cells that changed.
+
+    A cell counts as changed when it moves by more than the rounding the frames are already stored
+    at, so the encoding cannot introduce drift the reader would see.
+    """
+    out: list[dict] = []
+    prev: list[float] | None = None
+    for sq, n, z in frames:
+        if prev is None:
+            out.append({"seq": sq, "placed": n, "z": z})
+        else:
+            d: list[float] = []
+            for i, v in enumerate(z):
+                if abs(v - prev[i]) > 0.05:
+                    d.append(i)
+                    d.append(v)
+            out.append({"seq": sq, "placed": n, "d": d})
+        prev = z
+    return out
+
+
+def _stride(nx: int, ny: int) -> int:
+    """Cell stride for playback frames.
+
+    A frame is watched, not measured, so it is stored coarse and interpolated back up in the browser.
+    Two on a normal pad, three on a wide yard: the yard is three areas side by side, so at the same
+    stride its frames are more than twice the bytes for a picture the reader is watching go by.
+    """
+    return 3 if nx * ny > 8000 else 2
+
+
+def _half(z: list[float], nx: int, ny: int) -> list[float]:
+    """Every `_stride`-th cell in each direction."""
+    k = _stride(nx, ny)
+    return [_r(z[j * nx + i], 1) for j in range(0, ny, k) for i in range(0, nx, k)]
 
 
 def _plan_json(scn: Scenario) -> dict:
@@ -219,7 +347,50 @@ def _plan_json(scn: Scenario) -> dict:
     }
 
 
-def _loads_json(res: BuildResult) -> list[dict]:
+VOXEL_DZ_M = 0.5
+
+
+def _volume_json(res: BuildResult) -> dict:
+    """The pile resampled onto a fixed vertical grid, one event identifier per voxel.
+
+    Columns are emitted as ``[k0, [event, ...]]``: the index of the lowest occupied voxel and the
+    events above it, contiguous. An empty column is ``null``. That is compact without being a format
+    anyone has to decode, and it slices in either direction with plain indexing.
+    """
+    model = res.model
+    top = max((c[-1].z1_m for c in model.columns if c), default=0.0)
+    base = min((c[0].z0_m for c in model.columns if c), default=0.0)
+    nz = max(1, int(math.ceil((top - base) / VOXEL_DZ_M)))
+
+    cols: list[list | None] = []
+    for col in model.columns:
+        if not col:
+            cols.append(None)
+            continue
+        k0 = int((col[0].z0_m - base) / VOXEL_DZ_M)
+        k1 = int(math.ceil((col[-1].z1_m - base) / VOXEL_DZ_M))
+        events: list[int] = []
+        pi = 0
+        for k in range(k0, k1):
+            zc = base + (k + 0.5) * VOXEL_DZ_M
+            while pi + 1 < len(col) and col[pi].z1_m <= zc:
+                pi += 1
+            events.append(col[pi].event_id)
+        cols.append([k0, events] if events else None)
+
+    return {
+        "nx": res.terrain.nx,
+        "ny": res.terrain.ny,
+        "nz": nz,
+        "cell_m": res.terrain.cell_m,
+        "dz_m": VOXEL_DZ_M,
+        "base_m": _r(base, 2),
+        "z0": [_r(v, 2) for v in res.terrain.z0],
+        "columns": cols,
+    }
+
+
+def _loads_json(res: BuildResult, seed: int) -> list[dict]:
     """The event log. One row per load, which is what a fleet-management export looks like."""
     out = []
     for r in res.loads:
@@ -228,6 +399,10 @@ def _loads_json(res: BuildResult) -> list[dict]:
             "truck": r.truck_id, "grade": _r(r.grade, 4),
             "block": r.source_block, "placed": r.placed,
         }
+        # THE FULL ASSAY, not a grade. Copper comes from the dig sequence, because it carries the
+        # shovel-dwell autocorrelation the whole blending argument rests on; the rest is generated
+        # around it from the same block-level geological factors.
+        row.update(assay_for(r.grade, block=r.source_block, seed=seed).as_dict())
         if r.placed:
             row.update(
                 {
@@ -290,7 +465,7 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
     d = out_dir / scn.id
     d.mkdir(parents=True, exist_ok=True)
 
-    loads = _loads_json(res)
+    loads = _loads_json(res, scn.seed)
     grades_in = [r.grade for r in res.placed]
     var_in = tonnage_weighted_variance(grades_in, [1.0] * len(grades_in)) if grades_in else 0.0
 
@@ -315,18 +490,44 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         ),
         encoding="utf-8",
     )
-    # THE FRAMES. One surface per snapshot, so the app can play the build rather than only show its
-    # end state. Rounded hard: a frame is one float per cell and there are a couple of dozen of them.
+    # THE PILE AS A VOLUME. This is the artifact the product exists to produce and it was missing.
+    # The ledger has held per-column parcel stacks all along, each one a vertical interval with the
+    # deposition event it came from, and none of it reached the browser: only the surface shipped, so
+    # the app could show what the top of the pile looks like and nothing about what is inside it.
+    # That is the wrong half. A stockpile is characterised by its contents at depth.
+    #
+    # IT IS VOXELISED, NOT DUMPED RAW. Relaxation splits a parcel every time material crosses a cell
+    # boundary, so the raw stacks are slivers: measured on the reference scenario, 1,027,319 parcels
+    # with one column holding 85,766 of them, and 26 MB of JSON. Resampling onto a fixed vertical
+    # grid gives the same information at the resolution anyone can actually look at, and it is the
+    # form a block model is in anyway.
+    #
+    # Each voxel carries the EVENT it came from, and the assay is joined in the browser, so a new
+    # assay variable costs nothing in the artifact and cannot desynchronise from the geometry.
+    (d / "volume.json").write_text(
+        json.dumps(_volume_json(res), separators=(",", ":")), encoding="utf-8"
+    )
+
+    # THE FRAMES. ONE PER PLACED LOAD, so the app plays the build truck by truck rather than jumping
+    # four loads at a time. Rounded to a decimetre and sampled at a coarse stride, which is what makes
+    # a few hundred of them affordable; the browser interpolates them back onto the full grid.
     (d / "frames.json").write_text(
         json.dumps(
             {
                 "nx": res.terrain.nx,
                 "ny": res.terrain.ny,
                 "cell_m": res.terrain.cell_m,
-                "z0": [_r(v, 2) for v in res.terrain.z0],
-                "frames": [
-                    {"placed": n, "z": [_r(v, 2) for v in z]} for n, z in res.snapshots
-                ],
+                "step": _stride(res.terrain.nx, res.terrain.ny),
+                "z0": _half(res.terrain.z0, res.terrain.nx, res.terrain.ny),
+                # DELTAS, BECAUSE A FRAME IS ONE TRUCK. A load touches a couple of dozen cells and
+                # leaves the other nine hundred exactly as they were, so a full surface per frame is
+                # the same numbers written seven hundred times: 2.6 MB per scenario, 110 MB for the
+                # site. The first frame is complete and the rest carry only what moved, as flat
+                # [index, value, index, value] pairs. Reconstruction in the browser is an
+                # accumulation, and it is exact rather than lossy.
+                "frames": _frame_deltas(
+                    [(sq, n, _half(z, res.terrain.nx, res.terrain.ny)) for sq, n, z in res.snapshots]
+                ),
             },
             separators=(",", ":"),
         ),
@@ -349,12 +550,14 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
 
     manifest = {
         "id": scn.id,
+        "category": scn.category,
         "title": {"en": scn.title_en, "es": scn.title_es},
         "summary": {"en": scn.summary_en, "es": scn.summary_es},
         "reason": scn.reason,
         "tags": list(scn.tags),
         "seed": scn.seed,
         "engine": "bedblend",
+        "assay_variables": ASSAY_VARIABLES,
         "pad": {"nx": scn.pad_nx, "ny": scn.pad_ny, "cell_m": scn.cell_m},
         "material": {
             "repose_deg": scn.repose_deg,
@@ -391,7 +594,8 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
         },
         "reclaim": {"n_cuts": len(bake.cuts), "tonnes": _r(sum(c.tonnes for c in bake.cuts), 1)},
         "gate": bake.gate,
-        "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json", "frames.json"],
+        "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json",
+                  "frames.json", "volume.json"],
         "frames": len(res.snapshots),
     }
     (d / "manifest.json").write_text(
@@ -425,6 +629,10 @@ def topography_report() -> list[dict]:
 def main() -> None:
     ap = argparse.ArgumentParser(prog="bake")
     ap.add_argument("scenario", nargs="?", default="all")
+    ap.add_argument("--loads", type=int, default=None,
+                    help="override the load budget. FOR SMOKE TESTS ONLY: a bake at a reduced budget "
+                         "exercises every stage and produces an artifact that is not the scenario, "
+                         "so it must never be written to the canonical tree")
     ap.add_argument("--output", default=None,
                     help="write here instead of the canonical artifact tree; ALWAYS pass this "
                          "unless you intend a release bake")
@@ -440,15 +648,17 @@ def main() -> None:
     from .scenarios import SCENARIOS
 
     todo = SCENARIOS if args.scenario == "all" else [by_id(args.scenario)]
-    index = {"scenarios": [], "topography": topography_report()}
+
+    if args.loads is not None and args.output is None:
+        raise SystemExit(
+            "--loads changes what the scenario IS, so it may only be used with --output. A reduced "
+            "bake in the canonical tree is an artifact that does not match its own manifest."
+        )
 
     for scn in todo:
         print(f"baking {scn.id} ...", flush=True)
-        bake = run(scn.id)
+        bake = run(scn.id, n_loads=args.loads)
         m = write(bake, out)
-        index["scenarios"].append(
-            {k: m[k] for k in ("id", "title", "summary", "tags", "build", "gate")}
-        )
         print(
             f"  placed {m['build']['loads_placed']}  "
             f"refused {m['build']['refusal_rate']:.1%}  "
@@ -457,8 +667,23 @@ def main() -> None:
             flush=True,
         )
 
+    # THE INDEX IS ASSEMBLED FROM WHAT IS ON DISK, not from what this invocation happened to bake.
+    # It used to be accumulated in the loop, so `run.py ridge` rewrote the index with ridge alone and
+    # silently orphaned the other five scenarios: every artifact was still there, the site loaded
+    # cleanly, and the case selector offered exactly one case. Nothing failed. Building it from the
+    # manifests present, in the canonical order, makes a partial bake refresh what it rebuilt and
+    # leave the rest alone.
+    index = {"scenarios": [], "topography": topography_report()}
+    for scn in SCENARIOS:
+        mf = out / scn.id / "manifest.json"
+        if not mf.exists():
+            continue
+        m = json.loads(mf.read_text(encoding="utf-8"))
+        index["scenarios"].append(
+            {k: m[k] for k in ("id", "category", "title", "summary", "tags", "build", "gate")}
+        )
     (out / "index.json").write_text(json.dumps(index, indent=2, sort_keys=True), encoding="utf-8")
-    print(f"wrote {len(todo)} scenario(s) to {out}")
+    print(f"baked {len(todo)}; index lists {len(index['scenarios'])} scenario(s) in {out}")
 
 
 if __name__ == "__main__":

@@ -23,5 +23,5 @@ pip install -r requirements-api.txt
 uvicorn app.main:app --reload
 ```
 
-Keep it a thin layer over `stlab.model`. It must never re-implement the science: two implementations of
+Keep it a thin layer over `pipeline.model`. It must never re-implement the science: two implementations of
 the same method drift, and the one nobody is looking at drifts first.

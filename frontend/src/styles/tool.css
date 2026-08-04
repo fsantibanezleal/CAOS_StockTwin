@@ -11,18 +11,71 @@
  * playback bar, and the tables and legends inside a panel.
  */
 
-/* The scenario deck and the focus entry share one surface, per ADR-0070. */
-.st-deck {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
+/* THE LEFT RAIL: the scenario deck, the focus entry and the readouts on one surface, per ADR-0070.
+ *
+ * An earlier version put the deck in a row across the top and the readouts in a HUD over the stage,
+ * to buy height for the instrument. That was the wrong trade. Choosing a case and reading what it
+ * produced is one act, and a HUD that floats over the geometry can only carry three or four numbers
+ * before it covers the pile. The rail carries all ten, always visible, next to the control that
+ * changes them; it costs width, which a 3-D stage has to spare, rather than height, which it does
+ * not. */
+.st-rail {
+  flex: 0 0 15.5rem;
+  width: 15.5rem;
   min-width: 0;
-  margin-bottom: 0.5rem;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  overflow-y: auto;
+  padding-right: 0.7rem;
+  border-right: 1px solid color-mix(in srgb, currentColor 14%, transparent);
 }
 
-.st-deck > :first-child {
+.st-main {
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The readouts. A definition list, because that is what they are: a name and a measured value. */
+.st-kpis {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-kpis > div {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+}
+
+.st-kpis dt {
+  font-size: 0.66rem;
+  opacity: 0.7;
+  line-height: 1.15;
+}
+
+.st-kpis dd {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.1;
+}
+
+.st-kpis .muted dd {
+  opacity: 0.5;
+}
+
+.st-kpis .ok dd {
+  color: #2f9e59;
+}
+
+.st-kpis .bad dd {
+  color: #d1495b;
 }
 
 .st-focus {
@@ -390,15 +443,16 @@
    `height: 100%` resolves against nothing and the stage collapses to a quarter of the screen, while
    the aspect-ratio canvases run hundreds of pixels past the footer. */
 
-/* The workbench stacks: deck on top, tabs below. `.page-body.st-layout` is a flex ROW in the shared
-   sheet, which turned the three-chip scenario deck into a 338px left rail and left the 3-D stage at
-   47.7 percent against the ADR-0071 floor of 50. Measured, not guessed. */
+/* Rail beside instrument. The rail is a fixed narrow column, so the stage keeps essentially all the
+   width; what it costs is a fifth of the line length, not a fifth of the picture. */
 .page-body.st-layout {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  gap: 1rem;
+  min-height: 0;
 }
 
-.page-body.st-layout > .tabs {
+.page-body.st-layout > .st-main > .tabs {
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -406,11 +460,11 @@
   flex: 1 1 auto;
 }
 
-.page-body.st-layout > .tabs > .tablist {
+.page-body.st-layout > .st-main > .tabs > .tablist {
   flex: 0 0 auto;
 }
 
-.page-body.st-layout > .tabs > .tabpanel {
+.page-body.st-layout > .st-main > .tabs > .tabpanel {
   flex: 1 1 auto;
   min-height: 0;
   min-width: 0;
@@ -471,54 +525,198 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
 
 /* Trimming chrome, not content: the instrument was landing just under the ADR-0071 half-screen floor
    and every row of padding around it is height it does not get. */
-.page-body.st-layout > .tabs > .tablist {
+.page-body.st-layout > .st-main > .tabs > .tablist {
   padding-block: 0.15rem;
-}
-
-.page-body.st-layout .st-deck {
-  margin-bottom: 0.25rem;
 }
 
 .page-body.st-layout .st-controls {
   padding: 0.15rem 0 0;
 }
 
-/* THE SCENARIO DECK IS A ROW, NOT A RAIL.
- *
- * The shell's CaseSelector stacks its groups vertically, which is right for a deck of eleven cases in
- * four categories. This product has THREE. As a rail it cost 330px of width permanently and 658px of
- * height, and the 3-D stage came out at 47.7 percent against the ADR-0071 floor of 50. ADR-0071
- * clause 7 is explicit that the control should fit the job. Laying the same primitive out
- * horizontally keeps its behaviour, its chips, its deep link and its accessibility, and gives the
- * width back to the instrument. Nothing about the component is redefined; only its flow direction.
- */
-.page-body.st-layout .st-deck .cs {
+/* The selector runs vertically in the rail, which is its native layout, so nothing is redefined.
+   Only the chips are made full width, because a narrow column reads better as a list than as a
+   ragged wrap, and the anchor line is dropped to two lines so six cases fit above the readouts. */
+.page-body.st-layout .st-rail .cs-chip {
+  width: 100%;
+  text-align: left;
+}
+
+.page-body.st-layout .st-rail .cs-chips {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* The rail is chrome, so it is set smaller than body copy. */
+.page-body.st-layout .st-rail {
+  font-size: 0.8rem;
+}
+
+@media (max-width: 900px) {
+  /* Too narrow for two columns: the rail goes back on top and scrolls with the page. */
+  .page-body.st-layout {
+    flex-direction: column;
+  }
+  .st-rail {
+    flex: 0 0 auto;
+    width: auto;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+    padding-right: 0;
+    padding-bottom: 0.5rem;
+  }
+}
+
+/* TWO MAPS SIDE BY SIDE, each with its own variable selector. Half the width each is legible; the
+   three fixed thumbnails this replaced were a contact sheet, not a comparison. */
+.st-fieldpanel {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.35rem 1.1rem;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.st-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
   min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
 }
 
-.page-body.st-layout .st-deck .cs-group {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+.st-pair figure {
+  margin: 0;
   min-width: 0;
-}
-
-.page-body.st-layout .st-deck .cs-group-label {
-  font-size: 0.66rem;
-  opacity: 0.6;
-  white-space: nowrap;
-}
-
-.page-body.st-layout .st-deck .cs-chips {
+  min-height: 0;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.3rem;
 }
 
-.page-body.st-layout .st-deck .cs-chip {
+.st-pair figure .st-chartbox {
+  height: clamp(340px, 72vh, 900px);
+}
+
+.st-pair figcaption {
+  font-size: 0.74rem;
+  opacity: 0.75;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .st-pair {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The colour scale that sits with the stage controls. Numbers at both ends, unit at the right. */
+.st-scalebar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.74rem;
   white-space: nowrap;
+}
+
+.st-scalebar b {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.st-scalebar em {
+  font-style: normal;
+  opacity: 0.6;
+}
+
+.st-scalebar .st-scale {
+  width: 7rem;
+  height: 0.6rem;
+}
+
+/* THE CHART HOST. Its height is the flex remainder of the panel; the canvas is out of flow inside
+   it so it can never feed back into that height. See ChartBox for the loop this replaced. */
+.st-chartbox {
+  position: relative;
+  min-width: 0;
+  /* A DEFINITE HEIGHT FROM THE VIEWPORT, not a measurement of anything that contains the canvas.
+     A flex remainder would be better if every panel were a two-element column, but they are not:
+     the charts sit several levels down inside tables, legends and stat lists, and a remainder that
+     has to survive that nesting is a rule that breaks the first time a panel gains a paragraph.
+     This cannot feed back, cannot collapse to a floor, and is readable on any screen. The tab panel
+     scrolls internally, so a panel taller than its box never reaches the footer. */
+  height: clamp(340px, 72vh, 900px);
+}
+
+.st-chartcanvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+
+/* Inside the pile: the section takes the height, the controls and the note take what they need. */
+.st-inside {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.3rem;
+}
+
+.st-sectionbox {
+  height: clamp(340px, 72vh, 900px);
+}
+
+/* A SQUARE MAP CANNOT FILL A 16:9 SCREEN, so the width goes to the reading beside it.
+ *
+ * ADR-0071 puts the instrument at half the viewport or more. A pad is square and a laptop is not:
+ * even at full panel height a square map covers about 36 percent, and the rest of the row was
+ * whitespace with the legend and the statistics stacked underneath in a column of text. Measured at
+ * 1600 by 900: the dump plan came out at 7.3 percent. Putting the map and its reading side by side
+ * fills the row with instrument and reading instead of instrument and nothing, which is also what
+ * the layout doctrine asks for: fill the width with grids and figures, not stretched body text.
+ *
+ * ONLY THE PLAN PANEL. The other charts are wide by nature, and giving them a narrow column costs
+ * them: the dump detail and the sector charts dropped from 58 to 35 percent of the viewport when the
+ * rule applied to everything. A square map is the only case where the leftover width is a problem
+ * worth solving this way. */
+@media (min-width: 1100px) {
+  .page-body.st-layout .tabpanel > div.st-planpanel:not(.st-wide-pad) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    column-gap: 1.2rem;
+    align-items: start;
+  }
+
+  /* The chart takes the left column and all of the rows; everything else stacks on the right. */
+  .page-body.st-layout .tabpanel > div.st-planpanel:not(.st-wide-pad) > .st-chartbox {
+    grid-column: 1;
+    grid-row: 1 / span 30;
+  }
+
+  .page-body.st-layout .tabpanel > div.st-planpanel:not(.st-wide-pad) > *:not(.st-chartbox) {
+    grid-column: 2;
+  }
+
+  /* A stat list in a narrow column is a list, not a grid of cards. */
+  .page-body.st-layout .tabpanel > div:not(.st-fieldpanel) > .st-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* A WIDE PAD STACKS; a square one goes side by side.
+ *
+ * The maps preserve the site's aspect, so a 340-by-150-metre yard in a half-width column is limited
+ * by width and comes out short: measured, two of them covered 23 percent of the viewport against 57
+ * for a square pad. Stacking gives each the full width, which is the dimension a wide site needs.
+ * The pair also drops to one map when stacked, because two wide maps stacked do not both fit. */
+.st-fieldpanel.st-wide-pad .st-pair {
+  grid-template-columns: 1fr;
+}
+
+.st-fieldpanel.st-wide-pad .st-pair .st-chartbox {
+  height: clamp(260px, 46vh, 540px);
 }

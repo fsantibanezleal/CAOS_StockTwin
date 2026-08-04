@@ -8,7 +8,7 @@
  * EVERY NUMBER ON SCREEN IS COMPUTED FROM THE EVENT LOG, never read from a baked field. That is what
  * makes them falsifiable: a reader can see the events and the answer in the same view.
  */
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   type Cut,
@@ -32,12 +32,39 @@ const EMPTY = 1e-4;
  *  before this existed, the table-led views ran at 14 to 26 percent, which is the ADR's own
  *  description of "showing chrome with a picture in it". A table is a readout, not an instrument, so
  *  each of these views now LEADS with a chart and keeps its table underneath. */
+/** A chart host whose height comes from the layout and can never come from its own canvas.
+ *
+ *  THE CANVAS IS ABSOLUTELY POSITIONED INSIDE IT, so it is out of flow and cannot push the host.
+ *  Measuring the immediate parent of an in-flow canvas is a feedback loop: a taller canvas makes a
+ *  taller parent, the next measurement reads the taller parent and makes the canvas taller again,
+ *  and the chart grows without bound. That shipped, and it is what "the graph grows to infinity"
+ *  was. The host takes the remaining flex space of the panel, which is definite.
+ */
+export function ChartBox({ children, grow = 1 }: { children: React.ReactNode; grow?: number }) {
+  return (
+    <div className="st-chartbox" style={{ flexGrow: grow }}>
+      {children}
+    </div>
+  );
+}
+
 function stageChartHeight(el?: HTMLElement | null): number {
-  // MEASURE THE BOX. A fraction of the window ignores the header, the scenario deck, the tab strip
-  // and the footer, which together are most of a laptop screen; the charts came out taller than the
-  // space they had and the panel scrolled when it should have fitted.
-  const box = el?.parentElement?.clientHeight ?? 0;
-  return Math.max(320, Math.round(box > 120 ? box - 96 : window.innerHeight * 0.52));
+  // MEASURE A BOX WHOSE HEIGHT CANNOT DEPEND ON THIS CANVAS, and that qualifier is the whole
+  // function. It used to measure `el.parentElement`, which CONTAINS the canvas: making the canvas
+  // taller made the parent taller, the next resize read the larger parent and made the canvas
+  // taller again, and the chart grew without bound until the tab was unusable. A feedback loop, not
+  // a sizing bug.
+  //
+  // The scroller is the tab panel. Its height is set by the page layout and it scrolls its content,
+  // so it is definite no matter what is inside it. What the chart may have is that height less
+  // whatever else the panel is drawing, which is measured as the panel's content minus the canvas.
+  const host = el?.parentElement;
+  if (host && host.classList.contains('st-chartbox')) {
+    // The host is a flex child with the canvas out of flow, so its height is what the layout gave
+    // it and nothing the canvas does can change it.
+    return Math.max(180, Math.round(host.clientHeight));
+  }
+  return Math.max(320, Math.round(window.innerHeight * 0.52));
 }
 
 function ramp(t: number): string {
@@ -87,7 +114,8 @@ export function PlanPanel({
       // screen, which is what ran the plan and field views past the footer.
       const availW = cv.parentElement?.clientWidth ?? 600;
       const box = cv.parentElement?.clientHeight ?? 0;
-      const availH = box > 200 ? box - 90 : Math.round(window.innerHeight * 0.58);
+      // No allowance for a legend: it moved into the column beside the map.
+      const availH = box > 200 ? box : Math.round(window.innerHeight * 0.58);
       const s = Math.min(availW / W, availH / H);
       const cssW = W * s;
       const cssH = H * s;
@@ -164,8 +192,8 @@ export function PlanPanel({
   }, [plan, loads, field, dark]);
 
   return (
-    <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+    <div className={field.nx / field.ny > 1.35 ? 'st-planpanel st-wide-pad' : 'st-planpanel'}>
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: '#0f7a3d' }} /> paddock tip
         <span className="st-key" style={{ background: '#b35c00' }} /> edge tip
@@ -191,35 +219,52 @@ export function PlanPanel({
  *  grade pattern follow the thickness, and does the coarse fraction follow either", which is a
  *  comparison, and a comparison needs the panels together. */
 export function FieldPanel({ field, dark }: { field: Field; by?: string; dark: boolean }) {
-  const views: { key: 'grade' | 'coarse' | 'thickness'; en: string }[] = [
-    { key: 'grade', en: 'grade' },
-    { key: 'coarse', en: 'coarse fraction' },
-    { key: 'thickness', en: 'thickness above ground' },
-  ];
-  // A WIDE pad stacks; a squarish one goes side by side. Three columns of a 136-by-80 field are
-  // three slivers, which is worse than one map, and the layout should follow the shape of the site
-  // rather than a fixed column count.
-  const wide = field.nx / field.ny > 1.35;
+  // TWO MAPS, SIDE BY SIDE, EACH WITH ITS OWN SELECTOR.
+  //
+  // Three fixed thumbnails is not a comparison, it is a contact sheet: the reader gets whatever three
+  // views someone chose, at a third of the width each, and cannot ask the one question this panel
+  // exists for, which is "does THIS vary with THAT". Two maps at half width are legible, and letting
+  // each one choose its variable means every pair is available instead of one fixed triple.
+  const [left, setLeft] = useState<FieldVar>('grade');
+  const [right, setRight] = useState<FieldVar>('coarse');
+
   return (
-    <div>
-      <div className={wide ? 'st-multiples st-multiples-wide' : 'st-multiples'}>
-        {views.map((v) => (
-          <figure key={v.key}>
-            <FieldMap field={field} by={v.key} dark={dark} />
-            <figcaption>{v.en}</figcaption>
+    <div className={field.nx / field.ny > 1.35 ? 'st-fieldpanel st-wide-pad' : 'st-fieldpanel'}>
+      <div className="st-pair">
+        {([[left, setLeft, 'left'], [right, setRight, 'right']] as const).map(([v, set, side]) => (
+          <figure key={side}>
+            <label className="st-sel">
+              <span>show</span>
+              <select value={v} onChange={(e) => set(e.target.value as FieldVar)}>
+                {FIELD_VARS.map((o) => (
+                  <option key={o.key} value={o.key}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <FieldMap field={field} by={v} dark={dark} />
+            <figcaption>{FIELD_VARS.find((o) => o.key === v)?.caption}</figcaption>
           </figure>
         ))}
       </div>
       <p className="st-note">
-        The same pile, coloured three ways. Grade is what the plant receives; coarse fraction is what
-        size segregation did on the way down each face; thickness is how much material is actually
-        there, measured against the ORIGINAL ground rather than against zero, which are different
-        questions on any sloping site. A cell with no material is drawn as pad, never as material at
-        grade zero: that confusion once made an empty pad read as a full pile.
+        The same pile, two variables at a time. A cell with no material is drawn as pad, never as
+        material at grade zero: that confusion once made an empty pad read as a full pile.
       </p>
     </div>
   );
 }
+
+export type FieldVar = 'grade' | 'coarse' | 'thickness' | 'lift' | 'ground';
+
+const FIELD_VARS: { key: FieldVar; label: string; caption: string }[] = [
+  { key: 'grade', label: 'grade', caption: 'grade, what the plant receives' },
+  { key: 'coarse', label: 'coarse fraction', caption: 'coarse fraction, what segregation did on each face' },
+  { key: 'thickness', label: 'thickness', caption: 'thickness of material above the ORIGINAL ground' },
+  { key: 'lift', label: 'surface elevation', caption: 'surface elevation, ground plus material' },
+  { key: 'ground', label: 'original ground', caption: 'the landform before a single load was placed' },
+];
 
 function FieldMap({
   field,
@@ -227,19 +272,26 @@ function FieldMap({
   dark,
 }: {
   field: Field;
-  by: 'grade' | 'coarse' | 'thickness';
+  by: FieldVar;
   dark: boolean;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   const { vals, lo, hi, unit } = useMemo(() => {
     const thick = field.z.map((v, i) => v - field.z0[i]);
-    const v =
+    // `lift` and `ground` are drawn EVERYWHERE, including on bare pad, because a landform is there
+    // whether or not anything was tipped on it. The other three are properties OF THE MATERIAL, so
+    // they are null where there is none.
+    const v: (number | null)[] =
       by === 'grade'
-        ? field.grade
+        ? field.grade.map((g, i) => (thick[i] > EMPTY ? g : null))
         : by === 'coarse'
-          ? field.coarse
-          : thick.map((t) => (t > EMPTY ? t : null));
+          ? field.coarse.map((c, i) => (thick[i] > EMPTY ? c : null))
+          : by === 'thickness'
+            ? thick.map((t) => (t > EMPTY ? t : null))
+            : by === 'lift'
+              ? field.z.slice()
+              : field.z0.slice();
     const present = v.filter((x): x is number => x !== null && Number.isFinite(x));
     return {
       vals: v,
@@ -253,8 +305,12 @@ function FieldMap({
     const cv = ref.current;
     if (!cv) return;
     const draw = () => {
+      // MEASURE THE HOST, not a fraction of the window. The host is a ChartBox: its height comes
+      // from the layout and the canvas inside it is out of flow, so reading it cannot feed back.
+      // A window fraction ignores the header, the tab strip and the footer, and it left two maps
+      // covering 34 percent of the screen with the space above them empty.
       const availW = cv.parentElement?.clientWidth ?? 600;
-      const availH = Math.max(220, Math.round(window.innerHeight * 0.55));
+      const availH = Math.max(220, cv.parentElement?.clientHeight ?? 400);
       const s = Math.min(availW / field.nx, availH / field.ny);
       const cssW = field.nx * s;
       const cssH = field.ny * s;
@@ -289,7 +345,7 @@ function FieldMap({
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%', imageRendering: 'pixelated' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" style={{ imageRendering: 'pixelated' }} /></ChartBox>
       <p className="st-legend">
         <span className="st-scale" />
         <span>
@@ -386,7 +442,7 @@ function EnvelopeChart({
     if (cv.parentElement) ro.observe(cv.parentElement);
     return () => ro.disconnect();
   }, [stats, dark]);
-  return <canvas ref={ref} style={{ display: 'block', width: '100%' }} />;
+  return <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>;
 }
 
 
@@ -586,7 +642,7 @@ export function SectorPanel({ sectors, dark = false }: { sectors: Sector[]; dark
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: '#b35c00' }} /> whole area
         <span className="st-key" style={{ background: '#0a6ea8' }} /> its quadrants
@@ -727,7 +783,7 @@ export function ReclaimPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: 'rgba(30,90,150,0.6)' }} /> grade in, per load
         <span className="st-key" style={{ background: '#b35c00' }} /> grade out, per cut
@@ -799,7 +855,7 @@ export function VariogramPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
     if (!cv || !vg.centres.length) return;
     const draw = () => {
       const cssW = cv.parentElement?.clientWidth ?? 600;
-      const cssH = Math.round(stageChartHeight(cv) * 0.62);
+      const cssH = stageChartHeight(cv);
       const dpr = Math.min(window.devicePixelRatio, 2);
       cv.width = cssW * dpr;
       cv.height = cssH * dpr;
@@ -847,7 +903,7 @@ export function VariogramPanel({ sc, dark }: { sc: Scenario; dark: boolean }) {
 
   return (
     <div>
-      <canvas ref={ref} style={{ display: 'block', width: '100%' }} />
+      <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-note">
         The semivariogram of the incoming stream, computed here from the load log. Its range is a
         CONSEQUENCE of how long the shovel dwells in one dig block, not a setting: consecutive trucks

@@ -1,6 +1,6 @@
 # Method 1: mass-conserving relaxation with an imposed angle of repose
 
-**Family:** geometry · **Rung:** classical · **Tier:** live · `model/heightfield.py`, `engine/heightfield.ts`
+**Family:** geometry · **Rung:** classical · **Tier:** precomputed · `bedblend/relax.py`
 
 ## What it computes
 

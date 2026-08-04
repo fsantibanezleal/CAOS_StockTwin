@@ -1,6 +1,6 @@
 # Method 13: geostatistical stream synthesis
 
-**Family:** data · **Rung:** classical · **Tier:** precompute and live · `model/stream.py`, `engine/stream.ts`
+**Family:** data · **Rung:** classical · **Tier:** precomputed · `bedblend/stream.py`
 
 ## Why the input is not white noise
 

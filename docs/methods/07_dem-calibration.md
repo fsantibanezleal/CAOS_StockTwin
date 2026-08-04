@@ -9,7 +9,7 @@ Everything else in it is geometry. So the honesty of the whole segregation tier 
 question: where does `Sr` come from, and what is the error on it?
 
 A small bidisperse pour in a discrete-element engine gives a measured apex-to-toe coarse-fraction
-profile, and `stlab/stages/calibrate.py` grid-searches the `Sr` whose continuum profile best matches
+profile, and `data-pipeline/pipeline/calibrate.py` grid-searches the `Sr` whose continuum profile best matches
 it, publishing the fit residual as the honest error bar.
 
 ## Why the lane is separate

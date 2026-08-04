@@ -11,21 +11,106 @@ reason for inclusion, a fixed seed, and a kill criterion that the bake gate enfo
 
 The reference case for the physics. One area, one material class, nothing competing for attention, so the two construction phases and the four dump profiles can actually be seen.
 
+### [`short_dwell`](short_dwell.md), Short shovel dwell, decorrelated feed
+
+The causal claim of the whole product, isolated. Grade autocorrelation is a consequence of the dig sequence rather than a property of the ore, so changing ONLY the shovel dwell must move the measured stream range and the blending result, everything else held fixed.
+
+### [`long_dwell`](long_dwell.md), Long shovel dwell, strongly correlated feed
+
+Two points define a line and three define a trend. With the reference at twenty loads per block and the short-dwell case at four, this is the third point, and the one that shows the blending benefit collapsing rather than merely weakening.
+
+### [`trending`](trending.md), Trending feed, grade drifting through the campaign
+
+Variance reduction is measured against the input variance, and a trend inflates that denominator without being the kind of variability blending can address. It is the standard way the metric flatters a bed, and the product should show it rather than avoid it.
+
+### [`erratic_feed`](erratic_feed.md), Erratic feed, high block-to-block variance
+
+The metric is a RATIO. Doubling the input spread improves it without the pile doing anything differently, and a reader who is shown only the ratio cannot tell the two apart. This case exists so the absolute output spread can be read alongside it.
+
 ### [`yard`](yard.md), Multi-area stockyard
 
 Routing by declared class is what an operation actually does, and it is the only configuration in which a sector rollup can be compared against anything. A single-area yard has one sector, so the raw-versus-sector comparison has nothing to say.
+
+### [`yard_five`](yard_five.md), Five-area yard, finer ore-control classes
+
+How many stockpiles to run is the decision an ore-control engineer actually makes, and it is a trade rather than an optimisation. Three against five, same ore, same fleet.
+
+### [`misrouted`](misrouted.md), Ore-control misclassification
+
+Published ore-control misclassification runs 5 to 20 percent before the truck moves, and blast movement adds 9 to 19 percent ore loss on top. A routing model that assumes a perfect estimate is modelling a mine that does not exist.
 
 ### [`sidehill`](sidehill.md), Sidehill fill on real topography
 
 Building on relief is what exposed two defects a flat pad physically cannot reveal: a dozer that selected material by elevation and so excavated the hill, and a relaxation that treated elevation as free-floating and eroded bedrock. The case exists so those stay fixed.
 
+### [`valley`](valley.md), Valley fill, confined on two sides
+
+Confinement is why the fill taxonomy exists at all. A valley holds the same tonnage higher and narrower than a pad does, which changes the drop height, and drop height is one of the three drivers of size segregation. It is the cleanest contrast against the flat case.
+
+### [`cross_valley`](cross_valley.md), Cross-valley fill, confined across the axis
+
+The taxonomy has five members and a product that ships three is choosing which physics to show. This is the awkward case: confinement and drainage at right angles.
+
+### [`rough_ground`](rough_ground.md), Rough ground, no prepared pad
+
+Every other case assumes someone graded the ground first. This one asks what that preparation is worth, on a landform whose average is identical to the reference.
+
+### [`intensive_feed`](intensive_feed.md), Intensive feeding, the whole budget into one area
+
+The footprint has a geometric capacity: a square of side W holds a solid whose peak cannot exceed about 0.38 W at repose, whatever the fleet delivers. Offering twice the material is how that ceiling is demonstrated rather than asserted.
+
+### [`intensive_drain`](intensive_drain.md), Intensive draining, the pile taken back down
+
+A cut crosses the layers it can reach, and how many that is depends on how deep the campaign goes. Variance reduction measured over a shallow campaign is a different quantity from the same metric over a full one, and the difference is not small.
+
+### [`light_drain`](light_drain.md), Light draining, a few large cuts
+
+Cut size is a real operating choice and it is the one the reclaim geometry actually controls. Ninety small cuts against six large ones, on the same pile, is the comparison that says whether it matters.
+
+### [`two_phase`](two_phase.md), Two sub-areas worked in sequence
+
+Sequential and simultaneous construction put the same tonnage in the same place and produce different piles, because the grade arriving at any moment goes to whichever area is open. It is the cheapest lever an operation has over what each pile contains.
+
+### [`short_bench`](short_bench.md), Short benches, more lifts
+
+Bench height is the main lever a dump designer has and it drives the physics directly: run-out down a face is the horizontal component of the bench slope, and percolation segregation only becomes significant above roughly ten to twelve metres of drop.
+
+### [`narrow_ramp`](narrow_ramp.md), Narrow access ramp
+
+Ramp width is a dump-design parameter with a real cost: every metre of corridor is capacity the footprint does not hold. Whether a narrow ramp actually costs placement is a measurement, not an assumption.
+
+### [`seldom_dozed`](seldom_dozed.md), Dozer on a long cadence
+
+Dozer availability is a real operating constraint and the source is explicit that the machine works on a cadence rather than continuously. It is also the cheapest lever on placement rate.
+
+### [`wet_material`](wet_material.md), Wet material, steeper repose
+
+Repose is not a constant. Handbook values for ores span 34 to 60 degrees and the value moves with size, moisture and time since dumping. Everything downstream, the geometry, the capacity of the footprint and the truck's gradient limit, follows it.
+
 ## The matrix
 
 | scenario | ground | areas | benches | loads | trucks | tags |
 |---|---|---|---|---|---|---|
-| [`single`](single.md) | heaped | 1 | 2 | 520 | 4 | basic, physics |
-| [`yard`](yard.md) | heaped | 3 | 2 | 1000 | 6 | core, sectors, routing |
-| [`sidehill`](sidehill.md) | sidehill | 1 | 2 | 520 | 4 | topography, sidehill |
+| [`single`](single.md) | heaped | 1 | 1 | 900 | 4 | basic, physics |
+| [`short_dwell`](short_dwell.md) | heaped | 1 | 1 | 900 | 4 | stream, contrast |
+| [`long_dwell`](long_dwell.md) | heaped | 1 | 1 | 900 | 4 | stream, contrast |
+| [`trending`](trending.md) | heaped | 1 | 1 | 900 | 4 | stream, trend |
+| [`erratic_feed`](erratic_feed.md) | heaped | 1 | 1 | 900 | 4 | stream, variance |
+| [`yard`](yard.md) | heaped | 3 | 1 | 2700 | 6 | core, sectors, routing |
+| [`yard_five`](yard_five.md) | heaped | 5 | 1 | 4500 | 4 | core, sectors, routing |
+| [`misrouted`](misrouted.md) | heaped | 3 | 1 | 2700 | 4 | core, sectors, routing |
+| [`sidehill`](sidehill.md) | sidehill | 1 | 1 | 900 | 4 | topography, sidehill |
+| [`valley`](valley.md) | valley | 1 | 1 | 900 | 4 | topography, valley |
+| [`cross_valley`](cross_valley.md) | cross_valley | 1 | 1 | 900 | 4 | topography, cross-valley |
+| [`rough_ground`](rough_ground.md) | heaped | 1 | 1 | 900 | 4 | topography, rough |
+| [`intensive_feed`](intensive_feed.md) | heaped | 1 | 1 | 1800 | 4 | campaign, capacity |
+| [`intensive_drain`](intensive_drain.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim |
+| [`light_drain`](light_drain.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim |
+| [`two_phase`](two_phase.md) | heaped | 2 | 1 | 1800 | 4 | campaign, sequencing |
+| [`short_bench`](short_bench.md) | heaped | 1 | 3 | 900 | 4 | operations, bench |
+| [`narrow_ramp`](narrow_ramp.md) | heaped | 1 | 1 | 900 | 4 | operations, access |
+| [`seldom_dozed`](seldom_dozed.md) | heaped | 1 | 1 | 900 | 4 | operations, dozer |
+| [`wet_material`](wet_material.md) | heaped | 1 | 1 | 900 | 4 | operations, material |
 
 ## What every bake is gated on
 

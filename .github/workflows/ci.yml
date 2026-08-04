@@ -29,7 +29,11 @@ jobs:
       - name: Tests
         run: pytest
       - name: Pipeline smoke (sandboxed; the canonical artifacts are read-only here)
-        run: python data-pipeline/run.py single --output "${{ runner.temp }}/st-smoke"
+        # A SMOKE TEST, at a reduced load budget. The point is that every stage runs and the
+        # gate passes, not that the pile is the shipped one: a full campaign is the better part
+        # of half an hour on a runner. The committed artifacts are verified separately, by
+        # scripts/check_artifacts.py, against the real thing.
+        run: python data-pipeline/run.py single --loads 120 --output "${{ runner.temp }}/st-smoke"
       - name: CONTRACT 2, manifests and artifacts consistent (no drift)
         run: python scripts/check_artifacts.py
       # The core job has only the core lane, so this executes the one example that lives there and

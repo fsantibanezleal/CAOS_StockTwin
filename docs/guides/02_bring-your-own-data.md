@@ -48,7 +48,7 @@ from stlab.model.run import RunConfig, simulate
 from stlab.io.schema import PadSpec
 
 cfg = RunConfig(case_id="my_shift", pad=PadSpec(nx=64, ny=24, cell_m=3.0, repose_deg=37.0),
-                stacking="chevron", reclaim="fullface", n_passes=24, sr=1.0)
+                fill="heaped", bench_height_m=26.0, n_benches=1, n_loads=900)
 result = simulate(cfg, report.accepted)
 print(result.metrics)
 ```

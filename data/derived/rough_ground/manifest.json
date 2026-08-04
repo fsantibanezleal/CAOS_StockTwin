@@ -1,0 +1,148 @@
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 56,
+    "loads_placed": 744,
+    "mean_displacement_m": 19.63,
+    "peak_m": 17.42,
+    "profiles": {
+      "comet": 129,
+      "oval": 272,
+      "paddock": 135,
+      "rectangular": 96,
+      "sloughed_heap": 112
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 78590.8
+  },
+  "category": "landform",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 745,
+  "gate": {
+    "kill_criterion": "Buildable ground must be below the flat pad's 100 percent while the relief stays small. A surface that is rough and fully buildable means roughness is not reaching the slope.",
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 744,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 1.0,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "rough_ground",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "Every other case assumes someone graded the ground first. This one asks what that preparation is worth, on a landform whose average is identical to the reference.",
+  "reclaim": {
+    "n_cuts": 24,
+    "tonnes": 22541.4
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02873124
+  },
+  "summary": {
+    "en": "Flat on average and rough in detail: an unprepared surface rather than a graded pad. The relief is small and the local slopes are not, which is the condition a prepared pad exists to remove.",
+    "es": "Plano en promedio y rugoso en detalle: una superficie sin preparar en vez de una plataforma nivelada. El relieve es pequeno y las pendientes locales no lo son, que es justo la condicion que una plataforma preparada existe para eliminar."
+  },
+  "tags": [
+    "topography",
+    "rough"
+  ],
+  "title": {
+    "en": "Rough ground, no prepared pad",
+    "es": "Terreno rugoso, sin plataforma preparada"
+  }
+}

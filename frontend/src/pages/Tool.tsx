@@ -25,6 +25,7 @@ import type { CaseDef } from '@fasl-work/caos-app-shell';
 import {
   type Index,
   type Scenario,
+  playState,
   loadIndex,
   loadScenario,
   segregationSummary,
@@ -32,6 +33,7 @@ import {
 } from '../lib/scenario';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
 import PlayBar from '../viz/PlayBar';
+import InsidePanel from '../viz/InsidePanel';
 import {
   DumpDetailPanel,
   FieldPanel,
@@ -77,6 +79,16 @@ function useBoxHeight<T extends HTMLElement>(): [React.RefObject<T | null>, numb
   return [ref, h];
 }
 
+/** Human labels for the matrix axes, in both languages. */
+const CATEGORY: Record<string, { en: string; es: string }> = {
+  reference: { en: 'Reference', es: 'Referencia' },
+  feed: { en: 'Feed structure', es: 'Estructura de alimentacion' },
+  yard: { en: 'Yard and routing', es: 'Patio y ruteo' },
+  landform: { en: 'Landform', es: 'Relieve' },
+  operations: { en: 'Operating choices', es: 'Decisiones operativas' },
+  physics: { en: 'Physics', es: 'Fisica' },
+};
+
 export default function Tool() {
   const lang = useShellLang() === 'es' ? 'es' : 'en';
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
@@ -93,7 +105,10 @@ export default function Tool() {
   const [showPaths, setShowPaths] = useState(true);
   const [showCrest, setShowCrest] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
-  const [frame, setFrame] = useState(-1); // -1 means the finished pile
+  const [showHistory, setShowHistory] = useState(false);
+  const [range, setRange] = useState<{ lo: number; hi: number } | null>(null);
+  // Fractional position through the build, in loads. -1 means the finished pile.
+  const [pos, setPos] = useState(-1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -101,7 +116,7 @@ export default function Tool() {
   }, []);
   useEffect(() => {
     setSc(null);
-    setFrame(-1);
+    setPos(-1);
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
   }, [sid]);
 
@@ -113,9 +128,12 @@ export default function Tool() {
       (index?.scenarios ?? []).map((s) => ({
         id: s.id,
         name: s.title[lang],
-        // NO CATEGORY. The shell groups cases under labelled headings, which is right for a deck of
-        // eleven across four categories and wrong for three: it stacked them into a 182px block and
-        // took that height straight off the instrument. One group is one row.
+        // GROUPED BY THE AXIS THEY VARY. The matrix is an experiment, not a list: reference, feed
+        // structure, yard layout, landform, operations. An earlier version dropped the category to
+        // save vertical space when there were only three cases, which was the right call then and
+        // is the wrong one for fourteen, where an ungrouped deck says nothing about what is being
+        // compared with what.
+        category: CATEGORY[s.category ?? 'physics']?.[lang] ?? s.category,
         kind: 'synthetic' as const,
         anchor: `${s.build.loads_placed} loads placed, peak ${s.build.peak_m.toFixed(1)} m`,
       })),
@@ -124,11 +142,10 @@ export default function Tool() {
 
   const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
 
-  // The surface being drawn: a build frame while scrubbing, the finished pile otherwise.
-  const surface = useMemo(() => {
-    if (!sc?.frames || frame < 0) return null;
-    return sc.frames.frames[Math.min(frame, sc.frames.frames.length - 1)]?.z ?? null;
-  }, [sc, frame]);
+  // The surface being drawn, and the load being worked: a build frame while scrubbing, the
+  // finished pile otherwise.
+  const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
+  const surface = play?.z ?? null;
 
   if (err) {
     return (
@@ -141,54 +158,22 @@ export default function Tool() {
   const site = (
     <div className="st-stagefill">
       <div className="st-canvashost" ref={stageRef}>
-      {sc && (
-        <SiteView3D
-          field={sc.field}
-          surface={surface}
-          plan={sc.plan}
-          loads={sc.loads}
-          colourBy={colour}
-          showPaths={showPaths}
-          showCrest={showCrest}
-          showPlan={showPlan}
-          dark={dark}
-          height={stageH}
-        />
-      )}
-
-      {/* ADR-0070: the readouts are overlaid on the stage, never stacked as cards beneath it. */}
-      {sc && v && seg && (
-        <div className="st-hud">
-          <div>
-            <b>{v.vrr.toFixed(3)}</b>
-            <span>{t('variance reduction', 'reducción de varianza')}</span>
-          </div>
-          <div className={v.boundReliable ? '' : 'muted'}>
-            <b>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</b>
-            <span>
-              {v.boundReliable
-                ? t('ideal 1/N bound', 'cota ideal 1/N')
-                : t('bound not reliable here', 'cota no confiable aquí')}
-            </span>
-          </div>
-          <div>
-            <b>{sc.manifest.build.loads_placed}</b>
-            <span>{t('loads placed', 'cargas colocadas')}</span>
-          </div>
-          <div>
-            <b>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</b>
-            <span>{t('tips refused', 'puntos rechazados')}</span>
-          </div>
-          <div>
-            <b>{sc.manifest.build.peak_m.toFixed(1)} m</b>
-            <span>{t('peak height', 'altura máxima')}</span>
-          </div>
-          <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
-            <b>{sc.manifest.gate.pairs_over_repose}</b>
-            <span>{t('pairs over repose', 'pares sobre reposo')}</span>
-          </div>
-        </div>
-      )}
+        {sc && (
+          <SiteView3D
+            field={sc.field}
+            surface={surface}
+            plan={sc.plan}
+            loads={sc.loads}
+            colourBy={colour}
+            showPaths={showPaths}
+            showCrest={showCrest}
+            showPlan={showPlan}
+            play={showHistory ? null : play}
+            onRange={setRange}
+            dark={dark}
+            height={stageH}
+          />
+        )}
       </div>
 
       <div className="st-controls">
@@ -200,6 +185,16 @@ export default function Tool() {
             <option value="thickness">{t('thickness', 'espesor')}</option>
           </select>
         </label>
+        {/* THE SCALE, WITH NUMBERS ON IT. A ramp the reader cannot read is decoration, and the
+            range moves with the scenario and the variable, so it cannot be written into a caption. */}
+        {range && (
+          <span className="st-scalebar" aria-label={t('Colour scale', 'Escala de color')}>
+            <b>{range.lo.toFixed(colour === 'thickness' ? 1 : 3)}</b>
+            <i className="st-scale" />
+            <b>{range.hi.toFixed(colour === 'thickness' ? 1 : 3)}</b>
+            <em>{colour === 'grade' ? 'g/t' : colour === 'thickness' ? 'm' : ''}</em>
+          </span>
+        )}
         <div className="st-toggles">
           <label>
             <input type="checkbox" checked={showPaths} onChange={(e) => setShowPaths(e.target.checked)} />
@@ -212,6 +207,19 @@ export default function Tool() {
           <label>
             <input type="checkbox" checked={showPlan} onChange={(e) => setShowPlan(e.target.checked)} />
             {t('areas', 'áreas')}
+          </label>
+          <label
+            title={t(
+              'Off: only the truck working at this frame. On: the recent history, which shows how the campaign reached the whole area.',
+              'Apagado: solo el camion que trabaja en este cuadro. Encendido: el historial reciente, que muestra como la campana alcanzo toda el area.',
+            )}
+          >
+            <input
+              type="checkbox"
+              checked={showHistory}
+              onChange={(e) => setShowHistory(e.target.checked)}
+            />
+            {t('path history', 'historial de rutas')}
           </label>
         </div>
         <span
@@ -229,8 +237,8 @@ export default function Tool() {
         {sc && (
           <PlayBar
             frames={sc.frames}
-            index={frame < 0 ? (sc.frames?.frames.length ?? 1) - 1 : frame}
-            onIndex={setFrame}
+            pos={pos < 0 ? (sc.frames?.frames.length ?? 1) - 1 : pos}
+            onPos={setPos}
             lang={lang}
           />
         )}
@@ -249,6 +257,13 @@ export default function Tool() {
       id: 'field',
       label: t('Raw field', 'Campo crudo'),
       content: sc ? <FieldPanel field={sc.field} dark={dark} /> : null,
+    },
+    {
+      // SECOND, not last. What is inside the pile is the subject of the product, so it sits beside
+      // the site view rather than at the end of a row of analyses.
+      id: 'inside',
+      label: t('Inside the pile', 'Dentro de la pila'),
+      content: sc ? <InsidePanel sc={sc} dark={dark} lang={lang} /> : null,
     },
     {
       id: 'dump',
@@ -274,8 +289,10 @@ export default function Tool() {
 
   return (
     <div className="page-body st-layout">
-      {/* The scenario deck and the focus entry on ONE surface, per ADR-0070. */}
-      <div className="st-deck">
+      {/* THE LEFT RAIL: pick the case here, read the answer here. Both belong on one surface,
+          because choosing a scenario and seeing what it produced is a single act. The focus entry
+          sits with them, per ADR-0070. */}
+      <aside className="st-rail">
         <CaseSelector
           cases={cases}
           selectedId={sid}
@@ -284,15 +301,67 @@ export default function Tool() {
           deepLink
           ariaLabel={t('Scenario', 'Escenario')}
         />
+
         <button type="button" className="st-focus" onClick={toFocus}>
           <Maximize2 size={14} aria-hidden />
           <span>{t('Focus view', 'Vista enfocada')}</span>
         </button>
+
+        {sc && v && seg && (
+          <dl className="st-kpis">
+            <div>
+              <dt>{t('variance reduction', 'reducción de varianza')}</dt>
+              <dd>{v.vrr.toFixed(3)}</dd>
+            </div>
+            <div className={v.boundReliable ? undefined : 'muted'}>
+              <dt>{v.boundReliable ? t('ideal 1/N bound', 'cota ideal 1/N') : t('bound not reliable', 'cota no confiable')}</dt>
+              <dd>{v.boundReliable ? v.ideal.toFixed(3) : 'n/a'}</dd>
+            </div>
+            <div>
+              <dt>{t('loads placed', 'cargas colocadas')}</dt>
+              <dd>{sc.manifest.build.loads_placed}</dd>
+            </div>
+            <div>
+              <dt>{t('tips refused', 'puntos rechazados')}</dt>
+              <dd>{(sc.manifest.build.refusal_rate * 100).toFixed(1)}%</dd>
+            </div>
+            <div>
+              <dt>{t('peak height', 'altura máxima')}</dt>
+              <dd>{sc.manifest.build.peak_m.toFixed(1)} m</dd>
+            </div>
+            <div>
+              <dt>{t('material placed', 'material colocado')}</dt>
+              {/* The locale is pinned to the UI language, not left to the browser. Unpinned,
+                  `toLocaleString()` on a Spanish-locale machine rendered 33644 as "33.644" inside an
+                  English page, where it reads as thirty-three point six. */}
+              <dd>{Math.round(sc.manifest.build.volume_m3).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')} m3</dd>
+            </div>
+            <div>
+              <dt>{t('dozer displacement', 'desplazamiento del bulldozer')}</dt>
+              <dd>{sc.manifest.build.mean_displacement_m.toFixed(1)} m</dd>
+            </div>
+            <div>
+              <dt>{t('stream range, measured', 'rango del flujo, medido')}</dt>
+              <dd>{sc.manifest.stream.measured_range_t.toFixed(0)} t</dd>
+            </div>
+            <div>
+              <dt>{t('loads sorted on a face', 'cargas clasificadas en cara')}</dt>
+              <dd>{seg.nSorted}</dd>
+            </div>
+            <div className={sc.manifest.gate.pairs_over_repose === 0 ? 'ok' : 'bad'}>
+              <dt>{t('pairs over repose', 'pares sobre reposo')}</dt>
+              <dd>{sc.manifest.gate.pairs_over_repose}</dd>
+            </div>
+          </dl>
+        )}
+      </aside>
+
+      <div className="st-main">
+        {!sc && (
+          <p className="st-note">{t('Loading the scenario ...', 'Cargando el escenario ...')}</p>
+        )}
+        <Tabs tabs={tabs} initial="site" ariaLabel={t('Views', 'Vistas')} />
       </div>
-
-      {!sc && <p className="st-note">{t('Loading the scenario ...', 'Cargando el escenario ...')}</p>}
-
-      <Tabs tabs={tabs} initial="site" ariaLabel={t('Views', 'Vistas')} />
     </div>
   );
 }

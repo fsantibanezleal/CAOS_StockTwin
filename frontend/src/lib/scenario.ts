@@ -66,6 +66,16 @@ export interface Load {
   profile?: 'paddock' | 'oval' | 'comet' | 'rectangular' | 'sloughed_heap' | null;
   d_crest?: number;
   head?: number;
+  /** The multi-element assay, generated around the copper grade from shared geological factors. */
+  cu?: number;
+  mo?: number;
+  au?: number;
+  ag?: number;
+  fe?: number;
+  clay?: number;
+  ph?: number;
+  moisture?: number;
+  recovery?: number;
   len?: number;
   wid?: number;
   thick?: number;
@@ -92,12 +102,50 @@ export interface Field {
 
 /** Surface snapshots through the build, so the pile can be watched growing rather than only
  *  inspected once finished. */
+/** The pile as a block model: one deposition event per voxel, on a fixed vertical grid.
+ *
+ *  THIS IS THE PRODUCT. Only the surface used to ship, so the app could say what the top of the pile
+ *  looks like and nothing at all about what is inside it, which is the wrong half of a stockpile.
+ *  A column is `[k0, events]`: the lowest occupied voxel index and the events above it, contiguous.
+ *  `null` is a column with no material. The assay is joined by event from the load log, so adding a
+ *  variable costs nothing here and cannot desynchronise from the geometry. */
+export interface Volume {
+  nx: number;
+  ny: number;
+  nz: number;
+  cell_m: number;
+  dz_m: number;
+  base_m: number;
+  z0: number[];
+  columns: ([number, number[]] | null)[];
+}
+
+/** One assay variable, declared by the generator so the selector and the units cannot drift. */
+export interface AssayVar {
+  key: string;
+  label: string;
+  unit: string;
+  lo: number;
+  hi: number;
+  decimals: number;
+}
+
 export interface Frames {
   nx: number;
   ny: number;
   cell_m: number;
   z0: number[];
-  frames: { placed: number; z: number[] }[];
+  /** `nx` and `ny` are the FULL terrain grid. The `z` arrays are sampled every `step` cells in each
+   *  direction, so each one holds `ceil(nx/step) * ceil(ny/step)` values and has to be expanded
+   *  before it can be drawn against the field. `seq` is the sequence number of the load just placed,
+   *  which is what lets a player show the truck working right now instead of every path ever
+   *  driven. */
+  step?: number;
+  /** The first frame is complete; the rest carry only the cells that changed, as flat
+   *  [index, value, index, value] pairs. A load touches a couple of dozen cells and leaves the rest
+   *  alone, so a full surface per frame writes the same numbers hundreds of times: 2.6 MB per
+   *  scenario against 110 MB for the whole site. `expandFrame` accumulates them. */
+  frames: { seq: number; placed: number; z?: number[]; d?: number[] }[];
 }
 
 export interface Cut {
@@ -128,10 +176,14 @@ export interface Sector {
 
 export interface Manifest {
   id: string;
+  /** Which axis of the matrix this scenario varies. Groups the case selector. */
+  category?: string;
   title: { en: string; es: string };
   summary: { en: string; es: string };
   reason: string;
   tags: string[];
+  /** The assay variable table, declared by the generator that produced the loads. */
+  assay_variables?: AssayVar[];
   seed: number;
   pad: { nx: number; ny: number; cell_m: number };
   material: { repose_deg: number; loose_density_t_m3: number };
@@ -171,6 +223,7 @@ export interface Scenario {
   field: Field;
   cuts: Cut[];
   sectors: { areas: Sector[] };
+  volume: Volume | null;
 }
 
 export interface TopographyRow {
@@ -181,7 +234,7 @@ export interface TopographyRow {
 }
 
 export interface Index {
-  scenarios: Pick<Manifest, 'id' | 'title' | 'summary' | 'tags' | 'build' | 'gate'>[];
+  scenarios: Pick<Manifest, 'id' | 'category' | 'title' | 'summary' | 'tags' | 'build' | 'gate'>[];
   topography: TopographyRow[];
 }
 
@@ -204,7 +257,7 @@ export async function loadIndex(): Promise<Index> {
 }
 
 export async function loadScenario(id: string): Promise<Scenario> {
-  const [manifest, plan, loads, field, cuts, sectors, frames] = await Promise.all([
+  const [manifest, plan, loads, field, cuts, sectors, frames, volume] = await Promise.all([
     get<Manifest>(`${id}/manifest.json`),
     get<Plan>(`${id}/plan.json`),
     get<Load[]>(`${id}/loads.json`),
@@ -215,8 +268,9 @@ export async function loadScenario(id: string): Promise<Scenario> {
     // just cannot be played. Failing the whole page over a missing animation would be the wrong
     // trade.
     get<Frames>(`${id}/frames.json`).catch(() => null),
+    get<Volume>(`${id}/volume.json`).catch(() => null),
   ]);
-  return { manifest, plan, loads, field, cuts, sectors, frames };
+  return { manifest, plan, loads, field, cuts, sectors, frames, volume };
 }
 
 /* ------------------------------------------------------------------------------------------- */
@@ -422,4 +476,204 @@ export function thickness(f: Field): number[] {
 
 export function extent(f: Field): { w: number; h: number } {
   return { w: f.nx * f.cell_m, h: f.ny * f.cell_m };
+}
+
+
+/** Where the truck is, and what the ground looks like, at a fractional position through the build.
+ *
+ * A LOAD IS AN EVENT WITH A DURATION, not an instant. Given `pos = 12.4` this returns the state 40
+ * percent of the way through load 12: the truck part-way along its approach, and the surface still
+ * the one it is driving onto. The three phases are drive in, tip, drive out, and the material
+ * appears at the tip rather than fading in, because that is what tipping is.
+ */
+export interface PlayState {
+  /** Sequence number of the load being worked. */
+  seq: number;
+  /** Surface to draw. */
+  z: number[] | null;
+  /** Truck position and heading in pad metres, or null before the first load. */
+  truck: { x: number; y: number; heading: number } | null;
+  /** The part of the route already driven, for drawing the trail behind the truck. */
+  trail: [number, number][];
+  /** The part still to drive. */
+  ahead: [number, number][];
+  /** Which of the three phases we are in. */
+  phase: 'approach' | 'tip' | 'departure';
+}
+
+const APPROACH_FRAC = 0.45;
+const TIP_FRAC = 0.15;
+
+/** Walk a polyline to a fraction of its length, returning the point, heading, and the split. */
+function walk(
+  path: [number, number][],
+  f: number,
+): { x: number; y: number; heading: number; done: [number, number][]; left: [number, number][] } | null {
+  if (path.length < 2) return null;
+  const segs: number[] = [];
+  let total = 0;
+  for (let i = 1; i < path.length; i++) {
+    const d = Math.hypot(path[i][0] - path[i - 1][0], path[i][1] - path[i - 1][1]);
+    segs.push(d);
+    total += d;
+  }
+  if (total <= 0) return null;
+  let want = Math.min(Math.max(f, 0), 1) * total;
+  for (let i = 0; i < segs.length; i++) {
+    if (want <= segs[i] || i === segs.length - 1) {
+      const u = segs[i] > 0 ? Math.min(want / segs[i], 1) : 1;
+      const a = path[i];
+      const b = path[i + 1];
+      const x = a[0] + (b[0] - a[0]) * u;
+      const y = a[1] + (b[1] - a[1]) * u;
+      return {
+        x,
+        y,
+        heading: Math.atan2(b[1] - a[1], b[0] - a[0]),
+        done: [...path.slice(0, i + 1), [x, y]],
+        left: [[x, y], ...path.slice(i + 1)],
+      };
+    }
+    want -= segs[i];
+  }
+  return null;
+}
+
+/** Resolve a fractional build position into everything the scene needs to draw one moment. */
+export function playState(sc: Scenario, pos: number): PlayState | null {
+  const f = sc.frames;
+  if (!f || !f.frames.length) return null;
+  const i = Math.min(Math.max(Math.floor(pos), 0), f.frames.length - 1);
+  const frac = Math.min(Math.max(pos - i, 0), 1);
+  const cur = f.frames[i];
+  const load = sc.loads.find((l) => l.seq === cur.seq) ?? null;
+
+  // The surface BEFORE this load is the previous frame; the surface after is this one. Material
+  // appears when the tray goes up, not gradually while the truck is still driving.
+  const before = i > 0 ? expandFrame(f, i - 1) : expandFrame(f, 0);
+  const after = expandFrame(f, i);
+
+  let phase: PlayState['phase'] = 'approach';
+  let sub = 0;
+  if (frac < APPROACH_FRAC) {
+    phase = 'approach';
+    sub = frac / APPROACH_FRAC;
+  } else if (frac < APPROACH_FRAC + TIP_FRAC) {
+    phase = 'tip';
+    sub = (frac - APPROACH_FRAC) / TIP_FRAC;
+  } else {
+    phase = 'departure';
+    sub = (frac - APPROACH_FRAC - TIP_FRAC) / (1 - APPROACH_FRAC - TIP_FRAC);
+  }
+
+  const path = phase === 'departure' ? (load?.departure ?? []) : (load?.approach ?? []);
+  const w = walk(path as [number, number][], phase === 'tip' ? 1 : sub);
+
+  return {
+    seq: cur.seq,
+    z: phase === 'approach' ? before : after,
+    truck: w
+      ? { x: w.x, y: w.y, heading: w.heading }
+      : load && load.x !== undefined && load.y !== undefined
+        ? { x: load.x, y: load.y, heading: load.head ?? 0 }
+        : null,
+    trail: w ? w.done : [],
+    ahead: w ? w.left : [],
+    phase,
+  };
+}
+
+/** Expand one playback frame back onto the full terrain grid.
+ *
+ * Frames are stored at half resolution because a hundred and forty of them at full resolution is
+ * megabytes for something that is watched rather than measured. THE EXPANSION IS NOT OPTIONAL: the
+ * renderer indexes the surface as `z[j * nx + i]`, so a half-length array does not merely look
+ * coarse, it reads the wrong cells entirely. An earlier version guarded with a length check and fell
+ * back to the finished pile, which meant the player appeared to work while showing the same surface
+ * for every frame.
+ *
+ * Bilinear, not nearest: over a two-cell stride nearest gives a blocky staircase that reads as a
+ * rendering fault. It rounds the crest by a fraction of a cell while playing; the final state is
+ * drawn from the real field, so nothing measured is affected.
+ */
+/** The coarse surface at `index`, accumulating deltas from the last complete frame. Cached, because
+ *  playing forward would otherwise replay the whole history on every tick. */
+const COARSE = new WeakMap<Frames, { at: number; z: number[] }>();
+
+function coarseAt(f: Frames, index: number): number[] | null {
+  const first = f.frames[0];
+  if (!first?.z) return null;
+  const cache = COARSE.get(f);
+  let at: number;
+  let z: number[];
+  if (cache && cache.at <= index) {
+    at = cache.at;
+    z = cache.z;
+  } else {
+    at = 0;
+    z = first.z.slice();
+  }
+  for (let k = at + 1; k <= index; k++) {
+    const fr = f.frames[k];
+    if (!fr) break;
+    if (fr.z) {
+      z = fr.z.slice();
+    } else if (fr.d) {
+      for (let i = 0; i + 1 < fr.d.length; i += 2) z[fr.d[i]] = fr.d[i + 1];
+    }
+  }
+  COARSE.set(f, { at: index, z });
+  return z;
+}
+
+export function expandFrame(f: Frames, index: number): number[] | null {
+  const fr = f.frames[index];
+  if (!fr) return null;
+  const coarse = coarseAt(f, index);
+  if (!coarse) return null;
+  const step = f.step ?? 1;
+  if (step === 1) return coarse.slice();
+
+  const { nx, ny } = f;
+  const hnx = Math.ceil(nx / step);
+  const hny = Math.ceil(ny / step);
+  if (coarse.length !== hnx * hny) return null;
+
+  const out = new Array<number>(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const v = j / step;
+    const j0 = Math.min(Math.floor(v), hny - 1);
+    const j1 = Math.min(j0 + 1, hny - 1);
+    const tj = v - j0;
+    for (let i = 0; i < nx; i++) {
+      const u = i / step;
+      const i0 = Math.min(Math.floor(u), hnx - 1);
+      const i1 = Math.min(i0 + 1, hnx - 1);
+      const ti = u - i0;
+      const a = coarse[j0 * hnx + i0];
+      const b = coarse[j0 * hnx + i1];
+      const c = coarse[j1 * hnx + i0];
+      const d = coarse[j1 * hnx + i1];
+      out[j * nx + i] = (a + (b - a) * ti) * (1 - tj) + (c + (d - c) * ti) * tj;
+    }
+  }
+  return out;
+}
+
+
+/** Assay value for one deposition event, or null if the event is not in the log.
+ *
+ *  The volume stores an event per voxel and the assay lives on the load. Joining them here rather
+ *  than baking the assay into every voxel is what keeps the artifact at a hundred kilobytes instead
+ *  of tens of megabytes, and it means a new variable never requires a re-bake of the geometry.
+ */
+export function assayIndex(loads: Load[]): Map<number, Load> {
+  const m = new Map<number, Load>();
+  for (const l of loads) if (l.placed) m.set(l.seq, l);
+  return m;
+}
+
+/** Elevation of the centre of voxel `k`, in pad metres. */
+export function voxelZ(vol: Volume, k: number): number {
+  return vol.base_m + (k + 0.5) * vol.dz_m;
 }

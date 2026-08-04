@@ -1,0 +1,148 @@
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 396,
+    "loads_placed": 545,
+    "mean_displacement_m": 75.39,
+    "peak_m": 11.55,
+    "profiles": {
+      "comet": 101,
+      "oval": 198,
+      "paddock": 164,
+      "rectangular": 70,
+      "sloughed_heap": 12
+    },
+    "refusal_rate": 0.3944,
+    "volume_m3": 57456.7
+  },
+  "category": "operations",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 546,
+  "gate": {
+    "kill_criterion": "The spread of the coarse fraction must be NARROWER than the reference. A nine-metre bench cascades about fourteen metres, at the bottom of the measured envelope; if segregation is unchanged it is not being driven by the face at all.",
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 545,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.3944,
+    "stable_tolerance_deg": 1.0,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "short_bench",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "Bench height is the main lever a dump designer has and it drives the physics directly: run-out down a face is the horizontal component of the bench slope, and percolation segregation only becomes significant above roughly ten to twelve metres of drop.",
+  "reclaim": {
+    "n_cuts": 24,
+    "tonnes": 16727.3
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02389555
+  },
+  "summary": {
+    "en": "The same footprint built as three nine-metre lifts instead of one twenty-six. More benches mean more paddock campaigns, more dozer work and a shorter cascade down every face.",
+    "es": "La misma huella construida como tres levantes de nueve metros en vez de uno de veintiseis. Mas bancos significan mas campanas de paddock, mas trabajo de bulldozer y una cascada mas corta en cada cara."
+  },
+  "tags": [
+    "operations",
+    "bench"
+  ],
+  "title": {
+    "en": "Short benches, more lifts",
+    "es": "Bancos bajos, mas levantes"
+  }
+}
