@@ -669,8 +669,13 @@
   list-style: none;
   margin: -0.6rem 0 1.4rem;
   padding: 0 0 0 0.2rem;
+  /* TWO UP WHERE THERE IS ROOM. The prose is held at a reading measure, which is right for prose and
+     leaves the right half of a 1200px page empty; the doctrine is to fill that width with grids and
+     figures rather than with stretched body text. A glossary is a grid. */
   display: grid;
-  gap: 0.22rem;
+  grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
+  gap: 0.22rem 1.6rem;
+  max-width: none;
   font-size: 0.82rem;
   line-height: 1.5;
   opacity: 0.86;
