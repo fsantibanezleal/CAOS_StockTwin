@@ -9,6 +9,72 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.04.000] - 2026-08-04
+
+A 78-agent audit checked all 148 rules of the frontend ADRs against every surface of this product
+and confirmed 61 violations, 10 of them blocking. This release is the pass over them, plus the two
+further defects the new click-through gate found while it was being written.
+
+### Added
+
+- **Three continuous knobs that recompute the verdict in the browser**, so the App is a parametrized
+  instrument rather than a case picker with a layer toggle. Surge averaging, cutoff grade and the
+  independent-source threshold are each a decision a plant makes about a pile it did not build, each
+  recomputes from the cut ledger on every move, and the 1/N bound moves with them because that is
+  the arithmetic. What changes what was BUILT stays a readout, honestly labelled as fixed by the
+  bake. A grade-tonnage curve comes with the cutoff.
+- **A click-through gate for the focus flow**, which is ADR-0070 clause 8 verified by clicking rather
+  than by fetching a URL: load the App, click the entry, assert the focus view, click return, assert
+  the App came back on the same scenario with the same parameter values. It runs in both themes,
+  asserts the 80 percent focus-stage floor, the 50 percent App-instrument floor and that the rail
+  does not scroll, and it is wired into CI.
+- **Value readouts under the cursor** on the 3-D stage, resolved by raycast to a cell and reported in
+  physical units with the position in metres, and keyboard operation on every instrument: arrows
+  orbit or pan, plus and minus zoom, Home recentres.
+- **Heatmap interactions the rubric requires**: wheel zoom about the pointer, drag pan, double-click
+  reset, adjustable clip percentiles, and a shift-drag region select driving a linked profile chart.
+- **A protocol tab on Experiments** carrying the real held-out protocol as a figure with the
+  anti-pattern struck out beside it, the metrics as equations with their real constants, and the
+  table of what every case was built from.
+- **Sixteen equations, eight figures and eight per-section reference rows on Methodology**, one
+  Deployment section and five more engine stages on Implementation, and the pipeline as an ordered
+  list with a fourteen-symbol glossary on Introduction.
+
+### Fixed
+
+- **The panel furniture was missing entirely.** Nineteen classes every panel asks for were defined
+  nowhere: the v1 stylesheet that carried them was culled and the panels were never updated, so every
+  table in the workbench rendered as a browser-default table and the focus entry as an unstyled
+  button.
+- **The focus route was dark in both themes**, because its whole surface was keyed to a custom
+  property defined nowhere in the product, so the hardcoded fallback fired every time.
+- **The focus stage failed its own 80 percent floor at 1280x800** (77.5 percent) because the rail had
+  been under-sized to 288px, below the ADR's 300-340px band. Both hold now: docked at 320px above
+  1500px, an overlay drawer over a full-bleed stage below it.
+- **The round trip reset the reader's work.** It carried the case id and nothing else; the whole view
+  state now travels in the query string in both directions.
+- **The colour scale rendered nothing.** The ramp element had a size and no background; it is painted
+  from the same colormap array the stage samples.
+- **Three copies of a jet-family colour ramp** replaced by viridis from the shared module.
+- **Four charts hand-drawn on raw canvas** ported to uPlot, so they gain drag zoom, a cursor readout,
+  a reset, a keyboard path and a screen-reader table, with the detections drawn ON them.
+- **SitePanels and the focus route were English-only in their entirety**, the App shipped an
+  untranslated axis heading and an English-only error branch, and one Spanish string read "the bell"
+  where it meant "the campaign".
+- **The App instrument at 48.1 percent and the rail overflowing by 135px** at 1280x800, both found by
+  the new gate and both re-measured green at 51.3 percent and zero.
+- **The architecture diagrams described software that does not exist**: a live TypeScript physics
+  engine, conveyor stacking geometries, seventeen cases, and fourteen module paths present in no
+  repository. Re-authored, with the generator that owned them deleted per ADR-0058.
+
+### Changed
+
+- The kill criterion is bilingual in the artifact schema and in the twenty baked manifests.
+- Citation ids follow the required authorYYYY pattern.
+- The footer carries the required engine provenance as one clause.
+- Routes are declared once and read by both the nav and the router.
+
+
 ## [0.02.001] - 2026-08-01
 
 Two defects found by LOOKING at the deployed site rather than by reading the build, which passed
