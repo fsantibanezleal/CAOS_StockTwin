@@ -60,7 +60,7 @@ export default function Introduction() {
           {es
             ? 'Veintiocho descargas reales de un CAT 793F, relevadas por fotogrametria con dron, se clasifican en cuatro perfiles: oval, cometa, rectangular y monton derrumbado. Cual se forma lo decide la posicion del camion respecto de la cresta: descargar lejos de la cresta produce un monton derrumbado; descargar contra la cresta produce cometa, oval o rectangular. Los rangos medidos son 13 a 46 m de largo, 11 a 23 m de ancho y 0,37 a 2,03 m de espesor.'
             : 'Twenty-eight real CAT 793F dumps, surveyed by UAV photogrammetry, classify into four profiles: oval, comet, rectangular and sloughed heap. Which one forms is decided by the truck position relative to the crest: dumping far from the crest produces a sloughed heap, while dumping against the crest produces a comet, an oval or a rectangle. The measured ranges are 13 to 46 m long, 11 to 23 m wide and 0.37 to 2.03 m thick.'}
-          {' '}<Cite id="young2022" paren /> <Cite id="youngdata2021" paren />
+          {' '}<Cite id="young2022" paren /> <Cite id="young2021b" paren />
         </p>
         <Callout variant="honest" title={es ? 'Lo que este producto NO modela' : 'What this product does NOT model'}>
           {es
@@ -95,7 +95,7 @@ export default function Introduction() {
             : 'And the grade already arrives uncertain. Misclassification of ore to waste or waste to ore from sampling error alone is commonly between 5 and 20 percent at base and precious metal mines, with a further 9 to 19 percent ore loss from blast movement and dilution. A model showing a crisp grade per cell hides a known error rather than reporting it.'}
           {' '}<Cite id="young2021" paren />
         </p>
-        <Refs ids={['young2021', 'young2022', 'youngdata2021', 'moraga2017', 'zhao2021']} label="Refs" />
+        <Refs ids={['young2021', 'young2022', 'young2021b', 'moraga2017', 'zhao2021']} label="Refs" />
         </>
       ),
     },

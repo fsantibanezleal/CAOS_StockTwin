@@ -48,6 +48,7 @@ from bedblend.truck import Fleet, passable_mask
 
 from .assay import VARIABLES as ASSAY_VARIABLES
 from .assay import assay_for
+from .kill_es import KILL_ES
 from .scenarios import Scenario, by_id, class_thresholds, route_to_area
 
 ROUND = 3       # metres and grades are meaningless past a millimetre or a thousandth of a percent
@@ -318,7 +319,11 @@ def _gate(scn: Scenario, res: BuildResult, cuts: list[Cut], loads: list) -> dict
         "loads_placed": placed,
         "refusal_rate": _r(res.refusal_rate, 4),
         "mass_residual_rel": _r(abs(got - expected) / expected if expected else 0.0, 9),
-        "kill_criterion": scn.kill_criterion,
+        # BILINGUAL LIKE EVERY OTHER USER-VISIBLE STRING. The Experiments page renders this
+        # verbatim, so an English-only field is an English-only page for a Spanish reader,
+        # whatever the language toggle says. The English is the specification and lives with
+        # the scenario; the Spanish lives in kill_es.py so the table stays readable.
+        "kill_criterion": {"en": scn.kill_criterion, "es": KILL_ES.get(scn.id, scn.kill_criterion)},
     }
 
 

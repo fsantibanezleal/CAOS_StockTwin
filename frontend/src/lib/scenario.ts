@@ -220,7 +220,7 @@ export interface Manifest {
     loads_placed: number;
     refusal_rate: number;
     mass_residual_rel: number;
-    kill_criterion: string;
+    kill_criterion: { en: string; es: string };
   };
 }
 

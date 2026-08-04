@@ -25,6 +25,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { assayIndex, voxelZ } from '../lib/scenario';
 import type { AssayVar, Load, Scenario } from '../lib/scenario';
+import { cssVar, viridis } from './colormap';
 
 /** Fallback for a scenario baked before the generator declared its own variable table. */
 const FALLBACK_VARS: AssayVar[] = [
@@ -41,29 +42,8 @@ const GEOMETRIC: AssayVar[] = [
 /** Cap on the vertical stretch. Beyond this a section stops reading as a landform. */
 const MAX_EXAGGERATION = 6;
 
-function ramp(t: number): [number, number, number] {
-  const u = Math.min(Math.max(t, 0), 1);
-  const stops: [number, [number, number, number]][] = [
-    [0.0, [38, 70, 120]],
-    [0.25, [58, 140, 150]],
-    [0.5, [120, 175, 110]],
-    [0.75, [220, 180, 80]],
-    [1.0, [200, 90, 60]],
-  ];
-  for (let i = 0; i < stops.length - 1; i++) {
-    const [a, ca] = stops[i];
-    const [b, cb] = stops[i + 1];
-    if (u <= b) {
-      const f = (u - a) / (b - a || 1);
-      return [
-        ca[0] + f * (cb[0] - ca[0]),
-        ca[1] + f * (cb[1] - ca[1]),
-        ca[2] + f * (cb[2] - ca[2]),
-      ];
-    }
-  }
-  return stops[stops.length - 1][1];
-}
+/** The shared perceptually-uniform ramp; see the note in colormap.ts on the three jet copies. */
+const ramp = viridis;
 
 export default function InsidePanel({
   sc,
@@ -154,10 +134,10 @@ export default function InsidePanel({
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.clearRect(0, 0, cssW, cssH);
       if (!vol || !slice) {
-        g.fillStyle = dark ? '#8b949e' : '#6b7683';
+        g.fillStyle = cssVar('--color-fg-faint', '#8b949e');
         g.font = '13px system-ui, sans-serif';
         g.fillText(
-          t('This scenario was baked without a volume.', 'Este escenario se horneo sin volumen.'),
+          t('This scenario was baked without a volume.', 'Este escenario se generó sin volumen.'),
           16,
           28,
         );
@@ -190,7 +170,7 @@ export default function InsidePanel({
       const zPix = (zm: number) => oy - (zm - vol.base_m) * scaleZ;
 
       // The ground, drawn first so the material reads as sitting ON something.
-      g.fillStyle = dark ? '#232a33' : '#d6dbe2';
+      g.fillStyle = cssVar('--color-border', '#30363d');
       g.beginPath();
       g.moveTo(ox, oy);
       for (let a = 0; a < across; a++) g.lineTo(ox + a * mPerCellX * scaleX, zPix(ground[a]));
@@ -216,8 +196,8 @@ export default function InsidePanel({
       // picture rather than a measurement, and because the lifts are what they mark.
       if (levels) {
         const step = spanZ > 24 ? 5 : spanZ > 10 ? 2 : 1;
-        g.strokeStyle = dark ? 'rgba(220,228,238,0.28)' : 'rgba(30,45,60,0.24)';
-        g.fillStyle = dark ? '#9fb0c3' : '#4a5866';
+        g.strokeStyle = `color-mix(in srgb, ${cssVar('--color-fg', '#e6edf3')} 28%, transparent)`;
+        g.fillStyle = cssVar('--color-fg-faint', '#8b949e');
         g.font = '10px system-ui, sans-serif';
         g.lineWidth = 1;
         for (let z = 0; z <= vol.base_m + spanZ; z += step) {
@@ -231,14 +211,14 @@ export default function InsidePanel({
         }
       }
 
-      g.fillStyle = dark ? '#9fb0c3' : '#4a5866';
+      g.fillStyle = cssVar('--color-fg-faint', '#8b949e');
       g.font = '10px system-ui, sans-serif';
       g.fillText(
         (axis === 'y'
-          ? `${t('section along x, at y =', 'seccion en x, en y =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`
-          : `${t('section along y, at x =', 'seccion en y, en x =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`) +
+          ? `${t('section along x, at y =', 'sección en x, en y =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`
+          : `${t('section along y, at x =', 'sección en y, en x =')} ${(slice.fixed * vol.cell_m).toFixed(0)} m`) +
           (exaggeration > 1.05
-            ? `   ${t('vertical exaggeration', 'exageracion vertical')} ${exaggeration.toFixed(1)}x`
+            ? `   ${t('vertical exaggeration', 'exageración vertical')} ${exaggeration.toFixed(1)}x`
             : `   ${t('true proportions', 'proporciones reales')}`),
         ox,
         cssH - 8,
@@ -281,7 +261,7 @@ export default function InsidePanel({
           step={0.01}
           value={at}
           onChange={(e) => setAt(Number(e.target.value))}
-          aria-label={t('Move the section through the pile', 'Mover la seccion por la pila')}
+          aria-label={t('Move the section through the pile', 'Mover la sección por la pila')}
         />
         <label className="st-toggles">
           <input type="checkbox" checked={levels} onChange={(e) => setLevels(e.target.checked)} />
@@ -304,7 +284,7 @@ export default function InsidePanel({
       <p className="st-note">
         {t(
           'A vertical slice through the pile. Every voxel carries the load it came from, so what is drawn is the material actually there rather than an interpolation of the surface. The vertical is exaggerated to make the layering readable, by the factor printed on the figure, and the level sets carry true elevations; a stockpile is a hundred and fifty metres across and fourteen tall, and at true proportions that is a strip nobody can read. Drag the section through the pile, and change what it is coloured by: the metals travel together because they came from the same hydrothermal system, iron and pH move against each other because oxidising sulphide is what makes the ground acid, and moisture follows clay because clay is what holds water.',
-          'Un corte vertical de la pila. Cada voxel lleva la carga de la que proviene, asi que lo dibujado es el material que realmente esta ahi y no una interpolacion de la superficie. La vertical se exagera para hacer legible la estratificacion, por el factor impreso en la figura, y las curvas de nivel llevan cotas reales; un acopio mide ciento cincuenta metros de ancho y catorce de alto, y en proporciones reales eso es una franja que nadie puede leer. Mueve la seccion por la pila y cambia la variable: los metales viajan juntos porque vienen del mismo sistema hidrotermal, el hierro y el pH se mueven en sentidos opuestos porque el sulfuro oxidandose es lo que acidifica, y la humedad sigue a la arcilla porque la arcilla es la que retiene el agua.',
+          'Un corte vertical de la pila. Cada vóxel lleva la carga de la que proviene, así que lo dibujado es el material que realmente está ahí y no una interpolación de la superficie. La vertical se exagera para hacer legible la estratificación, por el factor impreso en la figura, y las curvas de nivel llevan cotas reales; un acopio mide ciento cincuenta metros de ancho y catorce de alto, y en proporciones reales eso es una franja que nadie puede leer. Mueve la sección por la pila y cambia la variable: los metales viajan juntos porque vienen del mismo sistema hidrotermal, el hierro y el pH se mueven en sentidos opuestos porque el sulfuro oxidándose es lo que acidifica, y la humedad sigue a la arcilla porque la arcilla es la que retiene el agua.',
         )}
       </p>
     </div>

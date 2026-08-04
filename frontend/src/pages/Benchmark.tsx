@@ -31,7 +31,7 @@ export default function Benchmark() {
           {es
             ? 'El operador de descarga de borde se calibra contra fotogrametria por dron de descargas individuales de un CAT 793F, no contra una suposicion. El predecesor colocaba cada carga como un disco isotropico de 4,5 m de radio, que falla los tres rangos a la vez.'
             : 'The edge dump operator is calibrated against UAV photogrammetry of individual CAT 793F dumps, not against an assumption. The predecessor placed every load as an isotropic 4.5 m radius disc, which fails all three ranges at once.'}
-          {' '}<Cite id="young2022" paren /> <Cite id="youngdata2021" paren />
+          {' '}<Cite id="young2022" paren /> <Cite id="young2021b" paren />
         </p>
         <div className="st-tablewrap">
           <table className="st-table">
@@ -181,7 +181,7 @@ export default function Benchmark() {
             {es
               ? 'La segregacion se calibra contra la TABLA publicada, no contra las superficies 3-D subyacentes. El conjunto de datos esta abierto bajo CC BY; ajustar contra las superficies es trabajo futuro declarado, no algo supuesto.'
               : 'Segregation is calibrated against the published TABLE, not against the underlying 3-D surfaces. The dataset is open under CC BY; fitting against the surfaces is declared future work, not something assumed done.'}
-            {' '}<Cite id="youngdata2021" paren />
+            {' '}<Cite id="young2021b" paren />
           </li>
           <li>
             {es
@@ -206,7 +206,7 @@ export default function Benchmark() {
           </li>
         </ul>
         <Refs
-          ids={['young2021', 'young2022', 'youngdata2021', 'schramm2021', 'kumral2006', 'moraga2017']}
+          ids={['young2021', 'young2022', 'young2021b', 'schramm2021', 'kumral2006', 'moraga2017']}
           label="Refs"
         />
         </>

@@ -22,7 +22,7 @@ export const CITATIONS: Citation[] = [
     doi: '10.3390/mining2010006',
   },
   {
-    id: 'youngdata2021',
+    id: 'young2021b',
     label: 'Young (2021), dataset',
     citation: 'Young, A. Mine Haul Truck Rear Dump Profiles. Zenodo, 2021. The 3-D CAD surfaces behind the measurements above, CC BY 4.0. Cited as the underlying evidence; this engine calibrates against the published table rather than against the surfaces themselves.',
     doi: '10.5281/zenodo.5789951',
@@ -172,15 +172,27 @@ export const CITATIONS: Citation[] = [
     url: 'https://www.at-minerals.com/en/artikel/at_Design_of_blending_beds-3658023.html',
   },
   {
-    id: 'wartsila',
+    id: 'wartsila2024',
     label: 'Wartsila Encyclopedia, angle of repose',
     citation: 'Wartsila Encyclopedia of Marine and Energy Technology, entry "angle of repose". Reports ores from about 34 degrees (copper, Norway) to about 60 degrees (copper, Peru). A handbook range, used as a range and never as a measured value for a specific material.',
     url: 'https://www.wartsila.com/encyclopedia/term/angle-of-repose',
   },
   {
-    id: 'oreblocks',
+    id: 'santibanez2026',
     label: 'oreblocks (software note)',
     citation: 'Santibanez-Leal, F. oreblocks: license-free synthetic ore-body block models with a stamped exact ultimate-pit optimum. Software note, CC-BY-4.0.',
     doi: '10.5281/zenodo.21512088',
+  },
+  {
+    id: 'baffinland2017',
+    label: 'Baffinland (2017)',
+    citation: 'Baffinland Iron Mines Corporation. Mary River Project, Life of Mine Waste Rock and Ore Stockpile Management Plan, 2017. Sets out the standard fill-type taxonomy this product builds against: heaped, sidehill, valley, cross-valley and ridge crest. Regulatory filing, no DOI.',
+    url: 'https://www.baffinland.com/',
+  },
+  {
+    id: 'sillitoe2010',
+    label: 'Sillitoe (2010)',
+    citation: 'Sillitoe, R.H. Porphyry Copper Systems. Economic Geology 105(1), 3-41, 2010. The reference description of the alteration and metal zoning a porphyry system produces. The synthetic multi-element assay takes its correlation structure, not its values, from this: metals travelling together because they come from one hydrothermal system, iron and pH moving opposite ways because oxidising sulphide is what acidifies.',
+    doi: '10.2113/gsecongeo.105.1.3',
   },
 ];
