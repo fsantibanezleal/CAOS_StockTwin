@@ -112,6 +112,57 @@ def main() -> None:
         if not all("approach" in x and "departure" in x for x in placed):
             fail(f"{sid}: a placed load carries no truck path, so the site view cannot draw it")
 
+        # THE PILE MUST BE WATCHABLE COMING DOWN, not only going up.
+        #
+        # Twenty of the twenty-two shipped artifacts carried NO reclaim frames and cuts with no
+        # position at all: the app's whole reclaim half was dead on every sequential case, the orange
+        # loader never drew, and nothing failed, because a cut with a tonnage and a grade is still a
+        # valid cut and a frames file with no `reclaim` key is still valid JSON. They had been baked
+        # before the pipeline learned to record any of it and were never re-baked. Absence again, and
+        # again invisible to a check that only asks whether what is present is well formed.
+        frames = json.loads((d / "frames.json").read_text(encoding="utf-8"))
+        cuts = json.loads((d / "cuts.json").read_text(encoding="utf-8"))
+        concurrent = m["reclaim"].get("mode") == "concurrent"
+        if not frames.get("frames"):
+            fail(f"{sid}: no build frames, so the pile cannot be watched going up")
+        if concurrent:
+            # The build chain already carries the bites, so the timeline is the build alone and a
+            # separate reclaim chain would be a second, contradictory story.
+            if not all("at" in c for c in cuts):
+                fail(f"{sid}: a concurrent campaign has a cut with no `at`, so it cannot be placed "
+                     f"on the build timeline")
+        else:
+            if not frames.get("reclaim"):
+                fail(f"{sid}: no reclaim frames, so the pile is never seen coming down. Re-bake it: "
+                     f"this artifact predates the reclaim recording.")
+            if any("at" in c for c in cuts):
+                fail(f"{sid}: a sequential campaign records `at` on a cut, which only means "
+                     f"something while the pile is still being fed")
+        for i, c in enumerate(cuts):
+            missing = [k for k in ("x", "y", "cells") if k not in c]
+            if missing:
+                fail(f"{sid}: cut {i} is missing {missing}, so the app cannot draw the loader where "
+                     f"it stood")
+
+        # AND SOMETHING HAS TO COME FOR THE MATERIAL.
+        #
+        # A cut used to record a tonnage and a centroid and nothing else: the ore left the ledger and
+        # no vehicle on site carried it away, so the pile lost volume with no machine in the picture.
+        # Every cut now carries its haul cycle, an empty truck in and a loaded truck out over the
+        # area's access corridor. A cut with no `stand` is a real refusal, the campaign having cut
+        # away its own access, and a whole scenario of them means the reclaim is unserved.
+        served = [c for c in cuts if c.get("stand")]
+        if not served:
+            fail(f"{sid}: not one cut has a truck routed to it, so nothing carries the reclaimed "
+                 f"material off site. Re-bake: this artifact predates the reclaim haulage.")
+        if len(served) < 0.5 * len(cuts):
+            fail(f"{sid}: only {len(served)} of {len(cuts)} cuts could be reached by a truck, so "
+                 f"most of the reclaim has no way off site")
+        for i, c in enumerate(served):
+            for leg in ("in", "out"):
+                if len(c.get(leg) or []) < 2:
+                    fail(f"{sid}: cut {i} has no `{leg}` route, so the truck teleports")
+
         field = json.loads((d / "field.json").read_text(encoding="utf-8"))
         n = field["nx"] * field["ny"]
         for key in ("z", "z0", "grade", "coarse"):

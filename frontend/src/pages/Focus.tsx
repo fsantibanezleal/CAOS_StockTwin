@@ -34,6 +34,7 @@ import {
   type Scenario,
   cutGradeRange,
   gradeTonnage,
+  cutMarks,
   isConcurrent,
   playState,
   timelineLength,
@@ -316,6 +317,7 @@ export default function Focus() {
                 frames={sc.frames}
                 total={steps}
             concurrentCuts={isConcurrent(sc) ? sc.cuts.length : 0}
+            marks={cutMarks(sc)}
                 pos={view.pos < 0 ? Math.max(steps - 1, 0) : view.pos}
                 onPos={(p) => set('pos', p)}
                 lang={lang}

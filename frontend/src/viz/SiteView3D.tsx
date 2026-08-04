@@ -642,28 +642,90 @@ export default function SiteView3D({
       // THE RECLAIM MACHINE IS A DIFFERENT COLOUR AND A DIFFERENT SHAPE, because it is doing the
       // opposite job. A yellow haul truck brings material to the pile; an orange loader takes it
       // away. Drawing both the same would say the two halves of a stockpile's life look alike.
-      if (play?.job === 'reclaim' && play.truck) {
-        const { x, y } = play.truck;
-        const g0 = groundAt(x, y);
-        const loader = new THREE.Group();
-        const mat = new THREE.MeshLambertMaterial({ color: dark ? 0xff9d4d : 0xe07b1f });
-        const hull = new THREE.Mesh(new THREE.BoxGeometry(10, 3.2, 6.2), mat);
-        hull.position.y = 2.0;
-        loader.add(hull);
-        const cabin = new THREE.Mesh(
-          new THREE.BoxGeometry(3.2, 2.6, 5.0),
-          new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 }),
-        );
-        cabin.position.set(-1.0, 4.9, 0);
-        loader.add(cabin);
-        // The bucket, raised and lowered through the cut as the material comes out.
-        const bite = Math.sin(Math.min(Math.max(play.sub, 0), 1) * Math.PI);
-        const bucket = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.2, 6.4), mat);
-        bucket.position.set(6.4, 1.4 + 3.4 * bite, 0);
-        bucket.rotation.z = -0.5 * bite;
-        loader.add(bucket);
-        loader.position.set(x - W / 2, g0, y - H / 2);
-        L.content.add(loader);
+      // -- THE RECLAIM: TWO MACHINES, NOT ONE ----------------------------------------------------
+      //
+      // A LOADER on the cut, digging, and an ORANGE TRUCK beside it that arrived EMPTY and leaves
+      // LOADED. That pairing is the whole answer to "how does it reclaim if no truck is coming to
+      // the site": until the engine routed one, nothing was. The truck is the mirror of the yellow
+      // haul truck, which arrives loaded and leaves empty, and the two are drawn to the same
+      // silhouette so the comparison is legible: same chassis, same cab, same tray, opposite cargo.
+      if (play?.job === 'reclaim') {
+        const orange = new THREE.MeshLambertMaterial({ color: dark ? 0xff9d4d : 0xe07b1f });
+        const steel = new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 });
+
+        // THE LOADER, on the cut, working through the load phase.
+        if (play.loader) {
+          const { x, y } = play.loader;
+          const loader = new THREE.Group();
+          const hull = new THREE.Mesh(new THREE.BoxGeometry(8, 2.8, 5.4), orange);
+          hull.position.y = 1.8;
+          loader.add(hull);
+          const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.8, 2.4, 4.4), steel);
+          cabin.position.set(-0.8, 4.3, 0);
+          loader.add(cabin);
+          // The bucket only swings while the truck is actually being filled.
+          const bite = play.phase === 'tip'
+            ? Math.sin(Math.min(Math.max(play.sub, 0), 1) * Math.PI)
+            : 0;
+          const bucket = new THREE.Mesh(new THREE.BoxGeometry(3.0, 2.0, 5.6), orange);
+          bucket.position.set(5.4, 1.3 + 3.2 * bite, 0);
+          bucket.rotation.z = -0.5 * bite;
+          loader.add(bucket);
+          loader.position.set(x - W / 2, groundAt(x, y), y - H / 2);
+          L.content.add(loader);
+        }
+
+        // THE TRUCK. Empty on the way in, filling while it waits, loaded on the way out.
+        if (play.truck) {
+          const { x, y, heading } = play.truck;
+          const body = new THREE.Group();
+
+          const chassis = new THREE.Mesh(new THREE.BoxGeometry(11.5, 2.6, 6.5), orange);
+          chassis.position.y = 1.6;
+          body.add(chassis);
+
+          const cab = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.4, 5.2), steel);
+          cab.position.set(4.6, 4.1, 0);
+          body.add(cab);
+
+          const tray = new THREE.Group();
+          const floor = new THREE.Mesh(new THREE.BoxGeometry(9.2, 0.4, 6.0), orange);
+          floor.position.set(0, 0, 0);
+          tray.add(floor);
+          for (const zz of [-2.9, 2.9]) {
+            const wall = new THREE.Mesh(new THREE.BoxGeometry(9.2, 1.9, 0.35), orange);
+            wall.position.set(0, 1.0, zz);
+            tray.add(wall);
+          }
+          const head = new THREE.Mesh(new THREE.BoxGeometry(0.4, 3.4, 6.0), orange);
+          head.position.set(4.6, 1.6, 0);
+          tray.add(head);
+          tray.position.set(-0.6, 3.2, 0);
+          body.add(tray);
+
+          // THE CARGO IS THE POINT. It is absent on the way in, grows while the loader works, and
+          // rides out in the tray. A truck that looked the same in both directions would say
+          // nothing about which way the material is going.
+          const fill =
+            play.phase === 'approach'
+              ? 0
+              : play.phase === 'tip'
+                ? Math.min(Math.max(play.sub, 0), 1)
+                : 1;
+          if (fill > 0.02) {
+            const h = 0.5 + 1.7 * fill;
+            const ore = new THREE.Mesh(
+              new THREE.BoxGeometry(8.2, h, 5.2),
+              new THREE.MeshLambertMaterial({ color: dark ? 0x6f5a44 : 0x7d6549 }),
+            );
+            ore.position.set(0, 0.2 + h / 2, 0);
+            tray.add(ore);
+          }
+
+          body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
+          body.rotation.y = -heading;
+          L.content.add(body);
+        }
       }
 
       if (play?.job !== 'reclaim' && play?.truck) {
