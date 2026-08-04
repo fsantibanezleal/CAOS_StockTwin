@@ -26,6 +26,7 @@ rather than writing a pretty artifact.
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import itertools
 import json
 import math
@@ -90,9 +91,18 @@ class SnapshotRecorder:
         )
 
 
-def run(scenario_id: str, *, seed_offset: int = 0) -> BakeResult:
-    """Execute one scenario end to end, with every invariant checked as it goes."""
+def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -> BakeResult:
+    """Execute one scenario end to end, with every invariant checked as it goes.
+
+    ``n_loads`` overrides the scenario's load budget. It exists for the CI smoke test and nothing
+    else: a bake exercises routing, relaxation, dozing, segregation, reclaim and the gate, and doing
+    that at nine hundred loads takes the better part of half an hour on a runner, which is not a
+    smoke test. The reduced artifact is NOT the scenario and the caller is prevented from writing it
+    to the canonical tree.
+    """
     scn = by_id(scenario_id)
+    if n_loads is not None:
+        scn = dataclasses.replace(scn, n_loads=n_loads)
     seed = scn.seed + seed_offset
 
     terrain = scn.terrain()
@@ -619,6 +629,10 @@ def topography_report() -> list[dict]:
 def main() -> None:
     ap = argparse.ArgumentParser(prog="bake")
     ap.add_argument("scenario", nargs="?", default="all")
+    ap.add_argument("--loads", type=int, default=None,
+                    help="override the load budget. FOR SMOKE TESTS ONLY: a bake at a reduced budget "
+                         "exercises every stage and produces an artifact that is not the scenario, "
+                         "so it must never be written to the canonical tree")
     ap.add_argument("--output", default=None,
                     help="write here instead of the canonical artifact tree; ALWAYS pass this "
                          "unless you intend a release bake")
@@ -635,9 +649,15 @@ def main() -> None:
 
     todo = SCENARIOS if args.scenario == "all" else [by_id(args.scenario)]
 
+    if args.loads is not None and args.output is None:
+        raise SystemExit(
+            "--loads changes what the scenario IS, so it may only be used with --output. A reduced "
+            "bake in the canonical tree is an artifact that does not match its own manifest."
+        )
+
     for scn in todo:
         print(f"baking {scn.id} ...", flush=True)
-        bake = run(scn.id)
+        bake = run(scn.id, n_loads=args.loads)
         m = write(bake, out)
         print(
             f"  placed {m['build']['loads_placed']}  "
