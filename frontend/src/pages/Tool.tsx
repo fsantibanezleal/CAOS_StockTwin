@@ -19,21 +19,26 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Maximize2 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Tabs, useShellLang } from '@fasl-work/caos-app-shell';
+import { SubTabs, Tabs, useShellLang } from '@fasl-work/caos-app-shell';
 import type { CaseDef } from '@fasl-work/caos-app-shell';
 
 import {
   type AssayVar,
   type Index,
   type Scenario,
+  cutGradeRange,
+  gradeTonnage,
   playState,
   loadIndex,
   loadScenario,
   segregationSummary,
   surfaceValues,
   timelineLength,
-  verdict,
+  verdictAt,
 } from '../lib/scenario';
+import { axisLabel, CATEGORY_ORDER } from '../lib/axes';
+import { focusHref, readView, type ViewState } from '../lib/viewstate';
+import { cssGradient } from '../viz/colormap';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
 import PlayBar from '../viz/PlayBar';
 import InsidePanel from '../viz/InsidePanel';
@@ -93,18 +98,6 @@ function useBoxHeight<T extends HTMLElement>(): [React.RefObject<T | null>, numb
   return [ref, h];
 }
 
-/** Human labels for the matrix axes, in both languages. */
-const CATEGORY_ORDER = ['reference', 'feed', 'yard', 'landform', 'campaign', 'operations', 'physics'];
-
-const CATEGORY: Record<string, { en: string; es: string }> = {
-  reference: { en: 'Reference', es: 'Referencia' },
-  feed: { en: 'Feed structure', es: 'Estructura de alimentacion' },
-  yard: { en: 'Yard and routing', es: 'Patio y ruteo' },
-  landform: { en: 'Landform', es: 'Relieve' },
-  operations: { en: 'Operating choices', es: 'Decisiones operativas' },
-  physics: { en: 'Physics', es: 'Fisica' },
-};
-
 /** The case the reader last looked at, so the top-level Focus route can open it. */
 function readRememberedCase(): string {
   try {
@@ -152,14 +145,18 @@ export default function Tool() {
     if (q && q !== sid) setSid(q);
   }, [params, sid]);
   const [sc, setSc] = useState<Scenario | null>(null);
-  const [colour, setColour] = useState<string>('cu');
-  const [showPaths, setShowPaths] = useState(true);
-  const [showCrest, setShowCrest] = useState(true);
-  const [showPlan, setShowPlan] = useState(true);
-  const [showHistory, setShowHistory] = useState(false);
+  // EVERY VIEW PARAMETER IN ONE OBJECT, because it all has to survive the trip to the focus route
+  // and back. ADR-0070 clause 8 makes that binding in both directions, and a dozen separate useState
+  // hooks is exactly how the previous version lost all of them but the case id.
+  const [view, setView] = useState<ViewState>(() => readView(params));
+  const set = useCallback(
+    <K extends keyof ViewState>(k: K, v: ViewState[K]) => setView((s) => ({ ...s, [k]: v })),
+    [],
+  );
   const [range, setRange] = useState<{ lo: number; hi: number } | null>(null);
-  // Fractional position through the build, in loads. -1 means the finished pile.
-  const [pos, setPos] = useState(-1);
+  const [blurbOpen, setBlurbOpen] = useState(false);
+  /** Which of the two fixed-by-the-bake ledger sections the rail is showing. */
+  const [ledger, setLedger] = useState<1 | 2>(1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -167,7 +164,10 @@ export default function Tool() {
   }, []);
   useEffect(() => {
     setSc(null);
-    setPos(-1);
+    setBlurbOpen(false);
+    // The playback position is the one view parameter that does not carry across a case change: it
+    // counts loads, and two scenarios do not have the same number of them.
+    setView((s) => ({ ...s, pos: -1 }));
     loadScenario(sid).then(setSc).catch((e) => setErr(String(e)));
     // Remembered so the top-level Focus route opens the case the reader was looking at. ADR-0070
     // requires the round trip to preserve the scenario, and with the entry in the nav rather than
@@ -179,7 +179,13 @@ export default function Tool() {
     }
   }, [sid]);
 
-  const v = useMemo(() => (sc ? verdict(sc) : null), [sc]);
+  // THE VERDICT AT THE KNOB SETTING, recomputed in the browser on every move of a slider. The knobs
+  // are the operating decisions taken downstream of a pile somebody else built: how much surge
+  // averaging sits between the reclaimer and the mill, what cutoff the stream is screened at, and
+  // how large a share of a cut a dig block needs before it counts as an independent source.
+  const v = useMemo(() => (sc ? verdictAt(sc, view) : null), [sc, view]);
+  const gt = useMemo(() => (sc ? gradeTonnage(sc, view.cutoff) : null), [sc, view.cutoff]);
+  const gRange = useMemo(() => (sc ? cutGradeRange(sc) : ([0, 1] as [number, number])), [sc]);
   const seg = useMemo(() => (sc ? segregationSummary(sc) : null), [sc]);
 
   const cases: (CaseDef & { axis: string })[] = useMemo(
@@ -204,7 +210,9 @@ export default function Tool() {
   // finished pile otherwise.
   const loc = lang === 'es' ? 'es-CL' : 'en-US';
 
-  const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
+  // The focus entry carries the WHOLE view, not only the case: the reader keeps their colour field,
+  // their overlays, their knobs and their position in the build.
+  const toFocus = useCallback(() => nav(focusHref(sid, view)), [nav, sid, view]);
 
   const assayVars = useMemo<AssayVar[]>(
     () => (sc?.manifest.assay_variables as AssayVar[] | undefined) ?? [],
@@ -212,19 +220,22 @@ export default function Tool() {
   );
   // The colour field for the stage: a joined assay surface, or null to let the view use its own.
   const surfaceVals = useMemo(
-    () => (sc && assayVars.some((a) => a.key === colour) ? surfaceValues(sc, colour) : null),
-    [sc, colour, assayVars],
+    () => (sc && assayVars.some((a) => a.key === view.colour) ? surfaceValues(sc, view.colour) : null),
+    [sc, view.colour, assayVars],
   );
-  const activeVar = assayVars.find((a) => a.key === colour);
+  const activeVar = assayVars.find((a) => a.key === view.colour);
 
   const steps = useMemo(() => timelineLength(sc), [sc]);
-  const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
+  const play = useMemo(() => (sc && view.pos >= 0 ? playState(sc, view.pos) : null), [sc, view.pos]);
   const surface = play?.z ?? null;
 
   if (err) {
     return (
       <div className="page-body st-layout">
-        <p className="st-bad">Could not load the scenario data: {err}</p>
+        <p className="st-bad">
+          {t('Could not load the scenario data.', 'No se pudieron cargar los datos del escenario.')}{' '}
+          <code>{err}</code>
+        </p>
       </div>
     );
   }
@@ -238,15 +249,22 @@ export default function Tool() {
             surface={surface}
             plan={sc.plan}
             loads={sc.loads}
-            colourBy={(colour === 'coarse' || colour === 'thickness' ? colour : 'grade') as ColourBy}
+            colourBy={
+              (view.colour === 'coarse' || view.colour === 'thickness'
+                ? view.colour
+                : 'grade') as ColourBy
+            }
             values={surfaceVals}
-            showPaths={showPaths}
-            showCrest={showCrest}
-            showPlan={showPlan}
-            play={showHistory ? null : play}
+            showPaths={view.paths}
+            showCrest={view.crest}
+            showPlan={view.plan}
+            play={view.history ? null : play}
             onRange={setRange}
             dark={dark}
             height={stageH}
+            lang={lang}
+            valueLabel={activeVar?.label ?? (view.colour === 'coarse' ? t('coarse fraction', 'fracción gruesa') : t('thickness', 'espesor'))}
+            valueUnit={activeVar?.unit ?? (view.colour === 'thickness' ? 'm' : '')}
           />
         )}
       </div>
@@ -257,10 +275,17 @@ export default function Tool() {
           {/* THE WHOLE ASSAY, not just copper. The field carries a grade and a coarse fraction per
               column; everything else lives on the load, and the volume says which load is on top of
               each column, so the two join into a surface for any of the nine variables. */}
-          <select value={colour} onChange={(e) => setColour(e.target.value)}>
+          <select
+            value={view.colour}
+            onChange={(e) => set('colour', e.target.value)}
+            title={t(
+              'The quantity the material skin is coloured by. Geometry comes from the height field; every assay variable is joined from the load sitting on top of each column.',
+              'La cantidad con que se colorea la piel del material. La geometría viene del campo de alturas; cada variable de ensayo se une desde la carga que está encima de cada columna.',
+            )}
+          >
             <optgroup label={t('geometry', 'geometría')}>
               <option value="coarse">{t('coarse fraction', 'fracción gruesa')}</option>
-              <option value="thickness">{t('thickness', 'espesor')}</option>
+              <option value="thickness">{t('thickness (m)', 'espesor (m)')}</option>
             </optgroup>
             <optgroup label={t('assay at the surface', 'ensayo en la superficie')}>
               {assayVars.map((a) => (
@@ -272,39 +297,55 @@ export default function Tool() {
             </optgroup>
           </select>
         </label>
-        {/* THE SCALE, WITH NUMBERS ON IT. A ramp the reader cannot read is decoration, and the
-            range moves with the scenario and the variable, so it cannot be written into a caption. */}
+        {/* THE SCALE, WITH NUMBERS ON IT AND A RAMP IN IT. A ramp the reader cannot read is
+            decoration; a ramp element with no background at all, which is what this was, is not even
+            that. The gradient comes from the same colormap the stage samples. */}
         {range && (
           <span className="st-scalebar" aria-label={t('Colour scale', 'Escala de color')}>
-            <b>{range.lo.toFixed(activeVar?.decimals ?? (colour === 'thickness' ? 1 : 3))}</b>
-            <i className="st-scale" />
-            <b>{range.hi.toFixed(activeVar?.decimals ?? (colour === 'thickness' ? 1 : 3))}</b>
-            <em>{activeVar?.unit ?? (colour === 'thickness' ? 'm' : '')}</em>
+            <b>{range.lo.toFixed(activeVar?.decimals ?? (view.colour === 'thickness' ? 1 : 3))}</b>
+            <i className="st-scale" style={{ background: cssGradient() }} />
+            <b>{range.hi.toFixed(activeVar?.decimals ?? (view.colour === 'thickness' ? 1 : 3))}</b>
+            <em>{activeVar?.unit ?? (view.colour === 'thickness' ? 'm' : '')}</em>
           </span>
         )}
         <div className="st-toggles">
-          <label>
-            <input type="checkbox" checked={showPaths} onChange={(e) => setShowPaths(e.target.checked)} />
+          <label
+            title={t(
+              'The approach and departure route the engine solved for the truck working this frame, over ground it could actually climb.',
+              'La ruta de entrada y salida que el motor resolvió para el camión que trabaja en este cuadro, sobre terreno que realmente podía subir.',
+            )}
+          >
+            <input type="checkbox" checked={view.paths} onChange={(e) => set('paths', e.target.checked)} />
             {t('truck paths', 'rutas')}
           </label>
-          <label>
-            <input type="checkbox" checked={showCrest} onChange={(e) => setShowCrest(e.target.checked)} />
+          <label
+            title={t(
+              'The crest line of the working face: the edge every edge dump was aimed at.',
+              'La línea de cresta de la cara de trabajo: el borde al que apuntó cada descarga de borde.',
+            )}
+          >
+            <input type="checkbox" checked={view.crest} onChange={(e) => set('crest', e.target.checked)} />
             {t('crest', 'cresta')}
           </label>
-          <label>
-            <input type="checkbox" checked={showPlan} onChange={(e) => setShowPlan(e.target.checked)} />
+          <label
+            title={t(
+              'The boundaries of the planned dump areas, which the pile grows away from as the campaign proceeds.',
+              'Los límites de las áreas de descarga planificadas, de las que la pila se aleja a medida que avanza la campaña.',
+            )}
+          >
+            <input type="checkbox" checked={view.plan} onChange={(e) => set('plan', e.target.checked)} />
             {t('areas', 'áreas')}
           </label>
           <label
             title={t(
               'Off: only the truck working at this frame. On: the recent history, which shows how the campaign reached the whole area.',
-              'Apagado: solo el camion que trabaja en este cuadro. Encendido: el historial reciente, que muestra como la campana alcanzo toda el area.',
+              'Apagado: solo el camión que trabaja en este cuadro. Encendido: el historial reciente, que muestra cómo la campaña alcanzó toda el área.',
             )}
           >
             <input
               type="checkbox"
-              checked={showHistory}
-              onChange={(e) => setShowHistory(e.target.checked)}
+              checked={view.history}
+              onChange={(e) => set('history', e.target.checked)}
             />
             {t('path history', 'historial de rutas')}
           </label>
@@ -312,11 +353,11 @@ export default function Tool() {
         <span
           className="st-hint"
           title={t(
-            'Drag to orbit. Shift-drag or right-drag to pan. Wheel to zoom. Double click to recentre.',
-            'Arrastra para orbitar. Shift o botón derecho para desplazar. Rueda para acercar. Doble clic para recentrar.',
+            'Drag to orbit. Shift-drag or right-drag to pan. Wheel to zoom. Double click to recentre. Hover for the value under the cursor. With the stage focused: arrows turn, plus and minus zoom, Home recentres.',
+            'Arrastra para orbitar. Shift o botón derecho para desplazar. Rueda para acercar. Doble clic para recentrar. Pasa el cursor para leer el valor. Con el escenario enfocado: flechas giran, más y menos acercan, Inicio recentra.',
           )}
         >
-          {t('orbit · pan · zoom', 'orbitar · desplazar · zoom')}
+          {t('orbit · pan · zoom · hover to read', 'orbitar · desplazar · zoom · pasar para leer')}
         </span>
 
         {/* The transport shares the control row: every extra row of chrome is height the
@@ -325,8 +366,8 @@ export default function Tool() {
           <PlayBar
             frames={sc.frames}
             total={steps}
-            pos={pos < 0 ? Math.max(steps - 1, 0) : pos}
-            onPos={setPos}
+            pos={view.pos < 0 ? Math.max(steps - 1, 0) : view.pos}
+            onPos={(p) => set('pos', p)}
             lang={lang}
           />
         )}
@@ -339,12 +380,14 @@ export default function Tool() {
     {
       id: 'plan',
       label: t('Dump plan', 'Plan de descarga'),
-      content: sc ? <PlanPanel plan={sc.plan} loads={sc.loads} field={sc.field} dark={dark} /> : null,
+      content: sc ? (
+        <PlanPanel plan={sc.plan} loads={sc.loads} field={sc.field} dark={dark} lang={lang} />
+      ) : null,
     },
     {
       id: 'field',
       label: t('Raw field', 'Campo crudo'),
-      content: sc ? <FieldPanel field={sc.field} dark={dark} /> : null,
+      content: sc ? <FieldPanel field={sc.field} dark={dark} lang={lang} /> : null,
     },
     {
       // SECOND, not last. What is inside the pile is the subject of the product, so it sits beside
@@ -361,21 +404,36 @@ export default function Tool() {
     {
       id: 'dump',
       label: t('Dump detail', 'Detalle de descarga'),
-      content: sc ? <DumpDetailPanel sc={sc} dark={dark} /> : null,
+      content: sc ? <DumpDetailPanel sc={sc} lang={lang} /> : null,
     },
     {
       id: 'sectors',
       label: t('Sectors', 'Sectores'),
-      content: sc ? <SectorPanel sectors={sc.sectors.areas} dark={dark} /> : null,
+      content: sc ? <SectorPanel sectors={sc.sectors.areas} lang={lang} /> : null,
     },
     {
       id: 'reclaim',
       label: t('Reclaim', 'Recuperación'),
+      // TWO METHODS, TWO PANES. The cut sequence and the experimental semivariogram are separate
+      // analyses computed by separate functions, and they were stacked in one scrolling pane. ADR-0016
+      // section 6 asks for one sub-tab per discrete thing; the flat tab row is already at the
+      // ADR-0071 clause 5 limit, so they go under a SubTabs rail rather than becoming a ninth tab.
       content: sc ? (
-        <>
-          <ReclaimPanel sc={sc} dark={dark} />
-          <VariogramPanel sc={sc} dark={dark} />
-        </>
+        <SubTabs
+          ariaLabel={t('Reclaim analyses', 'Análisis de recuperación')}
+          tabs={[
+            {
+              id: 'cuts',
+              label: t('Cut sequence', 'Secuencia de cortes'),
+              content: <ReclaimPanel sc={sc} lang={lang} knobs={view} gt={gt} />,
+            },
+            {
+              id: 'variogram',
+              label: t('Semivariogram', 'Semivariograma'),
+              content: <VariogramPanel sc={sc} lang={lang} />,
+            },
+          ]}
+        />
       ) : null,
     },
   ];
@@ -410,7 +468,7 @@ export default function Tool() {
             aria-label={t('Scenario', 'Escenario')}
           >
             {CATEGORY_ORDER.filter((k) => cases.some((c) => c.axis === k)).map((k) => (
-              <optgroup key={k} label={CATEGORY[k]?.[lang] ?? k}>
+              <optgroup key={k} label={axisLabel(k, lang)}>
                 {cases
                   .filter((c) => c.axis === k)
                   .map((c) => (
@@ -423,59 +481,173 @@ export default function Tool() {
           </select>
         </label>
 
-        {sc && <p className="st-caseblurb">{sc.manifest.summary[lang]}</p>}
+        {/* BOUNDED. The blurb is the only variable-height thing in this rail, and its 81-to-179px
+            range is exactly the amount by which the rail overflowed a 1280x800 viewport on three of
+            the twenty scenarios. Four lines fit every one of them; the rest is one click away. */}
+        {sc && (
+          <div className={`st-caseblurb${blurbOpen ? ' open' : ''}`}>
+            <p>{sc.manifest.summary[lang]}</p>
+            <button type="button" onClick={() => setBlurbOpen((x) => !x)}>
+              {blurbOpen ? t('less', 'menos') : t('more', 'más')}
+            </button>
+          </div>
+        )}
 
-        {sc && v && seg && (
+        {/* THE LIVE KNOBS. ADR-0017 section 3.2: a case selector plus a layer toggle is not an App.
+            These three are continuous, they recompute the verdict from the cut ledger in the
+            browser on every move, and every one of them is a decision a plant actually makes about
+            a pile it did not build. What changes what is BUILT stays a readout, because rebuilding
+            routes every load and relaxes the whole field, which is tens of seconds of Python. */}
+        {sc && v && gt && (
+          <div className="st-knobs">
+            <h3>{t('downstream of the pile', 'aguas abajo de la pila')}</h3>
+            <label
+              title={t(
+                'How many consecutive reclaim cuts the downstream surge capacity averages before the mill sees them. Averaging k cuts multiplies the effective number of independent sources by k, so the ideal bound moves with it.',
+                'Cuántos cortes consecutivos promedia la capacidad de tolva aguas abajo antes de que la planta los reciba. Promediar k cortes multiplica por k el número efectivo de fuentes independientes, así que la cota ideal se mueve con él.',
+              )}
+            >
+              <span>
+                {t('surge averaging', 'promedio de tolva')}
+                <b>
+                  {Math.round(view.batch)} {t('cuts', 'cortes')}
+                </b>
+              </span>
+              <input
+                type="range"
+                min={1}
+                max={24}
+                step={1}
+                value={view.batch}
+                onChange={(e) => set('batch', Number(e.target.value))}
+              />
+            </label>
+            <label
+              title={t(
+                'Grade below which a reclaimed cut goes to waste rather than to the mill. The screen sits upstream of the surge bin, so it changes both the tonnage and the variance the mill sees.',
+                'Ley bajo la cual un corte recuperado va a lastre en vez de a la planta. El harnero está aguas arriba de la tolva, así que cambia tanto el tonelaje como la varianza que ve la planta.',
+              )}
+            >
+              <span>
+                {t('cutoff grade', 'ley de corte')}
+                <b>{view.cutoff > 0 ? view.cutoff.toFixed(3) : t('off', 'sin')}</b>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={gRange[1]}
+                step={(gRange[1] - gRange[0]) / 100 || 0.001}
+                value={view.cutoff}
+                onChange={(e) => set('cutoff', Number(e.target.value))}
+              />
+            </label>
+            <label
+              title={t(
+                'Minimum tonnage share a dig block must contribute to a cut before it counts as an independent source in the 1/N bound. A cut that is 95 percent one block and traces of four others is averaging one source, not five.',
+                'Participación mínima de tonelaje que un bloque debe aportar a un corte para contar como fuente independiente en la cota 1/N. Un corte que es 95 por ciento un bloque y trazas de otros cuatro promedia una fuente, no cinco.',
+              )}
+            >
+              <span>
+                {t('source threshold', 'umbral de fuente')}
+                <b>{(view.threshold * 100).toFixed(1)}%</b>
+              </span>
+              <input
+                type="range"
+                min={0}
+                max={0.2}
+                step={0.005}
+                value={view.threshold}
+                onChange={(e) => set('threshold', Number(e.target.value))}
+              />
+            </label>
+          </div>
+        )}
+
+        {sc && v && seg && gt && (
           <div className="st-kpis">
             {([
               {
+                // THIS GROUP MOVES WITH THE KNOBS. Everything below it is a property of the built
+                // pile and is fixed by the bake.
                 head: t('what the pile did', 'lo que hizo la pila'),
                 rows: [
-                  { k: t('variance reduction', 'reducción de varianza'), v: v.vrr.toFixed(3), sub: t('var out / var in', 'var salida / var entrada'), strong: true },
+                  { k: t('variance reduction', 'reducción de varianza'), v: v.vrr.toFixed(3), sub: t('var out / var in, lower is better', 'var salida / var entrada, menor es mejor'), strong: true },
                   v.boundReliable
-                    ? { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: v.ideal.toFixed(3), sub: t('independent layers', 'capas independientes') }
+                    ? { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: v.ideal.toFixed(3), sub: t('N independent sources', 'N fuentes independientes') }
                     : { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: 'n/a', sub: t('withheld, not reliable', 'omitida, no confiable'), muted: true },
+                  { k: t('effective sources', 'fuentes efectivas'), v: v.nLayers.toFixed(2), sub: t('per batch reaching the mill', 'por lote que llega a la planta') },
+                  view.cutoff > 0
+                    ? { k: t('metal above cutoff', 'metal sobre la ley'), v: `${(gt.recovery * 100).toFixed(1)}%`, sub: `${Math.round(gt.ore).toLocaleString(loc)} t ${t('ore', 'mineral')}` }
+                    : { k: t('reclaimed', 'recuperado'), v: Math.round(gt.ore).toLocaleString(loc), unit: 't', sub: t('no cutoff applied', 'sin ley de corte') },
                 ],
               },
               {
                 head: t('what was built', 'lo que se construyó'),
                 rows: [
-                  { k: t('loads placed', 'cargas colocadas'), v: sc.manifest.build.loads_placed.toLocaleString(loc) },
-                  { k: t('tips refused', 'puntos rechazados'), v: `${(sc.manifest.build.refusal_rate * 100).toFixed(1)}%` },
-                  { k: t('peak height', 'altura máxima'), v: `${sc.manifest.build.peak_m.toFixed(1)}`, unit: 'm' },
-                  { k: t('material', 'material'), v: Math.round(sc.manifest.build.volume_m3).toLocaleString(loc), unit: 'm3' },
+                  { k: t('loads placed', 'cargas colocadas'), v: sc.manifest.build.loads_placed.toLocaleString(loc), sub: t('of those offered', 'de las ofrecidas') },
+                  { k: t('tips refused', 'puntos rechazados'), v: `${(sc.manifest.build.refusal_rate * 100).toFixed(1)}%`, sub: t('no trafficable spot', 'sin punto transitable') },
+                  { k: t('peak height', 'altura máxima'), v: `${sc.manifest.build.peak_m.toFixed(1)}`, unit: 'm', sub: t('above original ground', 'sobre el terreno original') },
+                  { k: t('material', 'material'), v: Math.round(sc.manifest.build.volume_m3).toLocaleString(loc), unit: 'm3', sub: t('loose volume placed', 'volumen suelto colocado') },
                 ],
               },
               {
                 head: t('how it got there', 'cómo llegó ahí'),
                 rows: [
-                  { k: t('dozer travel', 'arrastre bulldozer'), v: sc.manifest.build.mean_displacement_m.toFixed(1), unit: 'm' },
-                  { k: t('stream range', 'rango del flujo'), v: sc.manifest.stream.measured_range_t.toFixed(0), unit: 't' },
-                  { k: t('sorted on a face', 'clasificadas en cara'), v: String(seg.nSorted) },
-                  { k: t('over repose', 'sobre reposo'), v: String(sc.manifest.gate.pairs_over_repose), good: sc.manifest.gate.pairs_over_repose === 0 },
+                  { k: t('dozer travel', 'arrastre bulldozer'), v: sc.manifest.build.mean_displacement_m.toFixed(1), unit: 'm', sub: t('mean, per moved cell', 'medio, por celda movida') },
+                  { k: t('stream range', 'rango del flujo'), v: sc.manifest.stream.measured_range_t.toFixed(0), unit: 't', sub: t('shovel dwell, measured', 'permanencia de pala, medida') },
+                  { k: t('sorted on a face', 'clasificadas en cara'), v: String(seg.nSorted), sub: t('loads that cascaded', 'cargas que cascadearon') },
+                  { k: t('over repose', 'sobre reposo'), v: String(sc.manifest.gate.pairs_over_repose), sub: t('cell pairs, must be zero', 'pares de celdas, debe ser cero'), good: sc.manifest.gate.pairs_over_repose === 0 },
                 ],
               },
-            ] as KpiGroup[]).map((g) => (
-              <section key={g.head}>
-                <h3>{g.head}</h3>
-                <div className="st-tiles">
-                  {g.rows.map((r) => (
-                    <div
-                      key={r.k}
-                      className={[r.muted ? 'muted' : '', r.good ? 'ok' : '', r.strong ? 'strong' : '']
-                        .filter(Boolean)
-                        .join(' ')}
-                    >
-                      <b>
-                        {r.v}
-                        {r.unit ? <i>{r.unit}</i> : null}
-                      </b>
-                      <span>{r.k}</span>
-                      {r.sub ? <em>{r.sub}</em> : null}
+            ] as KpiGroup[]).map((g, gi) => (
+              // ONE SECTION AT A TIME BELOW THE HEADLINE. ADR-0071 clause 6: the rail shows its
+              // controls without scrolling, and it cannot hold four sliders, ten tiles and a blurb
+              // in 744 usable pixels. The group the knobs move stays on screen always, because it is
+              // the answer; the two describing the built pile, which do not change while the reader
+              // works, share a switcher. Nothing is deleted and nothing is more than one click away.
+              gi === 0 || gi === ledger ? (
+                <section key={g.head}>
+                  {gi === 0 ? (
+                    <h3>{g.head}</h3>
+                  ) : (
+                    <div className="st-ledgertabs" role="tablist" aria-label={t('Ledger', 'Registro')}>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={ledger === 1}
+                        onClick={() => setLedger(1)}
+                      >
+                        {t('what was built', 'lo que se construyó')}
+                      </button>
+                      <button
+                        type="button"
+                        role="tab"
+                        aria-selected={ledger === 2}
+                        onClick={() => setLedger(2)}
+                      >
+                        {t('how it got there', 'cómo llegó ahí')}
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </section>
+                  )}
+                  <div className="st-tiles">
+                    {g.rows.map((r) => (
+                      <div
+                        key={r.k}
+                        className={[r.muted ? 'muted' : '', r.good ? 'ok' : '', r.strong ? 'strong' : '']
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        <b>
+                          {r.v}
+                          {r.unit ? <i>{r.unit}</i> : null}
+                        </b>
+                        <span>{r.k}</span>
+                        {r.sub ? <em>{r.sub}</em> : null}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null
             ))}
           </div>
         )}

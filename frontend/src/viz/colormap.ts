@@ -33,6 +33,27 @@ export const cividis = (t: number): [number, number, number] => ramp(CIVIDIS, t)
 
 export const rgbCss = ([r, g, b]: [number, number, number]): string => `rgb(${r},${g},${b})`;
 
+/**
+ * The same ramp as CSS, so a legend swatch cannot drift from the surface it explains.
+ *
+ * The colour scale beside the stage rendered NOTHING for a version: the element had a size and no
+ * background, so the reader saw two numbers with a gap between them and no key at all. Writing a
+ * gradient by hand into the stylesheet would fix the symptom and reintroduce the cause, because the
+ * stylesheet has no way to know which colormap the canvas used. This generates it from the same array.
+ */
+export function cssGradient(
+  map: (t: number) => [number, number, number] = viridis,
+  steps = 10,
+  to = 'right',
+): string {
+  const stops: string[] = [];
+  for (let i = 0; i < steps; i += 1) {
+    const t = i / (steps - 1);
+    stops.push(`${rgbCss(map(t))} ${(t * 100).toFixed(1)}%`);
+  }
+  return `linear-gradient(to ${to}, ${stops.join(', ')})`;
+}
+
 /** A stable categorical colour for a deposition event, cycling through cividis. */
 export function eventColour(eventId: number, cycle = 11): [number, number, number] {
   return cividis(((eventId % cycle) + 0.5) / cycle);

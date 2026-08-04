@@ -353,27 +353,108 @@ export interface Verdict {
  * dig blocks a cut drew from, which is exactly what the 1/N bound is about. Taking it from a
  * configured "number of passes" would let the bound be set rather than measured.
  */
+/*
+ * THE EFFECTIVE NUMBER OF INDEPENDENT SOURCES per cut, not the raw count of them, is what makes the
+ * 1/N bound honest. A cut drawing 95 percent of its tonnage from one dig block and traces of four
+ * others is averaging one source, not five, and counting keys would say five. The inverse
+ * participation ratio, 1 / sum of squared fractions, is the standard effective-sample-size measure
+ * and gives one for a pure cut and n for an evenly mixed one. It lives in `verdictAt`, which this
+ * calls at the neutral knob setting so there is exactly one implementation of the arithmetic.
+ *
+ * The efficiency is NOT capped. Above one it says the achieved reduction beat the bound, which is
+ * arithmetically impossible for genuinely independent sources and therefore says the source count is
+ * being underestimated rather than that the pile is miraculous. Clamping it to 100 percent would
+ * hide exactly that diagnostic, which is why it is withheld instead.
+ */
 export function verdict(sc: Scenario): Verdict {
+  return verdictAt(sc, KNOBS);
+}
+
+/* ------------------------------------------------------------------------------------------- */
+/* THE KNOBS. Continuous parameters that recompute the verdict IN THE BROWSER, from the events.  */
+/* ------------------------------------------------------------------------------------------- */
+/*
+ * WHY THESE THREE AND NOT SLIDERS OVER THE PHYSICS. ADR-0017 section 3.2 wants continuous knobs over
+ * the domain's real quantities driving a live recompute, and ADR-0070 clause 6 forbids presenting a
+ * parameter as live when it cannot respond. Repose angle, bench height, truck limit and dozer cadence
+ * all change WHAT IS BUILT: they route every load again and relax the whole field after every
+ * operation, which is tens of seconds of Python. They stay readouts, honestly labelled as such.
+ *
+ * What IS live is everything downstream of the built pile, and it is not a consolation prize: the
+ * three knobs below are the decisions a plant actually makes about a stockpile it did not build.
+ * How many cuts the surge capacity averages before the mill sees them. How large a share of a cut a
+ * dig block needs before it counts as an independent source. What cutoff the ore stream is screened
+ * at. Each is a real operating choice, each moves the headline number, and each is recomputed here
+ * from the cut ledger rather than looked up.
+ */
+
+/** The default knob positions: the values the verdict is quoted at when nobody has touched anything. */
+export const KNOBS = {
+  /** One cut at a time: no downstream surge averaging. */
+  batch: 1,
+  /** Count every dig block that appears in a cut, however small its share. */
+  threshold: 0,
+  /** No screening: every reclaimed tonne is ore. */
+  cutoff: 0,
+} as const;
+
+export interface Knobs {
+  /** How many consecutive reclaim cuts the downstream surge capacity averages before the mill. */
+  batch: number;
+  /** Minimum tonnage share for a dig block to count as an independent source in the 1/N bound. */
+  threshold: number;
+  /** Grade below which a cut is waste rather than ore, in the same units as the cut grade. */
+  cutoff: number;
+}
+
+/** Average consecutive cuts in groups of `batch`, tonnage-weighted, as a surge bin does. */
+export function batchCuts(cuts: Cut[], batch: number): { t: number; grade: number }[] {
+  const k = Math.max(1, Math.round(batch));
+  if (k === 1) return cuts.map((c) => ({ t: c.t, grade: c.grade }));
+  const out: { t: number; grade: number }[] = [];
+  for (let i = 0; i < cuts.length; i += k) {
+    const g = cuts.slice(i, i + k);
+    const t = g.reduce((a, c) => a + c.t, 0);
+    out.push({ t, grade: t > 0 ? g.reduce((a, c) => a + c.grade * c.t, 0) / t : 0 });
+  }
+  return out;
+}
+
+/**
+ * The verdict at a given knob setting. `verdict(sc)` is this at the defaults.
+ *
+ * The 1/N bound moves with BOTH knobs and that is the physics, not a convenience: averaging k cuts
+ * multiplies the effective source count by k, and dropping trace provenance below a threshold cuts
+ * it. A reader who slides the batch up and watches the measured reduction fall faster than the bound
+ * is watching the pile's own mixing lose its advantage to the surge bin, which is the argument the
+ * product exists to make.
+ */
+export function verdictAt(sc: Scenario, knobs: Knobs): Verdict {
   const placed = sc.loads.filter((l) => l.placed);
   const gIn = placed.map((l) => l.grade);
   const wIn = placed.map(() => 1);
   const varIn = weightedVariance(gIn, wIn);
 
-  const gOut = sc.cuts.map((c) => c.grade);
-  const wOut = sc.cuts.map((c) => c.t);
+  // The cutoff screens the stream BEFORE the surge bin, because that is where a screen sits.
+  const kept = knobs.cutoff > 0 ? sc.cuts.filter((c) => c.grade >= knobs.cutoff) : sc.cuts;
+  const batched = batchCuts(kept, knobs.batch);
+  const gOut = batched.map((c) => c.grade);
+  const wOut = batched.map((c) => c.t);
   const varOut = weightedVariance(gOut, wOut);
 
-  // THE EFFECTIVE NUMBER OF INDEPENDENT SOURCES per cut, not the raw count of them. A cut drawing
-  // 95 percent of its tonnage from one dig block and traces of four others is averaging one source,
-  // not five, and counting keys would say five. The inverse participation ratio, 1 / sum of squared
-  // fractions, is the standard effective-sample-size measure and gives one for a pure cut and n for
-  // an evenly mixed one.
-  const eff = sc.cuts.map((c) => {
-    const f = Object.values(c.prov);
-    const ss = f.reduce((a, x) => a + x * x, 0);
+  // Effective independent sources per cut, with shares below the threshold discarded as trace and
+  // the survivors renormalised: a cut is not made more diverse by a dig block that contributed a
+  // hundredth of it. Averaging k cuts then multiplies the count, since the batches are disjoint.
+  const eff = kept.map((c) => {
+    let f = Object.values(c.prov).filter((x) => x >= knobs.threshold);
+    const s = f.reduce((a, x) => a + x, 0);
+    if (s <= 0) f = Object.values(c.prov);
+    const tot = f.reduce((a, x) => a + x, 0) || 1;
+    const ss = f.reduce((a, x) => a + (x / tot) ** 2, 0);
     return ss > 0 ? 1 / ss : 1;
   });
-  const nLayers = eff.length ? eff.reduce((a, b) => a + b, 0) / eff.length : 1;
+  const perCut = eff.length ? eff.reduce((a, b) => a + b, 0) / eff.length : 1;
+  const nLayers = perCut * Math.max(1, Math.round(knobs.batch));
 
   const vrr = varIn > 0 ? varOut / varIn : 0;
   const ideal = nLayers > 0 ? 1 / nLayers : 1;
@@ -382,10 +463,6 @@ export function verdict(sc: Scenario): Verdict {
     varOut,
     vrr,
     ideal,
-    // NOT capped. An efficiency above one means the achieved reduction beat the bound, which is
-    // arithmetically impossible for genuinely independent sources and therefore says the source
-    // count is being underestimated rather than that the pile is miraculous. Silently clamping it to
-    // 100 percent would hide exactly that diagnostic.
     efficiency: vrr > 0 ? ideal / vrr : 1,
     boundReliable: vrr > 0 ? ideal / vrr <= 1.05 : false,
     nLayers,
@@ -394,6 +471,77 @@ export function verdict(sc: Scenario): Verdict {
     meanGradeIn: weightedMean(gIn, wIn),
     meanGradeOut: weightedMean(gOut, wOut),
   };
+}
+
+export interface GradeTonnage {
+  /** Tonnes at or above the cutoff. */
+  ore: number;
+  /** Tonnes below it. */
+  waste: number;
+  /** Tonnage-weighted grade of the ore stream. */
+  oreGrade: number;
+  /** Grade of what the cutoff threw away, which is the number that says whether it was too high. */
+  wasteGrade: number;
+  /** Contained metal in the ore stream, in grade-tonnes. */
+  metal: number;
+  /** Contained metal lost to the waste stream. */
+  metalLost: number;
+  /** Share of the reclaimed metal that survives the screen. */
+  recovery: number;
+  /** The whole curve, for plotting: cutoff against ore tonnes and ore grade. */
+  curve: { cutoff: number; ore: number; grade: number }[];
+}
+
+/** A grade-tonnage curve over the reclaim cuts, and the point the cutoff knob is standing on. */
+export function gradeTonnage(sc: Scenario, cutoff: number): GradeTonnage {
+  const cuts = sc.cuts;
+  let ore = 0;
+  let waste = 0;
+  let metal = 0;
+  let metalLost = 0;
+  for (const c of cuts) {
+    if (c.grade >= cutoff) {
+      ore += c.t;
+      metal += c.grade * c.t;
+    } else {
+      waste += c.t;
+      metalLost += c.grade * c.t;
+    }
+  }
+  const grades = cuts.map((c) => c.grade);
+  const lo = grades.length ? Math.min(...grades) : 0;
+  const hi = grades.length ? Math.max(...grades) : 1;
+  const curve: { cutoff: number; ore: number; grade: number }[] = [];
+  const STEPS = 40;
+  for (let i = 0; i <= STEPS; i += 1) {
+    const x = lo + ((hi - lo) * i) / STEPS;
+    let t = 0;
+    let m = 0;
+    for (const c of cuts) {
+      if (c.grade >= x) {
+        t += c.t;
+        m += c.grade * c.t;
+      }
+    }
+    curve.push({ cutoff: x, ore: t, grade: t > 0 ? m / t : 0 });
+  }
+  return {
+    ore,
+    waste,
+    oreGrade: ore > 0 ? metal / ore : 0,
+    wasteGrade: waste > 0 ? metalLost / waste : 0,
+    metal,
+    metalLost,
+    recovery: metal + metalLost > 0 ? metal / (metal + metalLost) : 1,
+    curve,
+  };
+}
+
+/** The grade range of the reclaim cuts, which is the domain the cutoff knob is allowed to move in. */
+export function cutGradeRange(sc: Scenario): [number, number] {
+  const g = sc.cuts.map((c) => c.grade);
+  if (!g.length) return [0, 1];
+  return [Math.min(...g), Math.max(...g)];
 }
 
 /** Experimental semivariogram of a series against a cumulative coordinate. */

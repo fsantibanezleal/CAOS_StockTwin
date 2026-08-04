@@ -45,7 +45,7 @@ export interface Marker {
 
 export function UPlotChart({
   x, series, bands = [], markers = [], height = 210, xLabel, yLabel, unit = '', xUnit = '',
-  ariaSummary,
+  ariaSummary, xLabels, alwaysPoints = false, decimals = 4, caption,
 }: {
   x: number[];
   series: Series[];
@@ -57,6 +57,13 @@ export function UPlotChart({
   unit?: string;
   xUnit?: string;
   ariaSummary: string;
+  /** Category names for a categorical x axis, indexed by the x value. */
+  xLabels?: string[];
+  /** Force the point markers on, for a scatter rather than a series. */
+  alwaysPoints?: boolean;
+  decimals?: number;
+  /** A figure caption stating what the chart shows and its headline finding. */
+  caption?: string;
 }) {
   const host = useRef<HTMLDivElement | null>(null);
   const plot = useRef<uPlot | null>(null);
@@ -92,8 +99,10 @@ export function UPlotChart({
       dash: s.dash ? [5, 4] : undefined,
       fill: s.fill ? `color-mix(in srgb, ${s.colour ?? palette[i % palette.length]} 18%, transparent)` : undefined,
       scale: 'y',
-      points: { show: (u, si, idx) => (u.data[si] as number[]).length < 60 && idx !== undefined },
-      value: (_u, v) => (v == null ? '--' : `${v.toFixed(4)} ${unit}`),
+      points: alwaysPoints
+        ? { show: true, size: 7 }
+        : { show: (u, si, idx) => (u.data[si] as number[]).length < 60 && idx !== undefined },
+      value: (_u, v) => (v == null ? '--' : `${v.toFixed(decimals)} ${unit}`),
     }));
 
     const opts: uPlot.Options = {
@@ -108,12 +117,22 @@ export function UPlotChart({
       scales: { x: { time: false } },
       axes: [
         { label: xUnit ? `${xLabel} (${xUnit})` : xLabel, stroke: faint, grid: { stroke: border, width: 1 },
-          ticks: { stroke: border }, labelSize: 30, font: '11px system-ui', labelFont: '11px system-ui' },
+          ticks: { stroke: border }, labelSize: 30, font: '11px system-ui', labelFont: '11px system-ui',
+          // A CATEGORICAL AXIS KEEPS ITS NAMES. Plotting sector rows against an integer index and
+          // labelling the axis "0 1 2 3" makes the reader hold the mapping in their head.
+          ...(xLabels
+            ? {
+                size: 74,
+                rotate: -35,
+                values: (_u: uPlot, splits: number[]) =>
+                  splits.map((s) => (Number.isInteger(s) ? (xLabels[s] ?? '') : '')),
+              }
+            : {}) },
         { label: unit ? `${yLabel} (${unit})` : yLabel, stroke: faint, grid: { stroke: border, width: 1 },
           ticks: { stroke: border }, labelSize: 34, font: '11px system-ui', labelFont: '11px system-ui' },
       ],
       series: [
-        { label: xLabel, value: (_u, v) => (v == null ? '--' : `${v.toFixed(1)} ${xUnit}`) },
+        { label: xLabel, value: (_u, v) => (v == null ? '--' : xLabels ? (xLabels[v] ?? String(v)) : `${v.toFixed(1)} ${xUnit}`) },
         ...bandSeries,
         ...mainSeries,
       ],
@@ -161,11 +180,12 @@ export function UPlotChart({
     ro.observe(el);
     return () => { ro.disconnect(); plot.current?.destroy(); plot.current = null; };
     // theme is a dependency so the chart re-reads the CSS variables and re-strokes on a toggle
-  }, [x, series, bands, markers, height, xLabel, yLabel, unit, xUnit, theme]);
+  }, [x, series, bands, markers, height, xLabel, yLabel, unit, xUnit, theme, xLabels, alwaysPoints, decimals]);
 
   return (
-    <div>
+    <figure style={{ margin: 0, minWidth: 0 }}>
       <div ref={host} aria-hidden="true" />
+      {caption && <figcaption className="st-figcap">{caption}</figcaption>}
       <details>
         <summary className="st-muted" style={{ fontSize: '0.7rem', cursor: 'pointer' }}>
           {ariaSummary}
@@ -181,10 +201,10 @@ export function UPlotChart({
             <tbody>
               {x.map((xv, i) => (
                 <tr key={i}>
-                  <td className="st-mono">{xv.toFixed(1)}</td>
+                  <td className="st-mono">{xLabels ? (xLabels[xv] ?? xv) : xv.toFixed(1)}</td>
                   {series.map((s) => (
                     <td key={s.label} className="st-mono">
-                      {Number.isFinite(s.values[i]) ? s.values[i].toFixed(4) : '--'}
+                      {Number.isFinite(s.values[i]) ? s.values[i].toFixed(decimals) : '--'}
                     </td>
                   ))}
                 </tr>
@@ -193,6 +213,6 @@ export function UPlotChart({
           </table>
         </div>
       </details>
-    </div>
+    </figure>
   );
 }
