@@ -17,21 +17,43 @@ import pytest
 from pipeline.bake import run, topography_report, write
 from pipeline.scenarios import SCENARIOS, by_id, class_thresholds, route_to_area
 
+# Loads per scenario in the test suite. AT A REDUCED BUDGET, and the reason matters: these tests
+# check that every stage runs and every invariant holds, which a short campaign exercises exactly as
+# well as a long one. Baking twenty scenarios at their shipped budget is hours, and it was blocking
+# every pull request. The SHIPPED numbers are verified separately, by scripts/check_artifacts.py,
+# against the committed artifacts rather than against a fresh bake.
+TEST_LOADS = 140
+
 
 @pytest.fixture(scope="module")
 def baked(tmp_path_factory) -> dict:
-    """Bake every scenario once, into a sandbox.
+    """Bake every scenario once, at a reduced budget, into a sandbox.
 
     NEVER into the committed artifact tree. A pytest run writing the canonical bake is how a release
     once shipped a clobbered artifact, and the fix is that tests cannot reach it.
     """
     out = tmp_path_factory.mktemp("artifacts")
-    return {s.id: (run(s.id), out) for s in SCENARIOS}
+    return {s.id: (run(s.id, n_loads=TEST_LOADS), out) for s in SCENARIOS}
 
 
-def test_the_product_ships_the_three_agreed_scenarios():
+@pytest.fixture(scope="module")
+def baked_deep() -> object:
+    """One bake deep enough to reach the edge campaign, for the tests that need a face to exist."""
+    return run("single", n_loads=520)
+
+
+def test_the_matrix_meets_the_floor_and_covers_its_axes():
+    """ADR-0056 puts the floor at a dozen configurable cases, and an axis needs more than one case."""
     ids = {s.id for s in SCENARIOS}
-    assert ids == {"single", "yard", "sidehill"}
+    assert len(ids) >= 12, f"the matrix has {len(ids)} cases against a floor of 12"
+    assert len(ids) == len(SCENARIOS), "two scenarios share an id"
+
+    from collections import Counter
+
+    per_axis = Counter(s.category for s in SCENARIOS)
+    assert len(per_axis) >= 5, f"only {len(per_axis)} axes: {sorted(per_axis)}"
+    thin = [a for a, n in per_axis.items() if n < 2 and a != "reference"]
+    assert not thin, f"these axes carry a single case, which is an illustration not a comparison: {thin}"
 
 
 def test_every_scenario_declares_why_it_exists_and_what_would_kill_it():
@@ -81,17 +103,21 @@ def test_every_scenario_places_most_of_what_it_planned(baked, sid: str):
     assert len(bake.result.placed) > 100, f"{sid} placed only {len(bake.result.placed)} loads"
 
 
-@pytest.mark.parametrize("sid", [s.id for s in SCENARIOS])
-def test_both_construction_phases_and_the_measured_profiles_appear(baked, sid: str):
-    """A build with no edge dumps never formed a face, so none of the cascade physics ran."""
-    bake, _ = baked[sid]
-    counts = bake.result.profile_counts()
-    assert counts.get("paddock", 0) > 0, f"{sid} laid no base layer"
+def test_both_construction_phases_and_the_measured_profiles_appear(baked_deep):
+    """A build with no edge dumps never formed a face, so none of the cascade physics ran.
+
+    ON ONE SCENARIO, at a budget deep enough to reach the edge campaign. This is a property of the
+    ENGINE and not of any scenario: the base layer is the first fifth of a bench by volume, so a
+    reduced bake is ALL paddock by construction and the assertion would be testing the budget. The
+    per-scenario tests run at the reduced budget because what they check does not depend on it.
+    """
+    counts = baked_deep.result.profile_counts()
+    assert counts.get("paddock", 0) > 0, "no base layer"
     cascade = sum(v for k, v in counts.items() if k != "paddock")
-    assert cascade > 0, f"{sid} produced no cascading dumps at all"
+    assert cascade > 0, "no cascading dumps at all"
     # The three at-crest types are drawn from their measured frequencies, so all three should appear
     # over a few hundred loads.
-    assert {"oval", "comet", "rectangular"} <= set(counts), f"{sid} profiles: {counts}"
+    assert {"oval", "comet", "rectangular"} <= set(counts), f"profiles: {counts}"
 
 
 @pytest.mark.parametrize("sid", [s.id for s in SCENARIOS])
@@ -189,8 +215,8 @@ def test_a_bake_is_reproducible_bit_for_bit(tmp_path):
     A manifest that changed on every re-bake would make the git history of the evidence useless,
     because a real change would stop being distinguishable from a re-run.
     """
-    a = write(run("single"), tmp_path / "a")
-    b = write(run("single"), tmp_path / "b")
+    a = write(run("single", n_loads=TEST_LOADS), tmp_path / "a")
+    b = write(run("single", n_loads=TEST_LOADS), tmp_path / "b")
     assert json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
 
 
