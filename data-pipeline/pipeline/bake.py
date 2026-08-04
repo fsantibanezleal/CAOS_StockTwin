@@ -67,6 +67,9 @@ class BakeResult:
     gate: dict = field(default_factory=dict)
     # One surface per reclaim cut, so the pile can be watched coming down as well as going up.
     reclaim: list = field(default_factory=list)
+    # How many loads had been placed when each cut was taken. For a sequential campaign that is all
+    # of them; for a concurrent one it is what lets the app interleave the two operations in time.
+    cut_at: list = field(default_factory=list)
 
 
 class SnapshotRecorder:
@@ -135,8 +138,32 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
             k = next(seen)
             return route_to_area(p.grade + err[k % len(err)], cuts_, classes)
 
+    # CONCURRENT RECLAIM. The loader works the pile while the trucks are still tipping into it, so
+    # a cut can only cross the layers that had arrived by the time it was taken. The face is set up
+    # before the build rather than after it, and the engine's after_load hook drives it.
+    cuts: list[Cut] = []
+    cut_at: list[int] = []
+    reclaim_frames: list[list[float]] = []
+    live_faces = _faces(plan, scn) if scn.reclaim_mode == "concurrent" else []
+    live = {"n": 0, "fi": 0}
+
+    def after_load(placed: int, terr, mdl) -> None:
+        if not live_faces or placed - live["n"] < scn.loads_per_cut:
+            return
+        live["n"] = placed
+        face = live_faces[live["fi"] % len(live_faces)]
+        live["fi"] += 1
+        c = cut_one(terr, mdl, face, scn.cut_tonnes, repose_deg=scn.repose_deg)
+        if c.tonnes <= 0:
+            advance(face, terr)
+            return
+        cuts.append(c)
+        cut_at.append(placed)
+        reclaim_frames.append(list(terr.z))
+
     res = build(
         terrain, plan, fleet, loads,
+        after_load=after_load if live_faces else None,
         repose_deg=scn.repose_deg, seed=seed, material=material, route=router,
         paddock_frac=scn.paddock_frac,
         snapshot_every=max(1, scn.n_loads // max(1, scn.n_snapshots)),
@@ -152,18 +179,8 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
     # up averaging three separately-routed stockpiles together, their grades collapse onto the overall
     # mean, and the variance reduction comes out better than the independent-source bound, which is
     # arithmetically impossible and was the signal that the setup was wrong.
-    cuts: list[Cut] = []
-    reclaim_frames: list[list[float]] = []
     per_area = max(1, scn.n_cuts // max(1, len(plan.areas)))
-    for area in plan.areas:
-        face = ReclaimFace(
-            method=ReclaimMethod.FULL_HEIGHT,
-            position_m=area.x0_m,
-            direction=(1.0, 0.0),
-            depth_m=10.0,
-            width_m=area.length_m,
-            max_face_m=15.0,
-        )
+    for face in ([] if scn.reclaim_mode == "concurrent" else _faces(plan, scn)):
         # ONE CUT AT A TIME, SO THE PILE COMING DOWN CAN BE WATCHED. `campaign` runs the whole
         # sequence and returns the feed; that is the right shape for the engine and the wrong one
         # for a product whose subject is the operation. Reclaim is a machine in a place taking
@@ -179,14 +196,19 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
                 if c.tonnes <= 0:
                     break
             cuts.append(c)
+            # Sequential: every cut is taken after the last load was placed.
+            cut_at.append(len(res.placed))
             reclaim_frames.append(list(res.terrain.z))
     # A cut that delivered nothing is not a cut. Keeping them would put zero-tonnage rows in the feed
     # series and drag the weighted statistics around for no physical reason.
-    cuts = [c for c in cuts if c.tonnes > 0]
+    keep = [i for i, c in enumerate(cuts) if c.tonnes > 0]
+    cuts = [cuts[i] for i in keep]
+    cut_at = [cut_at[i] for i in keep]
+    reclaim_frames = [reclaim_frames[i] for i in keep]
 
     gate = _gate(scn, res, cuts, loads)
     return BakeResult(
-        scenario=scn, result=res, cuts=cuts, gate=gate, reclaim=reclaim_frames
+        scenario=scn, result=res, cuts=cuts, gate=gate, reclaim=reclaim_frames, cut_at=cut_at
     )
 
 
@@ -364,6 +386,25 @@ def _plan_json(scn: Scenario) -> dict:
 
 
 VOXEL_DZ_M = 0.5
+
+
+def _faces(plan, scn) -> list:
+    """One reclaim face per dump area.
+
+    ONE PILE AT A TIME. An unbounded face width lets a single cut slice through every area in the
+    yard at once, which no loader does and which quietly destroys the measurement.
+    """
+    return [
+        ReclaimFace(
+            method=ReclaimMethod.FULL_HEIGHT,
+            position_m=a.x0_m,
+            direction=(1.0, 0.0),
+            depth_m=10.0,
+            width_m=a.length_m,
+            max_face_m=15.0,
+        )
+        for a in plan.areas
+    ]
 
 
 def _centroid(terrain, cells: list[int]) -> tuple[float, float]:
@@ -583,9 +624,10 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
                     "x": _r(_centroid(res.terrain, c.cells)[0], 1),
                     "y": _r(_centroid(res.terrain, c.cells)[1], 1),
                     "cells": len(c.cells),
+                    "at": bake.cut_at[i] if i < len(bake.cut_at) else 0,
                     "prov": {str(k): _r(v, 4) for k, v in sorted(c.provenance.items())},
                 }
-                for c in bake.cuts
+                for i, c in enumerate(bake.cuts)
             ],
             separators=(",", ":"),
         ),
@@ -636,7 +678,11 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
             "peak_m": _r(max(res.terrain.z), 2),
             "volume_m3": _r(res.terrain.volume_m3(), 1),
         },
-        "reclaim": {"n_cuts": len(bake.cuts), "tonnes": _r(sum(c.tonnes for c in bake.cuts), 1)},
+        "reclaim": {
+            "n_cuts": len(bake.cuts),
+            "tonnes": _r(sum(c.tonnes for c in bake.cuts), 1),
+            "mode": scn.reclaim_mode,
+        },
         "gate": bake.gate,
         "files": ["plan.json", "loads.json", "sectors.json", "field.json", "cuts.json",
                   "frames.json", "volume.json"],

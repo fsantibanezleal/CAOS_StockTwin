@@ -653,3 +653,62 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
   opacity: 0.7;
   white-space: nowrap;
 }
+
+/* The block model: controls, three cross-sections, then the solid. */
+.st-blocks {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.3rem;
+}
+
+.st-blockbox {
+  height: clamp(340px, 66vh, 860px);
+}
+
+.st-blockhost {
+  position: absolute;
+  inset: 0;
+}
+
+.st-cuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  font-size: 0.74rem;
+  align-items: center;
+}
+
+.st-cuts label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.st-cuts label > span {
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.st-cuts input {
+  width: 9rem;
+}
+
+.st-cuts b {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  min-width: 2.6rem;
+}
+
+/* THE STAGE MUST NOT SHRINK WHEN A TAB IS REVISITED.
+ *
+ * The shell keeps a tab panel mounted and hides it. A hidden element has a clientHeight of zero, so
+ * the ResizeObserver on the 3-D host fired with zero while the Site tab was in the background, the
+ * canvas was sized to the floor, and coming back showed a stage a third of the height it left with:
+ * nothing re-measures it, because the box did not change when it became visible again. Reserving the
+ * height in CSS rather than only measuring it means the box the observer reads is right whether the
+ * panel is showing or not. */
+.st-canvashost {
+  min-height: clamp(320px, 58vh, 900px);
+}

@@ -37,6 +37,7 @@ import {
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
 import PlayBar from '../viz/PlayBar';
 import InsidePanel from '../viz/InsidePanel';
+import BlockModel3D from '../viz/BlockModel3D';
 import {
   DumpDetailPanel,
   FieldPanel,
@@ -74,9 +75,19 @@ function useBoxHeight<T extends HTMLElement>(): [React.RefObject<T | null>, numb
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setH(Math.max(280, Math.round(el.clientHeight))));
+    // A HIDDEN PANEL MEASURES ZERO, AND ZERO IS NOT A SIZE. The shell keeps a tab panel mounted and
+    // hides it, so the observer fires with a client height of zero the moment the reader switches
+    // tabs. Taking that reading clamped the stage to the floor, and coming back showed it a third of
+    // the height it left with, because nothing re-measures a box that did not change when it became
+    // visible again. A zero reading means "not currently laid out", so it is ignored and the last
+    // real height stands.
+    const read = () => {
+      const box = Math.round(el.clientHeight);
+      if (box > 0) setH(Math.max(280, box));
+    };
+    const ro = new ResizeObserver(read);
     ro.observe(el);
-    setH(Math.max(280, Math.round(el.clientHeight)));
+    read();
     return () => ro.disconnect();
   }, []);
   return [ref, h];
@@ -339,8 +350,13 @@ export default function Tool() {
       // SECOND, not last. What is inside the pile is the subject of the product, so it sits beside
       // the site view rather than at the end of a row of analyses.
       id: 'inside',
-      label: t('Inside the pile', 'Dentro de la pila'),
+      label: t('Section', 'Sección'),
       content: sc ? <InsidePanel sc={sc} dark={dark} lang={lang} /> : null,
+    },
+    {
+      id: 'blocks',
+      label: t('Block model', 'Modelo de bloques'),
+      content: sc ? <BlockModel3D sc={sc} dark={dark} lang={lang} /> : null,
     },
     {
       id: 'dump',
