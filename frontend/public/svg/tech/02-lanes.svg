@@ -1,10 +1,16 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 468" width="880" class="arch-svg" role="img">
+  <!-- Hand-authored. RE-AUTHORED IN FULL, because the previous version described a different product:
+       it claimed the pile physics ran LIVE in the browser on a TypeScript engine with a per-sweep
+       millisecond budget, and listed "the five stacking paths, the four reclaim geometries" as live
+       capabilities. The same tab's own text says the opposite, there is no TypeScript engine in this
+       repository, and stacking paths are conveyor geometries this product does not model. Every module
+       path below exists. -->
   <style>
     .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
     .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
-    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
-    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
-    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn); stroke-width: 1.2; stroke-dasharray: 5 3; }
     .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
     .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
     .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
@@ -23,37 +29,44 @@
       <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-accent)"/>
     </marker>
   </defs>
-  <text class="hdr" x="14" y="20">LIVE, IN THE BROWSER</text>
-  <rect class="bx-web" x="14" y="28" width="852" height="106" rx="6"/>
-  <text class="ttl" x="28" y="48">TypeScript engine, recomputed on every control change</text>
-  <text class="mono" x="28" y="63">frontend/src/engine/{heightfield,segregation,pile,stacking,blending,rtd,stream,run}.ts</text>
-  <text class="it" x="28" y="82">- the priority-cascade relaxation, the five stacking paths, the four reclaim geometries, the lot ledger</text>
-  <text class="it" x="28" y="97">- Gray-Thornton segregation, the variance reduction ratio, the variograms, the residence-time distribution</text>
-  <text class="it" x="28" y="112">- budget: 100 ms slider to redraw, 8 ms per relaxation sweep. Measured, and reported on the page.</text>
-  <text class="mu" x="28" y="128">Not Pyodide: a cold start plus per-frame marshalling cannot meet the 100 ms budget.</text>
-  <text class="hdr" x="14" y="158">OFFLINE, PRECOMPUTE</text>
-  <rect class="bx-off" x="14" y="166" width="418" height="132" rx="6"/>
-  <text class="ttl" x="28" y="186">The canonical bake, an explicit release operation</text>
-  <text class="mono" x="28" y="201">python data-pipeline/run.py</text>
-  <text class="it" x="28" y="220">- 31-seed credible bands per case</text>
-  <text class="it" x="28" y="235">- oreblocks ore bodies, GSTools simulation</text>
-  <text class="it" x="28" y="250">- surrogate training and ONNX export</text>
-  <text class="it" x="28" y="265">- the complete case by metric matrix</text>
-  <text class="mu" x="28" y="288">Tests write only to a sandbox output root.</text>
-  <rect class="bx-off" x="448" y="166" width="418" height="132" rx="6"/>
-  <text class="ttl" x="462" y="186">Discrete element, a separate conda environment</text>
-  <text class="mono" x="462" y="201">environment-dem.yml  ·  stlab/stages/calibrate.py</text>
-  <text class="it" x="462" y="220">- a bidisperse pour calibrates the segregation number</text>
-  <text class="it" x="462" y="235">- PyChrono has no pip wheel, so the lane is separate</text>
-  <text class="it" x="462" y="250">- kill criterion: if it cannot run, method 7 is DELISTED</text>
-  <text class="it" x="462" y="265">- and the calibration falls back to published distances</text>
-  <text class="mu" x="462" y="288">The Benchmark page states which path was taken.</text>
-  <text class="hdr" x="14" y="324">REPLAY</text>
-  <rect class="bx" x="14" y="332" width="852" height="68" rx="6"/>
-  <text class="ttl" x="28" y="352">The committed compact trace and its manifest</text>
-  <text class="mono" x="28" y="367">data/derived/&lt;case&gt;/trace.json  ·  data/derived/manifests/&lt;case&gt;.json</text>
-  <text class="it" x="28" y="386">First paint, and the cross-case pages. The trace carries EVENTS only: every verdict is recomputed in the browser.</text>
-  <rect class="bx-gate" x="14" y="412" width="852" height="42" rx="6"/>
-  <text class="ttl" x="28" y="430">THE GATE decides the lane by MEASUREMENT, not by intent</text>
-  <text class="mono" x="28" y="446">stlab/core/gate.py::classify_lane()  -&gt;  verdict and budgets into the manifest; CI fails on a mislabelled lane</text>
+
+  <text class="hdr" x="14" y="20">OFFLINE, PRECOMPUTE. THE SIMULATION LIVES HERE AND NOWHERE ELSE.</text>
+  <rect class="bx-off" x="14" y="28" width="418" height="150" rx="6"/>
+  <text class="ttl" x="28" y="48">The canonical bake, an explicit release operation</text>
+  <text class="mono" x="28" y="64">python data-pipeline/run.py</text>
+  <text class="it" x="28" y="84">- terrain, trafficability and the dump plan</text>
+  <text class="it" x="28" y="99">- every load routed by A-star, spotted, refused or placed</text>
+  <text class="it" x="28" y="114">- the whole height field relaxed after every operation</text>
+  <text class="it" x="28" y="129">- kinetic sieving solved down each real face</text>
+  <text class="it" x="28" y="144">- the dozer, the block ledger, the reclaim cuts</text>
+  <text class="mu" x="28" y="168">Tens of seconds per few hundred loads. Tests write only to a sandbox output root.</text>
+
+  <rect class="bx-off" x="448" y="28" width="418" height="150" rx="6"/>
+  <text class="ttl" x="462" y="48">The published engine, consumed pinned</text>
+  <text class="mono" x="462" y="64">bedblend 0.05.002 (PyPI, MIT, no runtime deps)</text>
+  <text class="mono" x="462" y="80">terrain - truck - design - dump - relax - dozer</text>
+  <text class="mono" x="462" y="96">facesegregation - blocks - sectors - reclaim - blending</text>
+  <text class="it" x="462" y="116">- a product declares no package of its own</text>
+  <text class="it" x="462" y="131">- an integrity guard rejects any editable install</text>
+  <text class="it" x="462" y="146">- so the internal package cannot come back</text>
+  <text class="mu" x="462" y="168">The physics is a dependency, not a folder in this repository.</text>
+
+  <path class="flow" d="M 240 182 L 240 236"/>
+  <text class="lbl" x="248" y="206">events and geometry, never verdicts</text>
+
+  <text class="hdr" x="14" y="234">THE COMMITTED ARTIFACT</text>
+  <rect class="bx" x="14" y="242" width="852" height="72" rx="6"/>
+  <text class="ttl" x="28" y="262">One folder per case, plus a rolled-up index</text>
+  <text class="mono" x="28" y="278">data/derived/&lt;case&gt;/{manifest,plan,loads,field,cuts,sectors,frames,volume}.json</text>
+  <text class="it" x="28" y="298">20 cases, 21,168 placed loads. Frames are delta encoded and the volume is voxelised at 0.5 m: 110 MB becomes 34 MB.</text>
+
+  <path class="flow-hi" d="M 440 318 L 440 370"/>
+  <text class="lbl" x="448" y="340">fetched by the page, cached by the CDN</text>
+
+  <text class="hdr" x="14" y="366">LIVE, IN THE BROWSER: THE VERDICTS ONLY</text>
+  <rect class="bx-web" x="14" y="374" width="852" height="80" rx="6"/>
+  <text class="ttl" x="28" y="394">Recomputed from the event log, on load and on every knob move</text>
+  <text class="mono" x="28" y="410">frontend/src/lib/scenario.ts</text>
+  <text class="it" x="28" y="430">Variance reduction, the effective source count and the 1/N bound, the semivariogram, the sector rollups with</text>
+  <text class="it" x="28" y="445">their intervals, the segregation summary and the grade-tonnage curve. Nothing here is read from the file.</text>
 </svg>

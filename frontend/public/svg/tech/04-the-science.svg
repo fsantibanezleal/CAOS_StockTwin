@@ -2,9 +2,9 @@
   <style>
     .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
     .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
-    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
-    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
-    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn); stroke-width: 1.2; stroke-dasharray: 5 3; }
     .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
     .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
     .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
@@ -26,38 +26,43 @@
   <text class="hdr" x="14" y="20">THE CHAIN, WITH THE EQUATION AT EACH STEP</text>
   <rect class="bx" x="14" y="30" width="852" height="76" rx="6"/>
   <text class="ttl" x="28" y="50">Grade stream</text>
-  <text class="mono" x="160" y="50">model/stream.py</text>
+  <text class="mono" x="160" y="50">bedblend/stream.py</text>
   <text class="it" x="28" y="71">C(h) = sill exp(-3h/a), generated exactly by a one-step recursion in cumulative tonnage</text>
   <text class="mu" x="28" y="89">Autocorrelation is the point: correlated layers are not independent samples.</text>
   <path class="flow-hi" d="M 440 106 L 440 116"/>
+  <text class="lbl" x="452" y="115">grade per load</text>
   <rect class="bx-hi" x="14" y="118" width="852" height="76" rx="6"/>
   <text class="ttl" x="28" y="138">Relaxation</text>
-  <text class="mono" x="160" y="138">heightfield.py::cascade</text>
+  <text class="mono" x="160" y="138">bedblend/relax.py</text>
   <text class="it" x="28" y="159">T = sum_k max(0, d_k - T);   t_k = max(0, d_k - T);   D_orth = dx tan(theta_r)</text>
   <text class="mu" x="28" y="177">The highest unstable cell topples first, so the transfers ARE the avalanche path.</text>
   <path class="flow-hi" d="M 440 194 L 440 204"/>
+  <text class="lbl" x="452" y="203">height field</text>
   <rect class="bx-hi" x="14" y="206" width="852" height="76" rx="6"/>
   <text class="ttl" x="28" y="226">Segregation</text>
-  <text class="mono" x="160" y="226">model/segregation.py</text>
+  <text class="mono" x="160" y="226">bedblend/facesegregation.py</text>
   <text class="it" x="28" y="247">d(phi)/dx + d/dz[ -Sr phi (1 - phi) ] = 0,   zero flux at the free surface and the base</text>
   <text class="mu" x="28" y="265">Gray and Thornton (3.20), Godunov flux. Coarse at the toe is an OUTPUT.</text>
   <path class="flow-hi" d="M 440 282 L 440 292"/>
+  <text class="lbl" x="452" y="291">phi(z) per cell</text>
   <rect class="bx-hi" x="14" y="294" width="852" height="76" rx="6"/>
   <text class="ttl" x="28" y="314">Lot ledger</text>
-  <text class="mono" x="160" y="314">model/pile.py::Pile</text>
+  <text class="mono" x="160" y="314">bedblend/blocks.py</text>
   <text class="it" x="28" y="335">g_cut = sum m_i g_i / sum m_i;   f_e = sum_(e_i = e) m_i / sum m_i;   sum_e f_e = 1</text>
   <text class="mu" x="28" y="353">A lot stack per cell. The sum-to-one identity is checked on every cut of every case.</text>
   <path class="flow-hi" d="M 440 370 L 440 380"/>
+  <text class="lbl" x="452" y="379">lot fractions</text>
   <rect class="bx-web" x="14" y="382" width="852" height="76" rx="6"/>
   <text class="ttl" x="28" y="402">Blending metrics</text>
-  <text class="mono" x="160" y="402">model/blending.py</text>
+  <text class="mono" x="160" y="402">bedblend/blending.py</text>
   <text class="it" x="28" y="423">VRR = var_out / var_in  (lower is better);   VRR_ideal = 1/N;   E = sigma_in/sigma_out = sqrt(N)</text>
   <text class="mu" x="28" y="441">Tonnage base, per Kumral. The ideal bound is DERIVED and labelled as derived.</text>
   <path class="flow-hi" d="M 440 458 L 440 468"/>
+  <text class="lbl" x="452" y="467">cut grades</text>
   <rect class="bx-web" x="14" y="470" width="852" height="76" rx="6"/>
   <text class="ttl" x="28" y="490">Residence time</text>
-  <text class="mono" x="160" y="490">model/rtd.py</text>
+  <text class="mono" x="160" y="490">bedblend/rtd.py</text>
   <text class="it" x="28" y="511">tau = sum m_i (t_out - t_in) / sum m_i;   dimensionless spread = sigma^2 / tau^2</text>
   <text class="mu" x="28" y="529">FIFO and LIFO references walked for the SAME event sequence, not approximated.</text>
-  <text class="mu" x="14" y="570">The one free parameter in the whole chain is the segregation number Sr, and stlab/stages/calibrate.py publishes its residual.</text>
+  <text class="mu" x="14" y="570">The one free parameter in the whole chain is the segregation number Sr, and bedblend/dump.py publishes its residual.</text>
 </svg>

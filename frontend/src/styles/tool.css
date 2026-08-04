@@ -27,6 +27,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+  /* A SAFETY VALVE, NOT THE LAYOUT. ADR-0071 clause 6 asks that the rail show its controls without
+     scrolling, and the way that is achieved is by bounding the one variable-height element in it
+     (see `.st-caseblurb`), not by deleting this line: removing the scroller only means the overflow
+     is clipped and unreachable instead of reachable. It stays so that expanding the blurb, or a
+     browser at a font size we did not measure, degrades to a scroll rather than to lost controls. */
   overflow-y: auto;
   padding-right: 0.7rem;
   border-right: 1px solid color-mix(in srgb, currentColor 14%, transparent);
@@ -49,53 +54,107 @@
 }
 
 /* The readouts. A definition list, because that is what they are: a name and a measured value. */
-/* THE READOUTS. A two-column ledger: name on the left, value right-aligned on the right, one row
-   each, hairline between. The previous version stacked a small grey label above a large value in a
-   two-up grid, which reads as a dashboard of tiles and is exactly as hard to scan as it sounds: no
-   alignment to run your eye down, and ten of them in a narrow rail. */
+/* THE READOUTS AS TILES, grouped by the question they answer.
+ *
+ * Two earlier versions were wrong in opposite directions. A two-up grid of label-over-value read as
+ * a dashboard of unrelated numbers; a flat two-column ledger scanned better but was a wall of ten
+ * rows with nothing telling the reader which of them was the answer and which was context. These
+ * are three small groups, each with a heading, and the value is what the eye lands on.
+ */
 .st-kpis {
-  margin: 0;
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.st-kpis section {
+  min-width: 0;
+}
+
+.st-kpis h3 {
+  margin: 0 0 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.st-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.st-tiles > div {
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  display: grid;
+  gap: 0.05rem;
+  align-content: start;
+}
+
+/* The headline number spans the row, because the variance reduction IS the answer. */
+.st-tiles > div.strong {
+  grid-column: 1 / -1;
+  background: color-mix(in srgb, var(--color-accent, #58a6ff) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent, #58a6ff) 34%, transparent);
+}
+
+.st-tiles b {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
-  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-}
-
-.st-kpis > div {
-  display: flex;
-  align-items: first baseline;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.32rem 0;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 9%, transparent);
-  min-width: 0;
-}
-
-.st-kpis dt {
-  font-size: 0.72rem;
-  opacity: 0.66;
-  line-height: 1.25;
-  min-width: 0;
-  /* WRAPPING BEATS TRUNCATION. An ellipsis on "variance reduc..." hides the word that says what the
-     number is, which is the one thing a readout cannot afford to lose. The row aligns on its first
-     line instead, so the values still make a column to scan down. */
-  hyphens: auto;
-}
-
-.st-kpis dd {
-  margin: 0;
-  font-size: 0.86rem;
-  font-weight: 500;
+  /* A long value with a unit after it must shrink rather than run out of its tile: 79,330 m3 was
+     losing the "3". */
   white-space: nowrap;
-  text-align: right;
+  overflow: hidden;
+  text-overflow: clip;
+  font-size: clamp(0.78rem, 1.6cqw + 0.55rem, 1.02rem);
 }
 
-.st-kpis .muted dd {
+.st-tiles > div {
+  container-type: inline-size;
+}
+
+.st-tiles > div.strong b {
+  font-size: 1.35rem;
+}
+
+.st-tiles b i {
+  font-style: normal;
+  font-size: 0.66em;
+  font-weight: 400;
+  opacity: 0.6;
+  margin-left: 0.15em;
+}
+
+.st-tiles span {
+  font-size: 0.66rem;
+  line-height: 1.25;
+  opacity: 0.72;
+}
+
+.st-tiles em {
+  font-style: normal;
+  font-size: 0.6rem;
+  opacity: 0.5;
+}
+
+.st-tiles > div.muted b {
   opacity: 0.45;
   font-weight: 400;
-  font-style: italic;
 }
 
-.st-kpis .ok dd {
-  color: #2f9e59;
+.st-tiles > div.ok b {
+  /* THE PALETTE TOKEN, NOT A LITERAL. A hardcoded green does not follow the theme and is not the
+     product line's green either; `--color-good` is defined for both themes by the shell. */
+  color: var(--color-good, #3fb950);
 }
 
 /* The case control: one row, the whole width of the rail. */
@@ -123,12 +182,144 @@
   color: inherit;
 }
 
-/* One sentence on what the selected case is, so the dropdown is not the only thing that says it. */
+/* One sentence on what the selected case is, so the dropdown is not the only thing that says it.
+ *
+ * IT IS BOUNDED, and that is a fit rule rather than a typographic preference. ADR-0071 clause 6 says
+ * the rail shows its controls without scrolling. Everything else in this rail is a fixed height: the
+ * focus entry, the select, three headings and ten tiles come to a constant 390-405px. This blurb is
+ * the only variable-height thing in the column, and it ranges from 81px to 179px across the twenty
+ * scenarios, which is exactly the 10-28px by which the rail overflowed a 1280x800 viewport on the
+ * yard, sidehill and single cases. Four lines is the budget that fits every one of them; the rest is
+ * one click away rather than pushing a readout off the bottom of the screen. */
 .st-caseblurb {
   margin: 0;
   font-size: 0.74rem;
   line-height: 1.45;
   opacity: 0.75;
+}
+
+.st-caseblurb p {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+  overflow: hidden;
+}
+
+.st-caseblurb.open p {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+}
+
+.st-caseblurb button {
+  align-self: flex-start;
+  border: 0;
+  background: none;
+  padding: 0.1rem 0;
+  margin: 0;
+  font: inherit;
+  font-size: 0.68rem;
+  color: inherit;
+  opacity: 0.6;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.st-caseblurb button:hover {
+  opacity: 0.9;
+}
+
+.st-caseblurb {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* THE LIVE KNOBS. Continuous parameters that recompute the verdict in the browser, so the App is a
+   parametrized instrument rather than a case picker with a layer toggle (ADR-0017 section 3.2).
+   Each value is rendered inline in its own label: a slider whose number is somewhere else is a
+   number the reader has to hunt for. */
+.st-knobs {
+  display: grid;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.st-knobs h3 {
+  margin: 0;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.st-knobs label {
+  display: grid;
+  gap: 0.12rem;
+  min-width: 0;
+}
+
+.st-knobs label > span {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+  font-size: 0.68rem;
+  opacity: 0.75;
+  min-width: 0;
+}
+
+.st-knobs label > span b {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 500;
+  font-size: 0.72rem;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.st-knobs input[type='range'] {
+  width: 100%;
+  margin: 0;
+  accent-color: var(--color-accent, #58a6ff);
+}
+
+/* THE RAIL SECTION SWITCHER. Three panes below the headline result: the live knobs, and the two
+   fixed-by-the-bake ledgers. One at a time, because ADR-0071 clause 6 says the rail shows its
+   controls without scrolling and this is the sectioning the clause names. */
+.st-railtabs {
+  display: flex;
+  gap: 0.25rem;
+  margin: 0.1rem 0 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+}
+
+.st-railtabs button {
+  flex: 1 1 0;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0.1rem 0;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: inherit;
+  opacity: 0.35;
+  cursor: pointer;
+  text-align: center;
+  padding-bottom: 0.24rem;
+  margin-bottom: -1px;
+  border-bottom: 2px solid transparent;
+}
+
+.st-railtabs button[aria-selected='true'] {
+  opacity: 0.75;
+  border-bottom-color: color-mix(in srgb, var(--color-accent, #58a6ff) 65%, transparent);
 }
 
 /* Per-panel controls sit with their panel, not in a global bar. ADR-0071 clause 6. */
@@ -319,21 +510,10 @@
   max-width: 100%;
 }
 
-/* The workbench footer is compact. The provenance and the disclaimer are mandatory content, but at
-   full prose size they were taking a sixth of the viewport away from the instrument. */
-body:has(.page-body.st-layout) .site-footer {
-  /* MEASURED: at prose size this footer was 157px of a 900px viewport, and the instrument landed at
-     47 percent against the ADR-0071 floor of 50. The provenance and the disclaimer are mandatory
-     content and are still here in full; only their type size and padding shrink, and only on the
-     workbench route. The prose routes keep the normal footer. */
-  font-size: 0.64rem;
-  line-height: 1.2;
-}
-
-body:has(.page-body.st-layout) .site-footer .footer-inner {
-  padding: 0.4rem 1.2rem;
-  gap: 0.25rem;
-}
+/* THE FOOTER IS NOT STYLED FROM HERE. Two files were adjusting the same shell chrome for the same
+   route -- this one and stocktwin.css -- and only one of them could win, so the numbers this file
+   claimed to have measured were never the numbers on screen. The workbench footer density lives in
+   exactly one place, stocktwin.css, which owns the ADR-0071 floor for this product. */
 
 /* Small multiples: the three field views side by side, so the width carries instrument rather than
    whitespace. They wrap on a narrow screen instead of shrinking to illegibility. */
@@ -471,9 +651,71 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
   opacity: 0.6;
 }
 
+/* THE RAMP ITSELF. It had a width, a height and no background, so the key drew nothing and the two
+   numbers either side of it were a range with no legend between them. The gradient is set from
+   JavaScript out of the SAME colormap array the stage samples, so the two cannot drift; see
+   `cssGradient` in viz/colormap.ts. */
 .st-scalebar .st-scale {
   width: 7rem;
   height: 0.6rem;
+  border-radius: 3px;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* THE SYMBOL GLOSSARY under an equation. An equation whose symbols are not defined is a picture of
+   an equation: the reader can see the shape and cannot check the claim. Every one on the deep pages
+   is followed by this list, with units. */
+.st-syms {
+  list-style: none;
+  margin: -0.6rem 0 1.4rem;
+  padding: 0 0 0 0.2rem;
+  display: grid;
+  gap: 0.22rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  opacity: 0.86;
+}
+
+.st-syms li {
+  padding-left: 0.9rem;
+  text-indent: -0.9rem;
+}
+
+/* THE VALUE UNDER THE CURSOR. Positioned by the view, written straight into the DOM: it follows the
+   pointer, so putting it through React state would re-render the workbench on every mouse move. */
+.st-probe {
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  min-width: 9rem;
+  padding: 0.35rem 0.55rem;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  line-height: 1.35;
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in srgb, var(--color-fg) 18%, transparent);
+}
+
+.st-probe b {
+  display: block;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.st-probe span {
+  display: block;
+  opacity: 0.7;
+  font-size: 0.66rem;
+}
+
+/* Keyboard focus must be visible on an instrument, not only on a button. */
+.st-stage3d > div:focus-visible,
+.st-chartbox:focus-visible,
+.st-chartcanvas:focus-visible {
+  outline: 2px solid var(--color-accent, #58a6ff);
+  outline-offset: -2px;
 }
 
 /* THE CHART HOST. Its height is the flex remainder of the panel; the canvas is out of flow inside
@@ -565,8 +807,8 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
    came out at 47.8 against the ADR-0071 floor of 50. It is chrome, so it gives the width up first. */
 @media (max-width: 1450px) {
   .page-body.st-layout > .st-rail {
-    flex-basis: 13.5rem;
-    width: 13.5rem;
+    flex-basis: 12.5rem;
+    width: 12.5rem;
     font-size: 0.76rem;
   }
 
@@ -577,4 +819,291 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
   .st-caseblurb {
     font-size: 0.7rem;
   }
+}
+
+/* The dump areas, named beside the map rather than lettered onto it. */
+.st-arealist {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.st-arealist li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  padding-bottom: 0.16rem;
+}
+
+.st-arealist span {
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+/* The block model: controls, three cross-sections, then the solid. */
+.st-blocks {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 0.3rem;
+}
+
+.st-blockbox {
+  height: clamp(340px, 66vh, 860px);
+}
+
+.st-blockhost {
+  position: absolute;
+  inset: 0;
+}
+
+.st-cuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  font-size: 0.74rem;
+  align-items: center;
+}
+
+.st-cuts label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.st-cuts label > span {
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.st-cuts input {
+  width: 9rem;
+}
+
+.st-cuts b {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  min-width: 2.6rem;
+}
+
+/* =============================================================================================
+   THE PANEL FURNITURE: notes, legends, tables and figures.
+   ---------------------------------------------------------------------------------------------
+   These nineteen classes were USED BY EVERY PANEL AND DEFINED NOWHERE. The v1 stylesheet that
+   carried them was culled when the product was rebuilt, correctly, because it was also overriding
+   the rail; what was missed is that the panels were still asking for its classes. Every table in
+   the workbench has been rendering as a browser-default table, every legend as a run of bare
+   spans, and the focus entry as an unstyled button, since that commit. A class a component names
+   and no stylesheet answers is not neutral, it is a silent regression.
+   ============================================================================================= */
+
+/* The focus entry, ADR-0070 clause 8: the most conspicuous control in the rail, because it is the
+   one the clause exists to make impossible to miss. */
+.st-focus {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.42rem 0.6rem;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--color-accent, #58a6ff) 45%, transparent);
+  background: color-mix(in srgb, var(--color-accent, #58a6ff) 14%, transparent);
+  color: inherit;
+  cursor: pointer;
+}
+
+.st-focus:hover {
+  background: color-mix(in srgb, var(--color-accent, #58a6ff) 26%, transparent);
+}
+
+/* A note is prose that explains an instrument. It is set narrower than the panel and lighter than
+   body copy, because it is a caption, not the argument. */
+.st-note {
+  margin: 0.5rem 0 0.7rem;
+  max-width: 78ch;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  opacity: 0.8;
+}
+
+.st-figure {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Every chart states what it shows AND its headline finding, per the rubric. */
+.st-figcap {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  opacity: 0.78;
+  padding-top: 0.3rem;
+  max-width: 90ch;
+}
+
+.st-map {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  gap: 0.25rem;
+}
+
+.st-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem 0.9rem;
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  opacity: 0.82;
+}
+
+.st-key {
+  display: inline-block;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 3px;
+  margin-right: 0.25rem;
+  vertical-align: -0.1rem;
+  border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* The swatches read the SAME tokens the canvas reads, so the legend and the picture cannot drift.
+   They used to be inline hex literals switched on a `dark` boolean while the canvas used another
+   set, which is how a legend ends up describing a colour that is not on screen. */
+.st-key-good { background: var(--color-good, #3fb950); }
+.st-key-warn { background: var(--color-warn, #d29922); }
+.st-key-ramp { background: color-mix(in srgb, var(--color-warn, #d29922) 55%, transparent); }
+.st-key-plan { background: color-mix(in srgb, currentColor 28%, transparent); }
+
+.st-linkbtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.72rem;
+  color: inherit;
+  opacity: 0.7;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.st-linkbtn:hover {
+  opacity: 1;
+}
+
+.st-tablewrap {
+  /* A wide table scrolls INSIDE its own box. The page never scrolls sideways. */
+  overflow-x: auto;
+  max-width: 100%;
+  margin: 0.5rem 0 0.9rem;
+}
+
+.st-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-table th,
+.st-table td {
+  text-align: left;
+  padding: 0.3rem 0.6rem 0.3rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  white-space: nowrap;
+}
+
+.st-table th {
+  font-weight: 600;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+}
+
+.st-table.st-compact th,
+.st-table.st-compact td {
+  padding: 0.18rem 0.5rem 0.18rem 0;
+  font-size: 0.74rem;
+}
+
+/* The reference row is the measurement the build is being judged against, not one of its results. */
+.st-table tr.st-ref td {
+  border-top: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+  opacity: 0.75;
+  font-style: italic;
+  white-space: normal;
+}
+
+.st-ok { color: var(--color-good, #3fb950); font-weight: 600; }
+.st-bad { color: var(--color-bad, #f85149); font-weight: 600; }
+
+/* A stat list: a name and a measured value, as many across as the width allows. */
+.st-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.5rem 1.2rem;
+  margin: 0.6rem 0 0.8rem;
+}
+
+.st-stats > div {
+  min-width: 0;
+  display: grid;
+  gap: 0.05rem;
+  padding: 0.35rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+  background: color-mix(in srgb, currentColor 3.5%, transparent);
+}
+
+.st-stats dt {
+  font-size: 0.68rem;
+  line-height: 1.25;
+  opacity: 0.7;
+}
+
+.st-stats dd {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.st-detail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.st-detail h4,
+.st-blocks h4,
+.st-inside h4 {
+  margin: 0.9rem 0 0.2rem;
+  font-size: 0.86rem;
+}
+
+/* THE STAGE MUST NOT SHRINK WHEN A TAB IS REVISITED.
+ *
+ * The shell keeps a tab panel mounted and hides it. A hidden element has a clientHeight of zero, so
+ * the ResizeObserver on the 3-D host fired with zero while the Site tab was in the background, the
+ * canvas was sized to the floor, and coming back showed a stage a third of the height it left with:
+ * nothing re-measures it, because the box did not change when it became visible again. Reserving the
+ * height in CSS rather than only measuring it means the box the observer reads is right whether the
+ * panel is showing or not. */
+.st-canvashost {
+  min-height: clamp(320px, 58vh, 900px);
 }

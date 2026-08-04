@@ -141,6 +141,10 @@ export interface Frames {
    *  which is what lets a player show the truck working right now instead of every path ever
    *  driven. */
   step?: number;
+  /** One surface per reclaim cut, same grid and same delta encoding as the build frames. The pile
+   *  coming DOWN is as much of the operation as the pile going up, and the timeline runs through
+   *  both. */
+  reclaim?: { seq: number; placed: number; z?: number[]; d?: number[] }[];
   /** The first frame is complete; the rest carry only the cells that changed, as flat
    *  [index, value, index, value] pairs. A load touches a couple of dozen cells and leaves the rest
    *  alone, so a full surface per frame writes the same numbers hundreds of times: 2.6 MB per
@@ -153,6 +157,11 @@ export interface Cut {
   grade: number;
   disp: number;
   unc: number;
+  /** Where the loader stood: the centroid of the cells this cut engaged, in pad metres. */
+  x?: number;
+  y?: number;
+  /** How many cells it engaged, which is the size of the bite. */
+  cells?: number;
   prov: Record<string, number>;
 }
 
@@ -211,7 +220,7 @@ export interface Manifest {
     loads_placed: number;
     refusal_rate: number;
     mass_residual_rel: number;
-    kill_criterion: string;
+    kill_criterion: { en: string; es: string };
   };
 }
 
@@ -344,27 +353,108 @@ export interface Verdict {
  * dig blocks a cut drew from, which is exactly what the 1/N bound is about. Taking it from a
  * configured "number of passes" would let the bound be set rather than measured.
  */
+/*
+ * THE EFFECTIVE NUMBER OF INDEPENDENT SOURCES per cut, not the raw count of them, is what makes the
+ * 1/N bound honest. A cut drawing 95 percent of its tonnage from one dig block and traces of four
+ * others is averaging one source, not five, and counting keys would say five. The inverse
+ * participation ratio, 1 / sum of squared fractions, is the standard effective-sample-size measure
+ * and gives one for a pure cut and n for an evenly mixed one. It lives in `verdictAt`, which this
+ * calls at the neutral knob setting so there is exactly one implementation of the arithmetic.
+ *
+ * The efficiency is NOT capped. Above one it says the achieved reduction beat the bound, which is
+ * arithmetically impossible for genuinely independent sources and therefore says the source count is
+ * being underestimated rather than that the pile is miraculous. Clamping it to 100 percent would
+ * hide exactly that diagnostic, which is why it is withheld instead.
+ */
 export function verdict(sc: Scenario): Verdict {
+  return verdictAt(sc, KNOBS);
+}
+
+/* ------------------------------------------------------------------------------------------- */
+/* THE KNOBS. Continuous parameters that recompute the verdict IN THE BROWSER, from the events.  */
+/* ------------------------------------------------------------------------------------------- */
+/*
+ * WHY THESE THREE AND NOT SLIDERS OVER THE PHYSICS. ADR-0017 section 3.2 wants continuous knobs over
+ * the domain's real quantities driving a live recompute, and ADR-0070 clause 6 forbids presenting a
+ * parameter as live when it cannot respond. Repose angle, bench height, truck limit and dozer cadence
+ * all change WHAT IS BUILT: they route every load again and relax the whole field after every
+ * operation, which is tens of seconds of Python. They stay readouts, honestly labelled as such.
+ *
+ * What IS live is everything downstream of the built pile, and it is not a consolation prize: the
+ * three knobs below are the decisions a plant actually makes about a stockpile it did not build.
+ * How many cuts the surge capacity averages before the mill sees them. How large a share of a cut a
+ * dig block needs before it counts as an independent source. What cutoff the ore stream is screened
+ * at. Each is a real operating choice, each moves the headline number, and each is recomputed here
+ * from the cut ledger rather than looked up.
+ */
+
+/** The default knob positions: the values the verdict is quoted at when nobody has touched anything. */
+export const KNOBS = {
+  /** One cut at a time: no downstream surge averaging. */
+  batch: 1,
+  /** Count every dig block that appears in a cut, however small its share. */
+  threshold: 0,
+  /** No screening: every reclaimed tonne is ore. */
+  cutoff: 0,
+} as const;
+
+export interface Knobs {
+  /** How many consecutive reclaim cuts the downstream surge capacity averages before the mill. */
+  batch: number;
+  /** Minimum tonnage share for a dig block to count as an independent source in the 1/N bound. */
+  threshold: number;
+  /** Grade below which a cut is waste rather than ore, in the same units as the cut grade. */
+  cutoff: number;
+}
+
+/** Average consecutive cuts in groups of `batch`, tonnage-weighted, as a surge bin does. */
+export function batchCuts(cuts: Cut[], batch: number): { t: number; grade: number }[] {
+  const k = Math.max(1, Math.round(batch));
+  if (k === 1) return cuts.map((c) => ({ t: c.t, grade: c.grade }));
+  const out: { t: number; grade: number }[] = [];
+  for (let i = 0; i < cuts.length; i += k) {
+    const g = cuts.slice(i, i + k);
+    const t = g.reduce((a, c) => a + c.t, 0);
+    out.push({ t, grade: t > 0 ? g.reduce((a, c) => a + c.grade * c.t, 0) / t : 0 });
+  }
+  return out;
+}
+
+/**
+ * The verdict at a given knob setting. `verdict(sc)` is this at the defaults.
+ *
+ * The 1/N bound moves with BOTH knobs and that is the physics, not a convenience: averaging k cuts
+ * multiplies the effective source count by k, and dropping trace provenance below a threshold cuts
+ * it. A reader who slides the batch up and watches the measured reduction fall faster than the bound
+ * is watching the pile's own mixing lose its advantage to the surge bin, which is the argument the
+ * product exists to make.
+ */
+export function verdictAt(sc: Scenario, knobs: Knobs): Verdict {
   const placed = sc.loads.filter((l) => l.placed);
   const gIn = placed.map((l) => l.grade);
   const wIn = placed.map(() => 1);
   const varIn = weightedVariance(gIn, wIn);
 
-  const gOut = sc.cuts.map((c) => c.grade);
-  const wOut = sc.cuts.map((c) => c.t);
+  // The cutoff screens the stream BEFORE the surge bin, because that is where a screen sits.
+  const kept = knobs.cutoff > 0 ? sc.cuts.filter((c) => c.grade >= knobs.cutoff) : sc.cuts;
+  const batched = batchCuts(kept, knobs.batch);
+  const gOut = batched.map((c) => c.grade);
+  const wOut = batched.map((c) => c.t);
   const varOut = weightedVariance(gOut, wOut);
 
-  // THE EFFECTIVE NUMBER OF INDEPENDENT SOURCES per cut, not the raw count of them. A cut drawing
-  // 95 percent of its tonnage from one dig block and traces of four others is averaging one source,
-  // not five, and counting keys would say five. The inverse participation ratio, 1 / sum of squared
-  // fractions, is the standard effective-sample-size measure and gives one for a pure cut and n for
-  // an evenly mixed one.
-  const eff = sc.cuts.map((c) => {
-    const f = Object.values(c.prov);
-    const ss = f.reduce((a, x) => a + x * x, 0);
+  // Effective independent sources per cut, with shares below the threshold discarded as trace and
+  // the survivors renormalised: a cut is not made more diverse by a dig block that contributed a
+  // hundredth of it. Averaging k cuts then multiplies the count, since the batches are disjoint.
+  const eff = kept.map((c) => {
+    let f = Object.values(c.prov).filter((x) => x >= knobs.threshold);
+    const s = f.reduce((a, x) => a + x, 0);
+    if (s <= 0) f = Object.values(c.prov);
+    const tot = f.reduce((a, x) => a + x, 0) || 1;
+    const ss = f.reduce((a, x) => a + (x / tot) ** 2, 0);
     return ss > 0 ? 1 / ss : 1;
   });
-  const nLayers = eff.length ? eff.reduce((a, b) => a + b, 0) / eff.length : 1;
+  const perCut = eff.length ? eff.reduce((a, b) => a + b, 0) / eff.length : 1;
+  const nLayers = perCut * Math.max(1, Math.round(knobs.batch));
 
   const vrr = varIn > 0 ? varOut / varIn : 0;
   const ideal = nLayers > 0 ? 1 / nLayers : 1;
@@ -373,10 +463,6 @@ export function verdict(sc: Scenario): Verdict {
     varOut,
     vrr,
     ideal,
-    // NOT capped. An efficiency above one means the achieved reduction beat the bound, which is
-    // arithmetically impossible for genuinely independent sources and therefore says the source
-    // count is being underestimated rather than that the pile is miraculous. Silently clamping it to
-    // 100 percent would hide exactly that diagnostic.
     efficiency: vrr > 0 ? ideal / vrr : 1,
     boundReliable: vrr > 0 ? ideal / vrr <= 1.05 : false,
     nLayers,
@@ -385,6 +471,77 @@ export function verdict(sc: Scenario): Verdict {
     meanGradeIn: weightedMean(gIn, wIn),
     meanGradeOut: weightedMean(gOut, wOut),
   };
+}
+
+export interface GradeTonnage {
+  /** Tonnes at or above the cutoff. */
+  ore: number;
+  /** Tonnes below it. */
+  waste: number;
+  /** Tonnage-weighted grade of the ore stream. */
+  oreGrade: number;
+  /** Grade of what the cutoff threw away, which is the number that says whether it was too high. */
+  wasteGrade: number;
+  /** Contained metal in the ore stream, in grade-tonnes. */
+  metal: number;
+  /** Contained metal lost to the waste stream. */
+  metalLost: number;
+  /** Share of the reclaimed metal that survives the screen. */
+  recovery: number;
+  /** The whole curve, for plotting: cutoff against ore tonnes and ore grade. */
+  curve: { cutoff: number; ore: number; grade: number }[];
+}
+
+/** A grade-tonnage curve over the reclaim cuts, and the point the cutoff knob is standing on. */
+export function gradeTonnage(sc: Scenario, cutoff: number): GradeTonnage {
+  const cuts = sc.cuts;
+  let ore = 0;
+  let waste = 0;
+  let metal = 0;
+  let metalLost = 0;
+  for (const c of cuts) {
+    if (c.grade >= cutoff) {
+      ore += c.t;
+      metal += c.grade * c.t;
+    } else {
+      waste += c.t;
+      metalLost += c.grade * c.t;
+    }
+  }
+  const grades = cuts.map((c) => c.grade);
+  const lo = grades.length ? Math.min(...grades) : 0;
+  const hi = grades.length ? Math.max(...grades) : 1;
+  const curve: { cutoff: number; ore: number; grade: number }[] = [];
+  const STEPS = 40;
+  for (let i = 0; i <= STEPS; i += 1) {
+    const x = lo + ((hi - lo) * i) / STEPS;
+    let t = 0;
+    let m = 0;
+    for (const c of cuts) {
+      if (c.grade >= x) {
+        t += c.t;
+        m += c.grade * c.t;
+      }
+    }
+    curve.push({ cutoff: x, ore: t, grade: t > 0 ? m / t : 0 });
+  }
+  return {
+    ore,
+    waste,
+    oreGrade: ore > 0 ? metal / ore : 0,
+    wasteGrade: waste > 0 ? metalLost / waste : 0,
+    metal,
+    metalLost,
+    recovery: metal + metalLost > 0 ? metal / (metal + metalLost) : 1,
+    curve,
+  };
+}
+
+/** The grade range of the reclaim cuts, which is the domain the cutoff knob is allowed to move in. */
+export function cutGradeRange(sc: Scenario): [number, number] {
+  const g = sc.cuts.map((c) => c.grade);
+  if (!g.length) return [0, 1];
+  return [Math.min(...g), Math.max(...g)];
 }
 
 /** Experimental semivariogram of a series against a cumulative coordinate. */
@@ -520,6 +677,14 @@ export interface PlayState {
   ahead: [number, number][];
   /** Which of the three phases we are in. */
   phase: 'approach' | 'tip' | 'departure';
+  /** Which machine is on the stage. A haul truck delivering, or a loader taking material away. */
+  job: 'haul' | 'reclaim';
+  /** On a reclaim step, the cut being taken. */
+  cut?: Cut | null;
+  /** How far through the current phase, 0 to 1. Lets the scene animate WITHIN a phase. */
+  sub: number;
+  /** The direction the load runs out, from the engine: the outward normal of the crest at the spot. */
+  dumpHeading: number | null;
 }
 
 const APPROACH_FRAC = 0.45;
@@ -560,10 +725,50 @@ function walk(
   return null;
 }
 
+/** The signed angle from `a` to `b`, taking the short way round, so a turn never spins the long way. */
+function shortestTurn(a: number, b: number): number {
+  let d = (b - a) % (2 * Math.PI);
+  if (d > Math.PI) d -= 2 * Math.PI;
+  if (d < -Math.PI) d += 2 * Math.PI;
+  return d;
+}
+
 /** Resolve a fractional build position into everything the scene needs to draw one moment. */
+/** How many steps the whole timeline has: every placed load, then every reclaim cut. */
+export function timelineLength(sc: Scenario | null): number {
+  const f = sc?.frames;
+  if (!f) return 0;
+  return f.frames.length + (f.reclaim?.length ?? 0);
+}
+
 export function playState(sc: Scenario, pos: number): PlayState | null {
   const f = sc.frames;
   if (!f || !f.frames.length) return null;
+
+  // THE TIMELINE RUNS PAST THE END OF THE BUILD. Everything after the last load is the reclaim
+  // campaign: an orange loader working the face, taking the pile back down cut by cut. It is the
+  // second half of what a stockpile does and it was not on the timeline at all.
+  const nBuild = f.frames.length;
+  if (f.reclaim?.length && pos >= nBuild) {
+    const k = Math.min(Math.floor(pos - nBuild), f.reclaim.length - 1);
+    const c = sc.cuts[k] ?? null;
+    const z = expandReclaim(f, k);
+    const here = c && typeof c.x === 'number' && typeof c.y === 'number'
+      ? { x: c.x, y: c.y, heading: 0 }
+      : null;
+    return {
+      seq: -1 - k,
+      z,
+      truck: here,
+      trail: [],
+      ahead: [],
+      phase: 'tip',
+      sub: pos - nBuild - k,
+      dumpHeading: null,
+      job: 'reclaim',
+      cut: c,
+    };
+  }
   const i = Math.min(Math.max(Math.floor(pos), 0), f.frames.length - 1);
   const frac = Math.min(Math.max(pos - i, 0), 1);
   const cur = f.frames[i];
@@ -590,17 +795,43 @@ export function playState(sc: Scenario, pos: number): PlayState | null {
   const path = phase === 'departure' ? (load?.departure ?? []) : (load?.approach ?? []);
   const w = walk(path as [number, number][], phase === 'tip' ? 1 : sub);
 
+  // THE TRUCK TURNS BEFORE IT TIPS, because that is what a haul truck does: it reverses to the tip
+  // head so the tray discharges over its REAR. The engine already places the material behind the
+  // truck, 0.66 of a body length back, and records the direction it runs out as the outward normal
+  // of the crest. The scene was orienting the truck by its direction of travel right through the
+  // tip, which put the load off the nose. It now swings to face AWAY from the run-out over the last
+  // stretch of the approach, holds there while the tray is up, and swings back to travel on the way
+  // out.
+  const dumpHeading = typeof load?.head === 'number' ? load.head : null;
+  const TURN_STARTS_AT = 0.7;
+  let heading = w ? w.heading : (dumpHeading ?? 0);
+  if (dumpHeading !== null) {
+    const backedIn = dumpHeading + Math.PI;   // nose away from the dump, tray over it
+    if (phase === 'tip') {
+      heading = backedIn;
+    } else if (phase === 'approach' && sub > TURN_STARTS_AT) {
+      const k = (sub - TURN_STARTS_AT) / (1 - TURN_STARTS_AT);
+      heading = heading + shortestTurn(heading, backedIn) * k;
+    } else if (phase === 'departure' && sub < 1 - TURN_STARTS_AT) {
+      const k = sub / (1 - TURN_STARTS_AT);
+      heading = backedIn + shortestTurn(backedIn, heading) * k;
+    }
+  }
+
   return {
     seq: cur.seq,
     z: phase === 'approach' ? before : after,
     truck: w
-      ? { x: w.x, y: w.y, heading: w.heading }
+      ? { x: w.x, y: w.y, heading }
       : load && load.x !== undefined && load.y !== undefined
-        ? { x: load.x, y: load.y, heading: load.head ?? 0 }
+        ? { x: load.x, y: load.y, heading }
         : null,
     trail: w ? w.done : [],
     ahead: w ? w.left : [],
     phase,
+    sub,
+    dumpHeading,
+    job: 'haul',
   };
 }
 
@@ -720,6 +951,64 @@ export function surfaceValues(sc: Scenario, key: string): (number | null)[] | nu
     const l = by.get(ev) as (Load & Record<string, number | undefined>) | undefined;
     const v = l ? l[key] : undefined;
     out[c] = typeof v === 'number' && Number.isFinite(v) ? v : null;
+  }
+  return out;
+}
+
+
+/** The surface after reclaim cut `k`, accumulated from the last build frame through the cut deltas. */
+const RECLAIM_CACHE = new WeakMap<Frames, { at: number; z: number[] }>();
+
+function expandReclaim(f: Frames, k: number): number[] | null {
+  const list = f.reclaim;
+  if (!list?.length) return null;
+  const cache = RECLAIM_CACHE.get(f);
+  let at: number;
+  let z: number[];
+  if (cache && cache.at <= k) {
+    at = cache.at;
+    z = cache.z;
+  } else {
+    const first = list[0];
+    if (!first?.z) return null;
+    at = 0;
+    z = first.z.slice();
+  }
+  for (let i = at + 1; i <= k; i++) {
+    const fr = list[i];
+    if (!fr) break;
+    if (fr.z) z = fr.z.slice();
+    else if (fr.d) for (let j = 0; j + 1 < fr.d.length; j += 2) z[fr.d[j]] = fr.d[j + 1];
+  }
+  RECLAIM_CACHE.set(f, { at: k, z });
+  return upsample(f, z);
+}
+
+/** Bilinear expansion of a coarse surface onto the full grid. Shared by both timelines. */
+function upsample(f: Frames, coarse: number[]): number[] | null {
+  const step = f.step ?? 1;
+  if (step === 1) return coarse.slice();
+  const { nx, ny } = f;
+  const hnx = Math.ceil(nx / step);
+  const hny = Math.ceil(ny / step);
+  if (coarse.length !== hnx * hny) return null;
+  const out = new Array<number>(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const v = j / step;
+    const j0 = Math.min(Math.floor(v), hny - 1);
+    const j1 = Math.min(j0 + 1, hny - 1);
+    const tj = v - j0;
+    for (let i = 0; i < nx; i++) {
+      const u = i / step;
+      const i0 = Math.min(Math.floor(u), hnx - 1);
+      const i1 = Math.min(i0 + 1, hnx - 1);
+      const ti = u - i0;
+      const a = coarse[j0 * hnx + i0];
+      const b = coarse[j0 * hnx + i1];
+      const c = coarse[j1 * hnx + i0];
+      const d = coarse[j1 * hnx + i1];
+      out[j * nx + i] = (a + (b - a) * ti) * (1 - tj) + (c + (d - c) * ti) * tj;
+    }
   }
   return out;
 }

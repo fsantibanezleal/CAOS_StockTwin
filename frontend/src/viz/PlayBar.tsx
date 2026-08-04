@@ -16,7 +16,7 @@
  * keeps running in a background tab is a compute bomb, and the standing rule is that every animation
  * defaults to paused, runs once, and halts when the tab is hidden.
  */
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pause, Play, SkipBack, SkipForward, Square } from 'lucide-react';
 import { usePausedViz } from '@fasl-work/caos-app-shell';
 
@@ -24,6 +24,8 @@ import type { Frames } from '../lib/scenario';
 
 interface Props {
   frames: Frames | null;
+  /** Total steps: every placed load, then every reclaim cut. */
+  total?: number;
   /** Fractional position through the build, in loads. `2.4` is 40 percent through the third load. */
   pos: number;
   onPos: (p: number) => void;
@@ -38,18 +40,27 @@ const BASE_LOADS_PER_S = 1.5;
 
 const SPEEDS = [0.5, 1, 2, 5];
 
-export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
+export default function PlayBar({ frames, total, pos, onPos, lang = 'en' }: Props) {
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
-  const n = frames?.frames.length ?? 0;
+  const nBuild = frames?.frames.length ?? 0;
+  const n = total ?? nBuild;
 
   const [speed, setSpeed] = useState(1);
   const rate = BASE_LOADS_PER_S * speed;
 
   const [playing, setPlaying] = useState(false);
+
+  // WHERE THIS RUN STARTED. The shell's loop hands out elapsed milliseconds from zero, so a player
+  // that maps elapsed straight onto a position can only ever play from the beginning: pausing
+  // half way and pressing play again threw the reader back to load one, which made stopping in
+  // place useless even when it worked. Each run records the position it began at and adds elapsed
+  // to that, so play RESUMES and the scrub is an equal citizen with the transport.
+  const origin = useRef(0);
+
   const frame = useCallback(
     (_dt: number, elapsed: number) => {
       if (n === 0) return false;
-      const p = (elapsed / 1000) * rate;
+      const p = origin.current + (elapsed / 1000) * rate;
       onPos(Math.min(p, n - 1));
       return p < n - 1;
     },
@@ -58,15 +69,23 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
 
   const viz = usePausedViz(frame, { onPlayingChange: setPlaying });
 
+  /** Play from where the reader is. At the very end there is nothing left to watch, so it rewinds. */
+  const resume = useCallback(() => {
+    origin.current = pos >= n - 1 - 1e-6 ? 0 : pos;
+    viz.restart();
+  }, [pos, n, viz]);
+
   const idx = Math.min(Math.max(Math.floor(pos), 0), Math.max(n - 1, 0));
+  const reclaiming = idx >= nBuild;
   const placed = useMemo(
     () => (frames && frames.frames[idx] ? frames.frames[idx].placed : 0),
     [frames, idx],
   );
-  const total = useMemo(
+  const built = useMemo(
     () => (frames && frames.frames.length ? frames.frames[frames.frames.length - 1].placed : 0),
     [frames],
   );
+  const nCuts = frames?.reclaim?.length ?? 0;
 
   if (!frames || n === 0) return null;
 
@@ -79,22 +98,29 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
     <div className="st-play" role="group" aria-label={t('Play the build', 'Reproducir la construcción')}>
       <button
         type="button"
-        onClick={() => (playing ? viz.pause() : viz.restart())}
+        onClick={() => (playing ? viz.pause() : resume())}
         aria-label={playing ? t('Pause', 'Pausar') : t('Play', 'Reproducir')}
-        title={playing ? t('Pause, keeping this moment', 'Pausar, manteniendo este momento') : t('Play the build', 'Reproducir la construcción')}
+        title={
+          playing
+            ? t('Pause here', 'Pausar aquí')
+            : t('Play from here', 'Reproducir desde aquí')
+        }
       >
         {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
       </button>
 
-      {/* STOP IS NOT PAUSE. Pause holds the moment you are looking at; stop ends the run and puts
-          the finished pile back on the stage, which is the state the tab opens in. Having only a
-          play/pause toggle left no way to say "I am done watching" other than dragging the scrub to
-          the end. */}
+      {/* STOP HALTS ON THE FRAME YOU ARE LOOKING AT. It used to jump to the finished pile, which is
+          not stopping, it is skipping to the end: the one moment the reader had chosen to look at
+          was the thing it threw away. It now snaps to that load's own frame, so the stage shows a
+          load boundary rather than a position part-way through a tip. */}
       <button
         type="button"
-        onClick={() => { viz.pause(); onPos(n - 1); }}
+        onClick={() => {
+          viz.pause();
+          onPos(Math.min(Math.max(Math.round(pos), 0), n - 1));
+        }}
         aria-label={t('Stop', 'Detener')}
-        title={t('Stop, and show the finished pile', 'Detener, y mostrar la pila terminada')}
+        title={t('Stop on this load', 'Detener en esta carga')}
       >
         <Square size={13} aria-hidden />
       </button>
@@ -118,8 +144,12 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
         aria-label={t('Build progress', 'Avance de la construcción')}
       />
 
+      {/* The readout says which half of the operation is on the stage: loads going on, or cuts
+          coming off. A single "n of m" counter cannot, and the two are different machines. */}
       <span className="st-play-read">
-        {placed}/{total} {t('loads', 'cargas')}
+        {reclaiming
+          ? `${idx - nBuild + 1}/${nCuts} ${t('cuts', 'cortes')}`
+          : `${placed}/${built} ${t('loads', 'cargas')}`}
       </span>
 
       <label className="st-play-speed">

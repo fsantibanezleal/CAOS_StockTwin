@@ -64,9 +64,10 @@ jobs:
           grep -q "OK   02_gstools"  /tmp/fw.log || { echo "::error::the gstools example did not run"; exit 1; }
 
   generated:
-    # Three files in this repository are DERIVED from the code: the TypeScript case registry, the case
-    # documentation pages, and the architecture diagrams. Regenerating them here and failing on a diff
-    # turns "someone edited one side only" into a build failure instead of a discrepancy nobody notices.
+    # The case documentation pages are DERIVED from the code, so regenerating them here and failing on a
+    # diff turns "someone edited one side only" into a build failure instead of a discrepancy nobody
+    # notices. The architecture diagrams are NOT derived: ADR-0058 makes them hand-authored source, and
+    # the generator that used to own them is what let the whole set drift as one block.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -80,10 +81,15 @@ jobs:
       # left to drift. What replaces this check is the Contract 2 gate over the committed artifacts.
       - name: The generated documentation pages match the code
         run: python scripts/gen_docs.py --check
-      - name: The architecture diagrams regenerate identically, with no hardcoded colour
+      # THE ARCHITECTURE DIAGRAMS ARE HAND-AUTHORED SOURCE, so there is no generator to re-run.
+      # ADR-0058 requires that, and the generator that used to live here is exactly the mechanism
+      # that let the whole set drift as one block: a stale conveyor-stacker description and a list
+      # of module paths that existed in no repository were all emitted from one script nobody read.
+      # What survives is the property the check was really for: no hardcoded colour.
+      - name: The architecture diagrams carry no hardcoded colour
         run: |
-          python scripts/make_arch_svgs.py
-          git diff --exit-code -- frontend/public/svg/tech
+          if grep -rn '#[0-9a-fA-F]\{3,6\}' frontend/public/svg/tech; then
+            echo "::error::a hardcoded colour in an architecture SVG (use var(--color-...))"; exit 1; fi
 
   web:
     runs-on: ubuntu-latest
@@ -102,6 +108,21 @@ jobs:
       - run: npm run build
         working-directory: frontend
       - run: npm test
+        working-directory: frontend
+      # ADR-0070 clause 8: THE FLOW IS THE FEATURE, and it is verified by CLICKING. Loading the App,
+      # clicking the focus entry, asserting the focus view rendered, clicking return and asserting
+      # the App came back on the same scenario WITH the same parameter values. A reachability check
+      # that fetches /focus/<id> passes on a route no user can reach; this one does not.
+      # It also asserts the two measured floors, the 80 percent focus stage and the 50 percent App
+      # instrument, and that the control rail does not scroll.
+      - name: Install a browser for the click-through gate
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+      - name: THE FLOW, by clicking, in both themes
+        run: |
+          npx vite preview --port 4188 --strictPort --host 127.0.0.1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4188/ >/dev/null && break; sleep 1; done
+          node test/focus-flow.mjs http://127.0.0.1:4188
         working-directory: frontend
 
   guards:

@@ -4,8 +4,17 @@
  * around it." So this escapes every shell container and takes the whole window: a focus view that
  * sits inside the page chrome is just the App with fewer tabs.
  *
- * One parameter column on the right, scrolling independently of the stage. KPIs overlaid on the
- * stage as a HUD. A visible return control at the top right. All four are clauses, not preferences.
+ * TWO CLAUSES THAT FIGHT EACH OTHER BELOW 1500px, and how they are reconciled. The ADR fixes the rail
+ * at 300-340px AND puts the stage at 80% or more of the viewport area. A docked rail of 300px leaves
+ * the stage 80% only from 1500px up; at the standard 1280x800 check a 300px rail leaves 76.6% and the
+ * 288px this file used to carry left 77.5%, which is how the previous version failed the floor. Both
+ * clauses can only hold at once by changing WHICH of the two the layout is: docked beside the stage
+ * on a wide screen, and an overlay drawer over a full-bleed stage below that. Under-sizing the rail
+ * to buy area, which is what 18rem was, satisfies the number and breaks the band.
+ *
+ * EVERY COLOUR IS A SHELL TOKEN. This file used to key its whole surface to `var(--st-bg, #0e1319)`,
+ * and `--st-bg` is defined nowhere in the product: the fallback fired every time, so the focus route
+ * rendered dark in BOTH themes while the rest of the app followed `data-theme`.
  */
 
 .fx-root {
@@ -13,12 +22,11 @@
   inset: 0;
   z-index: 60;
   display: grid;
-  /* The rail is sized so the STAGE clears the ADR-0070 eighty percent floor, not so the controls
-     look comfortable. Measured at 21rem the stage came out at 78.3 percent on a 1600px viewport,
-     which fails; 18rem leaves it above the floor with room to spare on narrower screens too. */
-  grid-template-columns: minmax(0, 1fr) 18rem;
-  background: var(--st-bg, #0e1319);
-  color: inherit;
+  /* The rail sits inside the ADR's 300-340px band. Below 1500px it stops being a grid track at all;
+     see the overlay rules further down. */
+  grid-template-columns: minmax(0, 1fr) 320px;
+  background: var(--color-bg);
+  color: var(--color-fg);
   overflow: hidden;
 }
 
@@ -38,22 +46,58 @@
 
 .fx-err {
   padding: 2rem;
-  color: #d1495b;
+  color: var(--color-bad);
 }
 
-/* -- the HUD, ON the stage --------------------------------------------------------------------- */
+/* -- the in-stage label, TOP LEFT -------------------------------------------------------------- */
+/* "The current state NAMED, plus one plain sentence of what is being seen, on a translucent surface,
+   max ~46ch, pointer-events: none. This is what makes the view teach on its own." It was at the
+   BOTTOM of the stage, stretched to a 22rem right inset, with no surface behind it and no blur:
+   four of the five properties the ADR names, missing. */
+.fx-label {
+  position: absolute;
+  top: 0.9rem;
+  left: 0.9rem;
+  max-width: 46ch;
+  margin: 0;
+  padding: 0.55rem 0.8rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in srgb, var(--color-fg) 14%, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fx-label b {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--color-accent);
+}
+
+.fx-label span {
+  display: block;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  opacity: 0.82;
+  margin-top: 0.15rem;
+}
+
+/* -- the HUD, ON the stage, BENEATH the label -------------------------------------------------- */
+/* "A vertical column at the left edge below the label, monospace values with small uppercase
+   labels." The label is bounded at 46ch and up to four lines, so the HUD is offset past it. */
 
 .fx-hud {
   position: absolute;
-  top: 0.9rem;
+  top: 7.4rem;
   left: 0.9rem;
   display: grid;
   gap: 0.35rem;
   padding: 0.7rem 0.9rem;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--st-bg, #0e1319) 70%, transparent);
-  backdrop-filter: blur(7px);
-  border: 1px solid color-mix(in srgb, currentColor 16%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in srgb, var(--color-fg) 16%, transparent);
   pointer-events: none;
   font-variant-numeric: tabular-nums;
 }
@@ -66,22 +110,31 @@
 }
 
 .fx-hud b {
-  font-size: 1.2rem;
-  min-width: 4.6rem;
+  /* Value first, monospace, so a column of readouts lines up on the digits. */
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 1.1rem;
+  min-width: 4.8rem;
   text-align: right;
 }
 
 .fx-hud span {
-  font-size: 0.72rem;
-  opacity: 0.78;
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
 }
 
 .fx-hud .ok b {
-  color: #2f9e59;
+  color: var(--color-good);
 }
 
 .fx-hud .bad b {
-  color: #d1495b;
+  color: var(--color-bad);
+}
+
+.fx-hud .muted b,
+.fx-hud .muted span {
+  opacity: 0.5;
 }
 
 /* -- the return control, top right of the stage ------------------------------------------------ */
@@ -90,6 +143,7 @@
   position: absolute;
   top: 0.9rem;
   right: 0.9rem;
+  z-index: 3;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -97,29 +151,35 @@
   font-size: 0.82rem;
   padding: 0.4rem 0.9rem;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, currentColor 35%, transparent);
-  background: color-mix(in srgb, var(--st-bg, #0e1319) 72%, transparent);
-  backdrop-filter: blur(7px);
+  border: 1px solid color-mix(in srgb, var(--color-fg) 35%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: blur(6px);
   color: inherit;
   cursor: pointer;
 }
 
 .fx-return:hover {
-  background: color-mix(in srgb, currentColor 14%, transparent);
+  background: color-mix(in srgb, var(--color-fg) 14%, transparent);
 }
 
-/* One sentence of plain language, so a reader can learn the concept from the view alone. */
-.fx-caption {
+/* The drawer handle, only rendered below the docked breakpoint. */
+.fx-railtoggle {
   position: absolute;
-  left: 0.9rem;
-  right: 22rem;
-  bottom: 0.7rem;
-  margin: 0;
-  font-size: 0.78rem;
-  line-height: 1.45;
-  opacity: 0.82;
-  pointer-events: none;
-  text-shadow: 0 1px 3px color-mix(in srgb, var(--st-bg, #0e1319) 85%, transparent);
+  top: 0.9rem;
+  right: 7.6rem;
+  z-index: 3;
+  display: none;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  font-size: 0.82rem;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-fg) 35%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 82%, transparent);
+  backdrop-filter: blur(6px);
+  color: inherit;
+  cursor: pointer;
 }
 
 /* -- the one parameter column ------------------------------------------------------------------ */
@@ -129,9 +189,58 @@
   min-height: 0;
   overflow-y: auto;            /* scrolls independently of the stage */
   padding: 0.9rem 1rem 2rem;
-  border-left: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-  background: color-mix(in srgb, currentColor 4%, transparent);
+  border-left: 1px solid color-mix(in srgb, var(--color-fg) 14%, transparent);
+  background: color-mix(in srgb, var(--color-fg) 4%, transparent);
   font-size: 0.82rem;
+}
+
+/* Rail item 1: scenario title and id, per the ADR's rail order. */
+.fx-title {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  line-height: 1.25;
+}
+
+.fx-id {
+  display: block;
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.7rem;
+  opacity: 0.6;
+  margin-bottom: 0.8rem;
+}
+
+/* Rail item 2: the mode toggle governing parameter density. */
+.fx-mode {
+  display: inline-flex;
+  margin-bottom: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--color-fg) 22%, transparent);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.fx-mode button {
+  font: inherit;
+  font-size: 0.74rem;
+  padding: 0.25rem 0.8rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.fx-mode button[aria-pressed='true'] {
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.fx-group {
+  font-size: 0.66rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+  margin: 1.1rem 0 0.45rem;
 }
 
 .fx-field {
@@ -143,6 +252,17 @@
 .fx-field > span {
   opacity: 0.78;
   font-size: 0.76rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* A slider's value is rendered inline in its own label; a knob whose number is somewhere else is a
+   knob the reader has to hunt for. */
+.fx-field > span b {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 500;
+  opacity: 0.95;
 }
 
 .fx-field select,
@@ -154,13 +274,13 @@
 .fx-field select {
   padding: 0.3rem 0.45rem;
   border-radius: 6px;
-  border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-fg) 25%, transparent);
   background: transparent;
   color: inherit;
 }
 
 .fx-toggles {
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-fg) 14%, transparent);
   border-radius: 8px;
   padding: 0.5rem 0.7rem 0.7rem;
   margin: 0 0 1rem;
@@ -224,40 +344,79 @@
   margin: 0.5rem 0 0.9rem;
 }
 
-@media (max-width: 900px) {
+/* The provenance note the ADR's rail order puts before the scenario switcher. */
+.fx-prov {
+  margin: 1.2rem 0 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-fg) 14%, transparent);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  opacity: 0.68;
+}
+
+/* -- the transport, IN THE RAIL ---------------------------------------------------------------- */
+/* ADR-0070 clause 2: "Every control that changes the simulation lives there." The transport changes
+   what the simulation shows more than any other control on the surface, and it spent a version
+   floating on the stage, which is the one place the clause excludes. The HUD and the label are the
+   only sanctioned stage chrome. */
+.fx-transport {
+  margin-bottom: 0.4rem;
+}
+
+.fx-transport .st-play {
+  padding: 0;
+  gap: 0.3rem;
+}
+
+.fx-transport .st-play-scrub {
+  flex: 1 1 100%;
+  order: 9;
+}
+
+.fx-transport .st-play-read {
+  font-size: 0.74rem;
+}
+
+/* -- below the docked breakpoint: the rail becomes an overlay drawer --------------------------- */
+/* The stage is then the whole viewport, which clears the 80% floor by construction, and the rail
+   keeps its 320px so it stays inside the ADR band when it is open. */
+@media (max-width: 1499px) {
   .fx-root {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
   }
+
+  .fx-railtoggle {
+    display: inline-flex;
+  }
+
   .fx-rail {
-    border-left: 0;
-    border-top: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-    max-height: 38vh;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 88vw;
+    z-index: 4;
+    background: color-mix(in srgb, var(--color-bg) 94%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow: -14px 0 34px color-mix(in srgb, #000 26%, transparent);
+    transform: translateX(100%);
+    transition: transform 140ms ease-out;
   }
-  .fx-caption {
-    right: 0.9rem;
+
+  .fx-rail.open {
+    transform: translateX(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fx-rail {
+      transition: none;
+    }
   }
 }
 
-.fx-hud .muted b,
-.fx-hud .muted span {
-  opacity: 0.5;
-}
-
-/* The playback bar sits ON the stage, like the HUD: this is the view built for watching the build,
-   so the transport belongs with the picture rather than in the parameter rail. */
-.fx-play {
-  position: absolute;
-  left: 0.9rem;
-  right: 0.9rem;
-  bottom: 3.4rem;
-  padding: 0.35rem 0.8rem;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--st-bg, #0e1319) 74%, transparent);
-  backdrop-filter: blur(7px);
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-}
-
-.fx-play .st-play {
-  padding: 0;
+@media (max-width: 860px) {
+  .fx-rail {
+    width: 320px;
+  }
 }

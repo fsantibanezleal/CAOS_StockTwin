@@ -108,6 +108,13 @@ class Scenario:
     seed: int = 20260802
 
     # Reclaim
+    # WHEN THE PILE IS DRAWN FROM. "after" fills it and then takes it down, which is the live-pile
+    # convention; "concurrent" feeds and draws at the same time, which is what a mine running a
+    # surge pile actually does. The two produce different piles from the same ore, because what a
+    # cut crosses depends on how much of the campaign had arrived when it was taken.
+    reclaim_mode: str = "after"
+    # In concurrent mode, how many placed loads go on between cuts.
+    loads_per_cut: int = 26
     cut_tonnes: float = 3000.0
     n_cuts: int = 24
 
@@ -875,6 +882,75 @@ WET_MATERIAL = Scenario(
 )
 
 
+
+CONCURRENT = Scenario(
+    id="concurrent",
+    category="campaign",
+    title_en="Fed and drawn at the same time",
+    title_es="Alimentado y recuperado a la vez",
+    summary_en=(
+        "A live surge pile: trucks are still tipping while the loader is already taking material "
+        "out. The pile never reaches a finished state, and a cut crosses only the layers that had "
+        "arrived by the time it was taken."
+    ),
+    summary_es=(
+        "Una pila de amortiguacion viva: los camiones siguen descargando mientras el cargador ya "
+        "esta sacando material. La pila nunca llega a un estado terminado, y un corte cruza solo "
+        "las capas que habian llegado cuando se tomo."
+    ),
+    reason=(
+        "Every other scenario fills the pile and then takes it down, which is one operating mode "
+        "and not the common one. A surge pile between the pit and the crusher is drawn from "
+        "continuously, and that changes the answer rather than the picture: a cut taken early "
+        "cannot contain material that has not been delivered yet, so the blending a pile achieves "
+        "depends on how long material is allowed to sit in it."
+    ),
+    kill_criterion=(
+        "Variance reduction must be WORSE than the sequential campaign on the same seed and "
+        "geometry. A cut taken part-way through the build has fewer layers available to cross, and "
+        "a pile that blends just as well whether or not it is allowed to fill is not blending by "
+        "residence at all."
+    ),
+    n_loads=900,
+    reclaim_mode="concurrent",
+    loads_per_cut=26,
+    tags=("campaign", "reclaim", "concurrent"),
+)
+
+
+SURGE = Scenario(
+    id="surge",
+    category="campaign",
+    title_en="Tight surge pile, drawn almost as fast as it is fed",
+    title_es="Pila de amortiguacion ajustada, recuperada casi tan rapido como se alimenta",
+    summary_en=(
+        "The same concurrent operation with the loader working every ten loads instead of every "
+        "twenty-six. The pile barely accumulates, which is the point of a surge pile and also the "
+        "limit of what one can do for you."
+    ),
+    summary_es=(
+        "La misma operacion concurrente con el cargador trabajando cada diez cargas en vez de cada "
+        "veintiseis. La pila casi no acumula, que es el proposito de una pila de amortiguacion y "
+        "tambien el limite de lo que puede hacer por uno."
+    ),
+    reason=(
+        "Residence time is the variable, isolated. A stockpile blends by holding material long "
+        "enough for a cut to cross several deliveries; drawing it down as fast as it fills leaves "
+        "nothing to cross. This is the far end of that axis and the case that shows the mechanism "
+        "by removing it."
+    ),
+    kill_criterion=(
+        "Variance reduction must be worse than the slower concurrent case, and the mean number of "
+        "independent sources per cut lower. If drawing faster does not reduce what a cut crosses, "
+        "residence is not what the blending is made of."
+    ),
+    n_loads=900,
+    reclaim_mode="concurrent",
+    loads_per_cut=10,
+    tags=("campaign", "reclaim", "concurrent"),
+)
+
+
 SCENARIOS: list[Scenario] = [
     SINGLE,
     SHORT_DWELL,
@@ -892,6 +968,8 @@ SCENARIOS: list[Scenario] = [
     INTENSIVE_DRAIN,
     LIGHT_DRAIN,
     TWO_PHASE,
+    CONCURRENT,
+    SURGE,
     SHORT_BENCH,
     NARROW_RAMP,
     SELDOM_DOZED,

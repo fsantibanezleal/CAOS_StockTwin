@@ -2,9 +2,9 @@
   <style>
     .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
     .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
-    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
-    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
-    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn); stroke-width: 1.2; stroke-dasharray: 5 3; }
     .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
     .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
     .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }

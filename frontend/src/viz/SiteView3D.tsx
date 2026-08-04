@@ -26,6 +26,7 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 
 import type { Field, Load, Plan, PlayState } from '../lib/scenario';
+import { viridis } from './colormap';
 
 export type ColourBy = 'grade' | 'coarse' | 'thickness' | 'lift';
 
@@ -60,32 +61,24 @@ interface Props {
   /** The value range actually drawn, so the page can put a labelled scale beside the stage. A
    *  colour ramp with no numbers on it is decoration. */
   onRange?: (r: { lo: number; hi: number }) => void;
+  lang?: 'en' | 'es';
+  /** What the colour field is called and what it is measured in, for the cursor readout. */
+  valueLabel?: string;
+  valueUnit?: string;
+  /** Raised when the reader hovers or selects a cell, so the other panels can mark the same one. */
+  onProbe?: (p: { i: number; j: number; x: number; y: number; z: number; v: number | null } | null) => void;
 }
 
-/** Perceptually ordered ramp, readable in both themes and safe for the common colour deficiencies. */
-function ramp(t: number): [number, number, number] {
-  const u = Math.min(Math.max(t, 0), 1);
-  const stops: [number, [number, number, number]][] = [
-    [0.0, [38, 70, 120]],
-    [0.25, [58, 140, 150]],
-    [0.5, [120, 175, 110]],
-    [0.75, [220, 180, 80]],
-    [1.0, [200, 90, 60]],
-  ];
-  for (let i = 0; i < stops.length - 1; i++) {
-    const [a, ca] = stops[i];
-    const [b, cb] = stops[i + 1];
-    if (u <= b) {
-      const f = (u - a) / (b - a || 1);
-      return [
-        ca[0] + f * (cb[0] - ca[0]),
-        ca[1] + f * (cb[1] - ca[1]),
-        ca[2] + f * (cb[2] - ca[2]),
-      ];
-    }
-  }
-  return stops[stops.length - 1][1];
-}
+/**
+ * ONE COLORMAP, AND IT IS PERCEPTUALLY UNIFORM.
+ *
+ * This file, the field maps and the section each carried their own copy of a five-stop blue-teal-
+ * green-yellow-red ramp. That is the jet family: it invents edges where the data is smooth and
+ * flattens real gradients where it is not, so two readers looking at the same surface read different
+ * shapes off it. The rubric treats that as a correctness defect rather than a matter of taste, and
+ * three copies of it meant the stage and its own legend could not even agree with each other.
+ */
+const ramp = viridis;
 
 const EMPTY = 1e-4;
 
@@ -129,9 +122,43 @@ export default function SiteView3D({
   dark,
   height = 460,
   onRange,
+  lang = 'en',
+  valueLabel,
+  valueUnit,
+  onProbe,
 }: Props) {
   const host = useRef<HTMLDivElement>(null);
   const live = useRef<Live | null>(null);
+  const readout = useRef<HTMLDivElement>(null);
+  const t = (en: string, es: string) => (lang === 'es' ? es : en);
+
+  // WHAT THE CURSOR IS OVER, kept in a ref rather than in state.
+  //
+  // The colour field, its range and its unit change with the reader's selection, and the probe has
+  // to see the current ones. Putting them in the effect's dependency list would tear down the WebGL
+  // context every time the colour dropdown moved, which is the bug this file already fixed once by
+  // splitting the stage from its content. Putting the readout itself in React state would re-render
+  // the page on every mouse move. So: a ref the content effect writes and the pointer handler reads,
+  // and the readout is written straight into the DOM.
+  const probeSrc = useRef<{
+    values: (number | null)[] | null;
+    z: number[];
+    z0: number[];
+    label: string;
+    unit: string;
+    decimals: number;
+  }>({ values: null, z: field.z, z0: field.z0, label: '', unit: '', decimals: 3 });
+
+  probeSrc.current = {
+    values,
+    z: surface ?? field.z,
+    z0: field.z0,
+    label: valueLabel ?? (colourBy === 'coarse' ? 'coarse fraction' : colourBy === 'thickness' ? 'thickness' : 'grade'),
+    unit: valueUnit ?? (colourBy === 'thickness' ? 'm' : ''),
+    decimals: colourBy === 'thickness' ? 2 : 3,
+  };
+  const onProbeRef = useRef(onProbe);
+  onProbeRef.current = onProbe;
 
   // -- the stage: built once per scenario, per theme, per size ---------------------------------
   useEffect(() => {
@@ -187,12 +214,11 @@ export default function SiteView3D({
     const mGeo = new THREE.PlaneGeometry(W, H, nx - 1, ny - 1);
     mGeo.rotateX(-Math.PI / 2);
     mGeo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(nx * ny * 3), 3));
-    scene.add(
-      new THREE.Mesh(
-        mGeo,
-        new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }),
-      ),
+    const mMesh = new THREE.Mesh(
+      mGeo,
+      new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide }),
     );
+    scene.add(mMesh);
 
     const content = new THREE.Group();
     scene.add(content);
@@ -272,6 +298,56 @@ export default function SiteView3D({
       dom.releasePointerCapture(e.pointerId);
       dom.style.cursor = 'grab';
     };
+
+    // -- THE VALUE UNDER THE CURSOR ------------------------------------------------------------
+    // An instrument that colours a field and cannot say what any point of it is worth makes the
+    // reader estimate a number off a ramp. The rubric requires a readout in physical units, and this
+    // is the only view where the pointer was doing nothing at all unless a drag was in progress.
+    const ray = new THREE.Raycaster();
+    const ndc = new THREE.Vector2();
+    const fmt = (x: number, d: number) => (Number.isFinite(x) ? x.toFixed(d) : '-');
+    const clearProbe = () => {
+      if (readout.current) readout.current.style.display = 'none';
+      onProbeRef.current?.(null);
+    };
+    const probe = (e: PointerEvent) => {
+      if (drag) return;
+      const box = dom.getBoundingClientRect();
+      ndc.x = ((e.clientX - box.left) / box.width) * 2 - 1;
+      ndc.y = -((e.clientY - box.top) / box.height) * 2 + 1;
+      ray.setFromCamera(ndc, camera);
+      const hit = ray.intersectObject(mMesh, false)[0];
+      const node = readout.current;
+      if (!hit || !node) {
+        clearProbe();
+        return;
+      }
+      const px = hit.point.x + W / 2;
+      const py = hit.point.z + H / 2;
+      const i = Math.min(Math.max(Math.floor(px / cm), 0), nx - 1);
+      const j = Math.min(Math.max(Math.floor(py / cm), 0), ny - 1);
+      const k = j * nx + i;
+      const src = probeSrc.current;
+      const zTop = src.z[k];
+      const above = zTop - src.z0[k];
+      // Bare ground reads as bare ground rather than as a value of zero, because those are different
+      // statements about the same cell.
+      const bare = !(above > 1e-3);
+      const v = src.values ? src.values[k] : null;
+      const shown =
+        src.label === 'thickness' ? above : v !== null && Number.isFinite(v) ? v : null;
+      node.style.display = 'block';
+      node.style.left = `${Math.min(Math.max(e.clientX - box.left + 14, 6), box.width - 190)}px`;
+      node.style.top = `${Math.min(Math.max(e.clientY - box.top + 14, 6), box.height - 76)}px`;
+      node.innerHTML =
+        `<b>${bare && src.label !== 'thickness' ? t('bare ground', 'suelo desnudo') : `${shown === null ? '-' : fmt(shown, src.decimals)}${src.unit ? ` ${src.unit}` : ''}`}</b>` +
+        `<span>${src.label}</span>` +
+        `<span>x ${fmt(px, 0)} m &middot; y ${fmt(py, 0)} m &middot; z ${fmt(zTop, 1)} m</span>` +
+        `<span>${t('thickness', 'espesor')} ${fmt(above, 2)} m</span>`;
+      onProbeRef.current?.({ i, j, x: px, y: py, z: zTop, v: shown });
+    };
+    dom.addEventListener('pointermove', probe);
+    dom.addEventListener('pointerleave', clearProbe);
     const wheel = (e: WheelEvent) => {
       e.preventDefault();
       dist = Math.min(Math.max(dist * (1 + Math.sign(e.deltaY) * 0.12), R * 0.25), R * 4.0);
@@ -295,6 +371,47 @@ export default function SiteView3D({
       render();
     };
     dom.addEventListener('dblclick', recentre);
+
+    // -- KEYBOARD ------------------------------------------------------------------------------
+    // Every gesture this view offers was pointer-only, so a keyboard user could not turn the pile at
+    // all. Arrow keys orbit, plus and minus zoom, Home returns to the framing the view opened with.
+    el.tabIndex = 0;
+    const key = (e: KeyboardEvent) => {
+      const step = e.shiftKey ? 0.16 : 0.05;
+      switch (e.key) {
+        case 'ArrowLeft':
+          az -= step;
+          break;
+        case 'ArrowRight':
+          az += step;
+          break;
+        case 'ArrowUp':
+          el2 = Math.min(el2 + step, 1.45);
+          break;
+        case 'ArrowDown':
+          el2 = Math.max(el2 - step, 0.12);
+          break;
+        case '+':
+        case '=':
+          dist = Math.max(dist * 0.88, R * 0.25);
+          break;
+        case '-':
+        case '_':
+          dist = Math.min(dist * 1.14, R * 4.0);
+          break;
+        case 'Home':
+        case 'Escape':
+          recentre();
+          e.preventDefault();
+          return;
+        default:
+          return;
+      }
+      e.preventDefault();
+      place();
+      render();
+    };
+    el.addEventListener('keydown', key);
 
     const resize = () => {
       const w = el.clientWidth || 600;
@@ -329,6 +446,9 @@ export default function SiteView3D({
       dom.removeEventListener('pointerup', up);
       dom.removeEventListener('wheel', wheel);
       dom.removeEventListener('dblclick', recentre);
+      dom.removeEventListener('pointermove', probe);
+      dom.removeEventListener('pointerleave', clearProbe);
+      el.removeEventListener('keydown', key);
       scene.traverse((o) => {
         const m = o as THREE.Mesh;
         if (m.geometry) m.geometry.dispose();
@@ -519,7 +639,34 @@ export default function SiteView3D({
       // says nothing about what it is doing there: the whole event is that it arrived carrying
       // something and left without it. The heap sits in the tray on the approach, rides up as the
       // tray pitches about its rear pivot, and is gone on the way out.
-      if (play?.truck) {
+      // THE RECLAIM MACHINE IS A DIFFERENT COLOUR AND A DIFFERENT SHAPE, because it is doing the
+      // opposite job. A yellow haul truck brings material to the pile; an orange loader takes it
+      // away. Drawing both the same would say the two halves of a stockpile's life look alike.
+      if (play?.job === 'reclaim' && play.truck) {
+        const { x, y } = play.truck;
+        const g0 = groundAt(x, y);
+        const loader = new THREE.Group();
+        const mat = new THREE.MeshLambertMaterial({ color: dark ? 0xff9d4d : 0xe07b1f });
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(10, 3.2, 6.2), mat);
+        hull.position.y = 2.0;
+        loader.add(hull);
+        const cabin = new THREE.Mesh(
+          new THREE.BoxGeometry(3.2, 2.6, 5.0),
+          new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 }),
+        );
+        cabin.position.set(-1.0, 4.9, 0);
+        loader.add(cabin);
+        // The bucket, raised and lowered through the cut as the material comes out.
+        const bite = Math.sin(Math.min(Math.max(play.sub, 0), 1) * Math.PI);
+        const bucket = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.2, 6.4), mat);
+        bucket.position.set(6.4, 1.4 + 3.4 * bite, 0);
+        bucket.rotation.z = -0.5 * bite;
+        loader.add(bucket);
+        loader.position.set(x - W / 2, g0, y - H / 2);
+        L.content.add(loader);
+      }
+
+      if (play?.job !== 'reclaim' && play?.truck) {
         const { x, y, heading } = play.truck;
         const laden = play.phase !== 'departure';
         const body = new THREE.Group();
@@ -539,29 +686,56 @@ export default function SiteView3D({
         body.add(cab);
 
         // The tray, and the material in it.
+        //
+        // THE BODY PITCHES UP AND THE LOAD LEAVES OVER THE TAILGATE, which is at -X, the rear. The
+        // pivot is the rear of the tray rather than its middle, so the nose of the tray rises and
+        // the material slides backwards and out, which is what a body-up haul truck does. The tray
+        // is drawn as a floor and two side walls rather than a closed box so the load inside it is
+        // visible at all.
+        const tipping = play.phase === 'tip';
+        const lift = tipping ? Math.sin(Math.min(play.sub, 1) * Math.PI) : 0;   // up and back down
+        const pitch = -0.95 * lift;
+
         const tray = new THREE.Group();
-        const shell = new THREE.Mesh(
-          new THREE.BoxGeometry(8.5, 3.2, 6.8),
-          new THREE.MeshLambertMaterial({ color: dark ? 0xffd479 : 0xd98a00 }),
-        );
-        tray.add(shell);
+        // YELLOW: a haul truck bringing material in. The reclaim machine above is orange.
+        const trayMat = new THREE.MeshLambertMaterial({ color: dark ? 0xffd94a : 0xf2c200 });
+        const floor = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.5, 6.8), trayMat);
+        floor.position.set(0, -1.3, 0);
+        tray.add(floor);
+        for (const zz of [-3.3, 3.3]) {
+          const wall = new THREE.Mesh(new THREE.BoxGeometry(8.6, 2.6, 0.4), trayMat);
+          wall.position.set(0, 0, zz);
+          tray.add(wall);
+        }
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.4, 6.8), trayMat);
+        head.position.set(4.2, 0.4, 0);      // the headboard, at the FRONT of the tray
+        tray.add(head);
+
         if (laden) {
-          const heap = new THREE.Mesh(
-            new THREE.BoxGeometry(7.4, 1.9, 5.9),
-            new THREE.MeshLambertMaterial({ color: dark ? 0x6b5a45 : 0x5a4a38 }),
-          );
-          heap.position.y = 2.1;
-          tray.add(heap);
+          // The load slides toward the tailgate as the body rises, and shrinks as it leaves.
+          const remaining = tipping ? Math.max(0, 1 - play.sub) : 1;
+          if (remaining > 0.02) {
+            const heap = new THREE.Mesh(
+              new THREE.BoxGeometry(7.4 * remaining, 1.8 * remaining, 5.9),
+              new THREE.MeshLambertMaterial({ color: dark ? 0x7a6650 : 0x5a4a38 }),
+            );
+            heap.position.set(-4.0 + 3.7 * remaining, -0.2, 0);
+            tray.add(heap);
+          }
         }
-        // The pivot is at the back of the tray, so tipping rotates about it rather than about the
-        // tray's middle, which is what a body-up truck actually does.
-        tray.position.set(-1.2, 4.3, 0);
-        if (play.phase === 'tip') {
-          tray.rotation.z = -0.9;
-          tray.position.y = 5.0;
-          tray.position.x = -2.4;
-        }
-        body.add(tray);
+
+        // Pivot at the rear: shift the group so the tray's own back edge is the origin, rotate, and
+        // shift back. Rotating about the middle would lift the tailgate too, which is the one part
+        // that has to stay down for the load to come out.
+        const REAR = -4.3;
+        tray.position.set(-1.2 + REAR, 4.3, 0);
+        tray.rotation.z = pitch;
+        const pivot = new THREE.Group();
+        pivot.add(tray);
+        tray.position.x = 0;
+        tray.translateX(-REAR);
+        pivot.position.set(-1.2 + REAR, 4.3 + 0.5 * lift, 0);
+        body.add(pivot);
 
         body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
         body.rotation.y = -heading;
@@ -585,5 +759,18 @@ export default function SiteView3D({
     L.render();
   }, [field, surface, plan, loads, colourBy, values, play, showPaths, showCrest, showPlan, dark, height, onRange]);
 
-  return <div ref={host} style={{ width: '100%', height }} aria-label="Site in three dimensions" />;
+  return (
+    <div className="st-stage3d" style={{ position: 'relative', width: '100%', height }}>
+      <div
+        ref={host}
+        style={{ width: '100%', height }}
+        role="application"
+        aria-label={t(
+          'Site in three dimensions. Drag to orbit, arrow keys to turn, plus and minus to zoom, Home to recentre.',
+          'La faena en tres dimensiones. Arrastra para orbitar, flechas para girar, mas y menos para acercar, Inicio para recentrar.',
+        )}
+      />
+      <div ref={readout} className="st-probe" style={{ display: 'none' }} aria-hidden="true" />
+    </div>
+  );
 }

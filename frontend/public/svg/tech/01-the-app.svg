@@ -2,9 +2,9 @@
   <style>
     .bx  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-border); stroke-width: 1; }
     .bx-hi   { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-accent); stroke-width: 1.6; }
-    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good, #3fb950); stroke-width: 1.4; }
-    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn, #d29922); stroke-width: 1.4; }
-    .bx-gate { fill: none; stroke: var(--color-warn, #d29922); stroke-width: 1.2; stroke-dasharray: 5 3; }
+    .bx-web  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-good); stroke-width: 1.4; }
+    .bx-off  { fill: var(--color-surface-2, var(--color-surface)); stroke: var(--color-warn); stroke-width: 1.4; }
+    .bx-gate { fill: none; stroke: var(--color-warn); stroke-width: 1.2; stroke-dasharray: 5 3; }
     .ttl { font: 600 12.5px system-ui, sans-serif; fill: var(--color-fg); }
     .sub { font: 10px system-ui, sans-serif; fill: var(--color-fg-faint); }
     .it  { font: 10.5px system-ui, sans-serif; fill: var(--color-fg-subtle); }
@@ -27,25 +27,25 @@
   <rect class="bx" x="14" y="30" width="196" height="96" rx="6"/>
   <text class="ttl" x="26" y="50">The ore body</text>
   <text class="sub" x="26" y="64">block model or seeded deposit</text>
-  <text class="mono" x="26" y="79">oreblocks / MineLib</text>
+  <text class="mono" x="26" y="79">bedblend/stream.py + assay.py</text>
   <text class="it" x="26" y="96">- per-block grade and tonnage</text>
   <text class="it" x="26" y="110">- bench structure, loading faces</text>
   <rect class="bx" x="232" y="30" width="196" height="96" rx="6"/>
   <text class="ttl" x="244" y="50">The truck stream</text>
   <text class="sub" x="244" y="64">one row per dump</text>
-  <text class="mono" x="244" y="79">model/stream.py</text>
+  <text class="mono" x="244" y="79">bedblend/stream.py</text>
   <text class="it" x="244" y="96">- exponential covariance in tonnes</text>
   <text class="it" x="244" y="110">- grade, size split, moisture</text>
   <rect class="bx-hi" x="450" y="30" width="196" height="96" rx="6"/>
   <text class="ttl" x="462" y="50">The pile</text>
   <text class="sub" x="462" y="64">height field plus lot ledger</text>
-  <text class="mono" x="462" y="79">model/pile.py</text>
+  <text class="mono" x="462" y="79">bedblend/relax.py + blocks.py</text>
   <text class="it" x="462" y="96">- relaxes to the repose angle</text>
   <text class="it" x="462" y="110">- a lot stack per pad cell</text>
   <rect class="bx-hi" x="668" y="30" width="198" height="96" rx="6"/>
   <text class="ttl" x="680" y="50">The reclaim cut</text>
   <text class="sub" x="680" y="64">what the plant receives</text>
-  <text class="mono" x="680" y="79">Pile.reclaim()</text>
+  <text class="mono" x="680" y="79">bedblend/reclaim.py</text>
   <text class="it" x="680" y="96">- blended grade plus provenance</text>
   <text class="it" x="680" y="110">- fractions sum to one</text>
   <path class="flow" d="M 210 78 L 230 78"/>
@@ -57,17 +57,17 @@
   <text class="hdr" x="14" y="160">THE THREE QUESTIONS IT ANSWERS</text>
   <rect class="bx-web" x="14" y="170" width="276" height="76" rx="6"/>
   <text class="ttl" x="26" y="190">How much did it homogenize?</text>
-  <text class="mono" x="26" y="205">model/blending.py</text>
+  <text class="mono" x="26" y="205">bedblend/blending.py</text>
   <text class="it" x="26" y="222">VRR = var_out / var_in, lower is better,</text>
   <text class="it" x="26" y="234">always shown against the 1/N bound</text>
   <rect class="bx-web" x="302" y="170" width="276" height="76" rx="6"/>
   <text class="ttl" x="314" y="190">Where did this tonne come from?</text>
-  <text class="mono" x="314" y="205">ReclaimCut.sources</text>
+  <text class="mono" x="314" y="205">bedblend/blocks.py</text>
   <text class="it" x="314" y="222">a fraction per deposition event; the</text>
   <text class="it" x="314" y="234">sum-to-one identity is a test</text>
   <rect class="bx-web" x="590" y="170" width="276" height="76" rx="6"/>
   <text class="ttl" x="602" y="190">Is segregation biasing the cut?</text>
-  <text class="mono" x="602" y="205">model/segregation.py</text>
+  <text class="mono" x="602" y="205">bedblend/facesegregation.py</text>
   <text class="it" x="602" y="222">Gray-Thornton (3.20); coarse at the toe is an</text>
   <text class="it" x="602" y="234">output, not a rule</text>
   <text class="hdr" x="14" y="276">THE DESIGN-BUILD FLOW</text>

@@ -7,43 +7,38 @@ import '@fasl-work/caos-app-shell/styles.css';
 import './stocktwin.css';
 import { CITATIONS } from './data/citations';
 import { architecture } from './architecture';
+import { ROUTES } from './lib/routes';
 import Tool from './pages/Tool';
-import Introduction from './pages/Introduction';
-import Methodology from './pages/Methodology';
-import Implementation from './pages/Implementation';
-import Experiments from './pages/Experiments';
-import Benchmark from './pages/Benchmark';
 import Focus from './pages/Focus';
 
 applyTheme(readTheme());
 
+// ONE LIST OF ROUTES. The nav and the router both read `ROUTES`, so a path exists in exactly one
+// place: this file used to declare each of the six twice, once as a nav entry and once as a
+// <Route>, which is how a nav item ends up pointing at a route somebody renamed.
 const config: ShellConfig = {
   product: { name: 'StockTwin', mark: <Layers size={18} aria-hidden="true" /> },
-  routes: [
-    { path: '/', en: 'App', es: 'App' },
-    // FOCUS IS A TOP-LEVEL DESTINATION. ADR-0070 clause 8 asks for a visible, obvious entry that is
-    // not buried in a menu; a nav item is as visible as this app has. It opens the case the reader
-    // was last looking at, so the round trip still preserves the scenario, which is what the clause
-    // is protecting.
-    { path: '/focus', en: 'Focus', es: 'Foco' },
-    { path: '/introduction', en: 'Introduction', es: 'Introducción' },
-    { path: '/methodology', en: 'Methodology', es: 'Metodología' },
-    { path: '/implementation', en: 'Implementation', es: 'Implementación' },
-    { path: '/experiments', en: 'Experiments', es: 'Experimentos' },
-    { path: '/benchmark', en: 'Benchmark', es: 'Benchmark' },
-  ],
+  routes: ROUTES.map(({ path, en, es }) => ({ path, en, es })),
   links: { github: 'https://github.com/fsantibanezleal/CAOS_StockTwin' },
   version: __APP_VERSION__,
   architecture,
   // THE FOOTER IS NOT A METHODS SECTION. It had the engine, two DOIs, the calibration corpus, the
   // lane split and the definition of the metric crammed into it, which is four lines of type at the
   // bottom of every page and the wrong home for every one of those facts. Methodology and
-  // Implementation are the pages that exist to carry them, and they do. What stays here is what a
-  // footer is for: what this is, and the one limit a reader needs before trusting a number.
+  // Implementation are the pages that exist to carry them, and they do.
+  //
+  // What stays is what a footer is for: what this is, the one limit a reader needs before trusting a
+  // number, and the provenance of the engine it all runs on. The provenance is a required item and
+  // it is ONE clause: the engine, its version, its licence, and the survey the geometry is
+  // calibrated against with its DOI.
   footer: {
     disclaimer: {
       en: 'Teaching and research. No metal accounting, no blending optimizer, no plant setpoint.',
       es: 'Ensenanza e investigacion. Sin contabilidad metalurgica, sin optimizador de mezcla, sin consignas de planta.',
+    },
+    provenance: {
+      en: 'Engine: bedblend 0.05.002 (MIT); dump geometry calibrated to 28 UAV-surveyed dumps, Young and Rogers 2022, doi:10.3390/mining2010006.',
+      es: 'Motor: bedblend 0.05.002 (MIT); geometria de descarga calibrada contra 28 descargas levantadas con UAV, Young y Rogers 2022, doi:10.3390/mining2010006.',
     },
   },
 };
@@ -54,19 +49,17 @@ createRoot(document.getElementById('root')!).render(
       <CitationsProvider items={CITATIONS}>
         <Routes>
           {/* ADR-0070: the focus view renders OUTSIDE the shell. The header and footer are exactly
-              the chrome a focus view exists to escape, so it cannot be a child of AppShell. */}
+              the chrome a focus view exists to escape, so it cannot be a child of AppShell. It is
+              not in ROUTES because it is not a nav entry: it is reached from the App. */}
           <Route path="/focus/:caseId" element={<Focus />} />
           {/* The nav entry, which resolves to whichever case the App last had selected. */}
           <Route path="/focus" element={<Focus />} />
           <Route path="*" element={
             <AppShell config={config}>
               <Routes>
-                <Route path="/" element={<Tool />} />
-                <Route path="/introduction" element={<Introduction />} />
-                <Route path="/methodology" element={<Methodology />} />
-                <Route path="/implementation" element={<Implementation />} />
-                <Route path="/experiments" element={<Experiments />} />
-                <Route path="/benchmark" element={<Benchmark />} />
+                {ROUTES.map((r) => (
+                  <Route key={r.path} path={r.path} element={r.element} />
+                ))}
                 <Route path="*" element={<Tool />} />
               </Routes>
             </AppShell>

@@ -1,7 +1,7 @@
 {
   "name": "stocktwin-frontend",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "predev": "node copy-data.mjs",
@@ -10,7 +10,8 @@
     "build": "tsc --noEmit && vite build",
     "postbuild": "node spa-404.mjs",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gate:flow": "vite preview --port 4173 --strictPort & sleep 4 && node test/focus-flow.mjs && kill %1"
   },
   "dependencies": {
     "@fasl-work/caos-app-shell": "^0.3.0",
@@ -29,6 +30,7 @@
     "@types/react-dom": "^19.0.0",
     "@types/three": "^0.171.0",
     "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.62.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vite": "^6.0.7",
