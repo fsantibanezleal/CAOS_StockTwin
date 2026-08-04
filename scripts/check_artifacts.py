@@ -49,6 +49,34 @@ def main() -> None:
     if sorted(ids) != on_disk:
         fail(f"the index lists {sorted(ids)} but the tree holds {on_disk}")
 
+    # WHAT THE REGISTRY DECLARES, AGAINST WHAT THE TREE SHIPS.
+    #
+    # Everything above this point compares the artifact with itself, and a check that iterates the
+    # output can only ever confirm the output is well formed: it cannot know something is ABSENT.
+    # That is not hypothetical. Twenty-two scenarios were declared, all twenty-two baked with exit
+    # zero, and TWO were never assembled into the tree. The index is built from the manifests present
+    # on disk, deliberately, so a partial bake refreshes what it rebuilt and leaves the rest alone,
+    # which means two missing folders produce a perfectly valid smaller product. Every gate passed.
+    # Every page said "twenty", because every page had been written from the same shipped artifact.
+    # The two missing cases were the only ones modelling a pile fed and drawn at the same time, and
+    # they were found by a reader asking whether the product covered that, not by any check here.
+    sys.path.insert(0, str(ROOT / "data-pipeline"))
+    try:
+        from pipeline.scenarios import SCENARIOS  # noqa: PLC0415
+    except ModuleNotFoundError as e:  # the engine is a separate published package
+        fail(f"cannot read the scenario registry to compare against the artifacts: {e}")
+    declared = sorted(s.id for s in SCENARIOS)
+    if declared != sorted(ids):
+        missing = sorted(set(declared) - set(ids))
+        extra = sorted(set(ids) - set(declared))
+        parts = []
+        if missing:
+            parts.append(f"DECLARED BUT NOT SHIPPED: {missing} (re-bake them, or remove them from "
+                         f"the registry if they are withdrawn)")
+        if extra:
+            parts.append(f"SHIPPED BUT NOT DECLARED: {extra} (a stale folder from an earlier matrix)")
+        fail("; ".join(parts))
+
     total = 0
     for sid in ids:
         d = DERIVED / sid
