@@ -657,6 +657,25 @@
   border: 1px solid color-mix(in srgb, currentColor 22%, transparent);
 }
 
+/* THE SYMBOL GLOSSARY under an equation. An equation whose symbols are not defined is a picture of
+   an equation: the reader can see the shape and cannot check the claim. Every one on the deep pages
+   is followed by this list, with units. */
+.st-syms {
+  list-style: none;
+  margin: -0.6rem 0 1.4rem;
+  padding: 0 0 0 0.2rem;
+  display: grid;
+  gap: 0.22rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  opacity: 0.86;
+}
+
+.st-syms li {
+  padding-left: 0.9rem;
+  text-indent: -0.9rem;
+}
+
 /* THE VALUE UNDER THE CURSOR. Positioned by the view, written straight into the DOM: it follows the
    pointer, so putting it through React state would re-render the workbench on every mouse move. */
 .st-probe {
