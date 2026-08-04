@@ -27,10 +27,12 @@ never stands on fresh material.**
 That is why there is a plan at all. Tip positions are not arbitrary points on a pad: they are laid out
 inside designed areas, in benches, reachable from an access point over a ramp the dozer maintains. As
 the pile grows, what a truck can reach changes, and a tip it can no longer reach is REFUSED and
-recorded. Between 41 and 53 percent of planned tips are refused in the shipped scenarios. That number
-is reported rather than hidden: the plan is generated once while the pile grows away from it, a real
-operation re-plans, and saying so is more useful than quietly teleporting a truck somewhere it could
-not have driven.
+recorded. About 17 percent of the offered loads are refused in most of the shipped scenarios, and the
+number is reported rather than hidden: the plan is generated once while the pile grows away from it, a
+real operation re-plans, and saying so is more useful than quietly teleporting a truck somewhere it
+could not have driven. Where the figure is far higher it is the scenario's subject, not a defect:
+`intensive_feed` offers twice what the footprint can hold at repose, so 58.7 percent of it has
+nowhere to go, and that ceiling is the thing the case exists to demonstrate.
 
 ## The three questions it answers
 
@@ -89,34 +91,58 @@ project.
 
 ## The scenarios are the validation design
 
-Six of them. Each states, in advance, why it is in the product and what result would mean the code is
-wrong, and the bake gate enforces that on the ACTUAL artifact.
+Twenty cases across six axes, against the ADR-0056 floor of a dozen. Each states in advance why it is
+in the product and what result would mean the code is wrong, and the bake gate enforces that on the
+ACTUAL artifact rather than on the code that wrote it.
 
-| scenario | what it is for | placed | refused | peak |
-|---|---|---|---|---|
-| `single` | one working stock, the reference case for reading the physics | 298 | 46.8% | 10.8 m |
-| `yard` | three areas, loads routed to an area by their ore-control class | 419 | 53.4% | 11.1 m |
-| `sidehill` | built against real relief, because only one of the five published fill types is a flat pad | 326 | 41.8% | 19.8 m |
-| `valley` | confined on two sides, so the same tonnage stands higher | 328 | 41.4% | 26.6 m |
-| `ridge` | the ground sheds material instead of holding it, and buildable ground is a strip | 329 | 41.2% | 29.8 m |
-| `short_dwell` | changes ONLY the shovel dwell, to show the blending result follows the dig sequence | 298 | 46.8% | 10.8 m |
+| scenario | axis | placed | refused | peak | stream range | pairs over repose |
+|---|---|---|---|---|---|---|
+| `single` | reference | 744 | 17.3% | 13.7 m | 5242 t | 0 |
+| `short_dwell` | feed | 744 | 17.3% | 13.7 m | 852 t | 0 |
+| `long_dwell` | feed | 744 | 17.3% | 13.7 m | 13826 t | 0 |
+| `trending` | feed | 744 | 17.3% | 13.7 m | 5242 t | 0 |
+| `erratic_feed` | feed | 744 | 17.3% | 13.7 m | 5374 t | 0 |
+| `yard` | yard | 2232 | 17.3% | 14.0 m | 4480 t | 0 |
+| `yard_five` | yard | 3383 | 24.8% | 14.4 m | 4226 t | 0 |
+| `misrouted` | yard | 2223 | 17.7% | 14.3 m | 4480 t | 0 |
+| `sidehill` | landform | 744 | 17.3% | 21.5 m | 5242 t | 0 |
+| `valley` | landform | 744 | 17.3% | 27.0 m | 5242 t | 0 |
+| `cross_valley` | landform | 744 | 17.3% | 25.5 m | 5242 t | 0 |
+| `rough_ground` | landform | 744 | 17.3% | 17.4 m | 5242 t | 0 |
+| `intensive_feed` | campaign | 744 | 58.7% | 13.7 m | 5610 t | 0 |
+| `intensive_drain` | campaign | 744 | 17.3% | 13.6 m | 5242 t | 0 |
+| `light_drain` | campaign | 744 | 17.3% | 13.7 m | 5242 t | 0 |
+| `two_phase` | campaign | 1488 | 17.3% | 14.5 m | 5610 t | 0 |
+| `short_bench` | operations | 545 | 39.4% | 11.6 m | 5242 t | 0 |
+| `narrow_ramp` | operations | 744 | 17.3% | 12.5 m | 5242 t | 0 |
+| `seldom_dozed` | operations | 744 | 17.3% | 13.0 m | 5242 t | 0 |
+| `wet_material` | operations | 881 | 2.1% | 15.8 m | 5242 t | 0 |
 
-**The kill criteria held.** `valley` stands at 26.6 m against `single`'s 10.8 m from the same load
-budget, which is what confinement means. `ridge` and `valley` both start from ground that is only 71.9
-percent buildable before a single load is placed, against 100 percent for a flat pad. And
-`short_dwell` is identical to `single` in every respect except the dwell, and its measured stream
-range falls from 5956 t to 903 t.
+**The kill criteria held.** Shovel dwell moves the measured stream range from 852 t at four loads per
+dig block, through 5242 at twenty, to 13826 at sixty, with the geometry and the seed held identical:
+the blending result follows the dig sequence and not the ore. Confinement takes the valley to 27.0 m
+against the flat pad's 13.7 from the same load budget. Wet material at 43 degrees of repose stands at
+15.8 m where the same tonnage at 37 stands at 13.7. A narrower ramp and a slower dozer both cost
+placement, and neither improves it.
+
+**Every one of the twenty relaxes to zero cell pairs over the angle of repose.**
 
 The gate, run on the artifact rather than on the code that wrote it:
 
-- zero cell pairs standing over the imposed angle of repose
+- zero cell pairs standing more than the stability tolerance over the imposed angle of repose
 - the lot ledger agreeing with the terrain column by column
 - mass conserved to one part in a million of the volume placed
 - no cell below its original ground
 
 The predecessor to this engine finished with 446 over-steep pairs, the worst at 55.9 degrees against
-an imposed 37, which is what the pile rendered as spikes. The cause was that a toppling cell gets
-lower and destabilises the cells ABOVE it, while only the receivers were re-queued.
+an imposed 37, which is what the pile rendered as spikes.
+
+**Two withdrawn scenarios, and what that costs.** A steep sidehill and a ridge crest will not relax:
+after the sweeps stop making progress and a stalled cascade is reseeded, they leave 22 pairs at 45.9
+degrees and 1 pair at 41.5 respectively. They are withdrawn rather than shipped with a surface the
+product's own invariant rejects, and rather than widening the tolerance to fit them. The consequence
+is that the matrix covers heaped, sidehill, valley and cross-valley ground, plus unprepared rough
+ground, and NOT all five published fill types. Recorded as finding F-020.
 
 ## Grade autocorrelation is an output, not a knob
 

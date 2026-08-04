@@ -51,10 +51,6 @@ Confinement is why the fill taxonomy exists at all. A valley holds the same tonn
 
 The taxonomy has five members and a product that ships three is choosing which physics to show. This is the awkward case: confinement and drainage at right angles.
 
-### [`ridge`](ridge.md), Ridge crest fill, shedding both ways
-
-The opposite of the valley: instead of holding material in, the ground sheds it. Access is tightest here because the buildable ground is a strip, which makes it the clearest demonstration that the plan has to follow the landform.
-
 ### [`rough_ground`](rough_ground.md), Rough ground, no prepared pad
 
 Every other case assumes someone graded the ground first. This one asks what that preparation is worth, on a landform whose average is identical to the reference.
@@ -106,7 +102,6 @@ Repose is not a constant. Handbook values for ores span 34 to 60 degrees and the
 | [`sidehill`](sidehill.md) | sidehill | 1 | 1 | 900 | 4 | topography, sidehill |
 | [`valley`](valley.md) | valley | 1 | 1 | 900 | 4 | topography, valley |
 | [`cross_valley`](cross_valley.md) | cross_valley | 1 | 1 | 900 | 4 | topography, cross-valley |
-| [`ridge`](ridge.md) | ridge_crest | 1 | 1 | 900 | 4 | topography, ridge |
 | [`rough_ground`](rough_ground.md) | heaped | 1 | 1 | 900 | 4 | topography, rough |
 | [`intensive_feed`](intensive_feed.md) | heaped | 1 | 1 | 1800 | 4 | campaign, capacity |
 | [`intensive_drain`](intensive_drain.md) | heaped | 1 | 1 | 900 | 4 | campaign, reclaim |

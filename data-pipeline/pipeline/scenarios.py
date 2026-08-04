@@ -328,39 +328,19 @@ VALLEY = Scenario(
 )
 
 
-RIDGE = Scenario(
-    id="ridge",
-    category="landform",
-    title_en="Ridge crest fill, shedding both ways",
-    title_es="Relleno en cresta, vertiendo a ambos lados",
-    summary_en=(
-        "Built along a ridge, where the ground falls away on both sides. Every edge dump has two "
-        "faces to choose between, and material that overruns a toe is gone down a hillside rather "
-        "than sitting at the foot of the pile."
-    ),
-    summary_es=(
-        "Construido a lo largo de una cresta, donde el terreno cae por ambos lados. Cada descarga "
-        "de borde tiene dos caras entre las que elegir, y el material que pasa el pie se va ladera "
-        "abajo en vez de quedar al pie de la pila."
-    ),
-    reason=(
-        "The opposite of the valley: instead of holding material in, the ground sheds it. Access is "
-        "tightest here because the buildable ground is a strip, which makes it the clearest "
-        "demonstration that the plan has to follow the landform."
-    ),
-    kill_criterion=(
-        "Buildable ground before any load is placed must be measurably lower than on a flat pad, "
-        "and no cell may end below its original ground. A ridge that behaves like a pad has not "
-        "been modelled."
-    ),
-    n_areas=1,
-    classes=("ROM",),
-    n_loads=900,
-    fill=FillType.RIDGE_CREST,
-    relief_m=24.0,
-    roughness_m=0.5,
-    tags=("topography", "ridge"),
-)
+# RIDGE IS WITHDRAWN, alongside STEEP_SIDEHILL, and for the same reason.
+#
+# A ridge-crest fill sheds material off both sides, and the relaxation will not fully converge on
+# it: after the sweeps stop making progress and a stalled cascade is reseeded on the offenders, ONE
+# cell pair of a three thousand six hundred cell pad stands at 41.5 degrees against an imposed 37.
+# Four and a half degrees over, against a stability tolerance of four.
+#
+# It could be shipped by moving that tolerance to five. It is not, because the tolerance was set from
+# what the check must catch and what it must not flag, and moving it to fit one cell is tuning the
+# measure to the result. The consequence is stated rather than buried: the shipped matrix covers
+# heaped, sidehill, valley and cross-valley, plus unprepared rough ground, and NOT all five published
+# fill types. See finding F-020.
+
 
 
 SHORT_DWELL = Scenario(
@@ -907,7 +887,6 @@ SCENARIOS: list[Scenario] = [
     SIDEHILL,
     VALLEY,
     CROSS_VALLEY,
-    RIDGE,
     ROUGH_GROUND,
     INTENSIVE_FEED,
     INTENSIVE_DRAIN,

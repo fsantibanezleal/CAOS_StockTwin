@@ -18,6 +18,12 @@ say how much that ground matters before a single load is placed.
 **Only one of the five is a flat pad.** A product that models a flat pad and calls it a stockpile is
 modelling one member of a taxonomy and presenting it as the subject.
 
+**Four of the five are in the shipped matrix**, plus an unprepared rough-ground case. The ridge crest
+is NOT: the relaxation leaves one cell pair of a three thousand six hundred cell pad at 41.5 degrees
+against an imposed 37, and the scenario is withdrawn rather than shipped with a surface the product's
+own invariant rejects. The engine still implements it and it is still described here, because the
+taxonomy is what the method is about; the scenario matrix is a separate question. See finding F-020.
+
 ## What is reported before anything is built
 
     relief_m         the vertical range of the landform
@@ -46,9 +52,10 @@ markedly higher and narrower than a pad does, which changes the drop height, and
 of the three drivers of size segregation. A ridge does the opposite: material that overruns a toe is
 gone down a hillside rather than sitting at the foot of the pile.
 
-The `valley` and `ridge` scenarios exist to measure that, and each one's kill criterion is written
-against it: the valley must stand HIGHER than the flat-pad case from the same load budget, and the
-ridge must start from measurably less buildable ground.
+The `valley` and `cross_valley` scenarios exist to measure that, and each one's kill criterion is
+written against it: the valley must stand HIGHER than the flat-pad case from the same load budget.
+Measured, it does, at 27.0 m against 13.7 from the same 900 offered loads. The ridge crest would have
+been the opposite case and it is withdrawn; see above.
 
 ## The ground is a FLOOR, everywhere
 
