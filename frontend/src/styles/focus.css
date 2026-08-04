@@ -143,7 +143,12 @@
   position: absolute;
   top: 0.9rem;
   right: 0.9rem;
-  z-index: 3;
+  /* ABOVE THE DRAWER. Below the docked breakpoint the parameter rail is an overlay pinned to the
+     right edge, which is exactly where this button is, and at a lower z-index the drawer covered it:
+     the click landed on the rail heading and the reader was stuck in the focus view with no way out
+     but the browser's back button. ADR-0070 clause 8 makes the return control binding, and a control
+     that exists but cannot be clicked is the same failure as one that was never built. */
+  z-index: 6;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -167,7 +172,9 @@
   position: absolute;
   top: 0.9rem;
   right: 7.6rem;
-  z-index: 3;
+  /* Above the drawer too: it is the control that CLOSES the drawer, so being underneath it is a
+     one-way door. */
+  z-index: 6;
   display: none;
   align-items: center;
   gap: 0.4rem;
@@ -394,6 +401,9 @@
     top: 0;
     right: 0;
     bottom: 0;
+    /* The drawer starts BELOW the stage controls rather than over them, so the way out and the
+       handle that closes it are never behind it even while it is open. */
+    top: 3.6rem;
     width: 320px;
     max-width: 88vw;
     z-index: 4;

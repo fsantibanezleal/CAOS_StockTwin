@@ -84,6 +84,30 @@ try {
     });
     check(share >= 0.8, `[${theme}] the stage owns ${(share * 100).toFixed(1)} percent of the viewport (floor 80)`);
 
+    // 4b. THE WAY OUT IS NEVER OBSTRUCTED, including with the controls open.
+    //
+    // Below the docked breakpoint the parameter rail is an overlay pinned to the right edge, which
+    // is exactly where the return control sits. At a lower z-index the drawer covered it: the click
+    // landed on the rail heading and the reader was stuck in the focus view with no way out but the
+    // browser's back button. Every earlier version of this gate clicked return on a CLOSED drawer
+    // and passed, which is why it shipped. A control that exists and cannot be clicked is the same
+    // failure as one that was never built.
+    const handle = page.locator('.fx-railtoggle');
+    if (await handle.isVisible().catch(() => false)) {
+      await handle.click();
+      await page.waitForTimeout(500);
+      const topmost = await page.evaluate(() => {
+        const r = document.querySelector('.fx-return');
+        if (!r) return 'no return control';
+        const b = r.getBoundingClientRect();
+        const el = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+        return el ? (el.closest('.fx-return') ? 'fx-return' : `${el.tagName}.${el.className}`) : 'none';
+      });
+      check(topmost === 'fx-return', `[${theme}] return is clickable with the drawer OPEN (hit ${topmost})`);
+      await handle.click();               // put it back
+      await page.waitForTimeout(400);
+    }
+
     // 5. The return control lands back on the App, same scenario, same work.
     const back = page.locator('.fx-return');
     check(await back.isVisible(), `[${theme}] the return control is visible`);
