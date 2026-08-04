@@ -596,7 +596,7 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
 }
 
 .st-pair figure .st-chartbox {
-  height: clamp(300px, 52vh, 620px);
+  height: clamp(340px, 72vh, 900px);
 }
 
 .st-pair figcaption {
@@ -647,7 +647,7 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
      has to survive that nesting is a rule that breaks the first time a panel gains a paragraph.
      This cannot feed back, cannot collapse to a floor, and is readable on any screen. The tab panel
      scrolls internally, so a panel taller than its box never reaches the footer. */
-  height: clamp(300px, 46vh, 560px);
+  height: clamp(340px, 72vh, 900px);
 }
 
 .st-chartcanvas {
@@ -666,5 +666,57 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
 }
 
 .st-sectionbox {
-  height: clamp(320px, 54vh, 640px);
+  height: clamp(340px, 72vh, 900px);
+}
+
+/* A SQUARE MAP CANNOT FILL A 16:9 SCREEN, so the width goes to the reading beside it.
+ *
+ * ADR-0071 puts the instrument at half the viewport or more. A pad is square and a laptop is not:
+ * even at full panel height a square map covers about 36 percent, and the rest of the row was
+ * whitespace with the legend and the statistics stacked underneath in a column of text. Measured at
+ * 1600 by 900: the dump plan came out at 7.3 percent. Putting the map and its reading side by side
+ * fills the row with instrument and reading instead of instrument and nothing, which is also what
+ * the layout doctrine asks for: fill the width with grids and figures, not stretched body text.
+ *
+ * ONLY THE PLAN PANEL. The other charts are wide by nature, and giving them a narrow column costs
+ * them: the dump detail and the sector charts dropped from 58 to 35 percent of the viewport when the
+ * rule applied to everything. A square map is the only case where the leftover width is a problem
+ * worth solving this way. */
+@media (min-width: 1100px) {
+  .page-body.st-layout .tabpanel > div.st-planpanel:not(.st-wide-pad) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    column-gap: 1.2rem;
+    align-items: start;
+  }
+
+  /* The chart takes the left column and all of the rows; everything else stacks on the right. */
+  .page-body.st-layout .tabpanel > div.st-planpanel:not(.st-wide-pad) > .st-chartbox {
+    grid-column: 1;
+    grid-row: 1 / span 30;
+  }
+
+  .page-body.st-layout .tabpanel > div.st-planpanel:not(.st-wide-pad) > *:not(.st-chartbox) {
+    grid-column: 2;
+  }
+
+  /* A stat list in a narrow column is a list, not a grid of cards. */
+  .page-body.st-layout .tabpanel > div:not(.st-fieldpanel) > .st-stats {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* A WIDE PAD STACKS; a square one goes side by side.
+ *
+ * The maps preserve the site's aspect, so a 340-by-150-metre yard in a half-width column is limited
+ * by width and comes out short: measured, two of them covered 23 percent of the viewport against 57
+ * for a square pad. Stacking gives each the full width, which is the dimension a wide site needs.
+ * The pair also drops to one map when stacked, because two wide maps stacked do not both fit. */
+.st-fieldpanel.st-wide-pad .st-pair {
+  grid-template-columns: 1fr;
+}
+
+.st-fieldpanel.st-wide-pad .st-pair .st-chartbox {
+  height: clamp(260px, 46vh, 540px);
 }

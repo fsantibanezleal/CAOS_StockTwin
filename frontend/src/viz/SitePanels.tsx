@@ -114,7 +114,8 @@ export function PlanPanel({
       // screen, which is what ran the plan and field views past the footer.
       const availW = cv.parentElement?.clientWidth ?? 600;
       const box = cv.parentElement?.clientHeight ?? 0;
-      const availH = box > 200 ? box - 90 : Math.round(window.innerHeight * 0.58);
+      // No allowance for a legend: it moved into the column beside the map.
+      const availH = box > 200 ? box : Math.round(window.innerHeight * 0.58);
       const s = Math.min(availW / W, availH / H);
       const cssW = W * s;
       const cssH = H * s;
@@ -191,7 +192,7 @@ export function PlanPanel({
   }, [plan, loads, field, dark]);
 
   return (
-    <div>
+    <div className={field.nx / field.ny > 1.35 ? 'st-planpanel st-wide-pad' : 'st-planpanel'}>
       <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
       <p className="st-legend">
         <span className="st-key" style={{ background: '#0f7a3d' }} /> paddock tip
@@ -228,7 +229,7 @@ export function FieldPanel({ field, dark }: { field: Field; by?: string; dark: b
   const [right, setRight] = useState<FieldVar>('coarse');
 
   return (
-    <div className="st-fieldpanel">
+    <div className={field.nx / field.ny > 1.35 ? 'st-fieldpanel st-wide-pad' : 'st-fieldpanel'}>
       <div className="st-pair">
         {([[left, setLeft, 'left'], [right, setRight, 'right']] as const).map(([v, set, side]) => (
           <figure key={side}>
@@ -304,8 +305,12 @@ function FieldMap({
     const cv = ref.current;
     if (!cv) return;
     const draw = () => {
+      // MEASURE THE HOST, not a fraction of the window. The host is a ChartBox: its height comes
+      // from the layout and the canvas inside it is out of flow, so reading it cannot feed back.
+      // A window fraction ignores the header, the tab strip and the footer, and it left two maps
+      // covering 34 percent of the screen with the space above them empty.
       const availW = cv.parentElement?.clientWidth ?? 600;
-      const availH = Math.max(220, Math.round(window.innerHeight * 0.55));
+      const availH = Math.max(220, cv.parentElement?.clientHeight ?? 400);
       const s = Math.min(availW / field.nx, availH / field.ny);
       const cssW = field.nx * s;
       const cssH = field.ny * s;
