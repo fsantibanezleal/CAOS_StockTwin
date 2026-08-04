@@ -24,6 +24,8 @@ import type { Frames } from '../lib/scenario';
 
 interface Props {
   frames: Frames | null;
+  /** Total steps: every placed load, then every reclaim cut. */
+  total?: number;
   /** Fractional position through the build, in loads. `2.4` is 40 percent through the third load. */
   pos: number;
   onPos: (p: number) => void;
@@ -38,9 +40,10 @@ const BASE_LOADS_PER_S = 1.5;
 
 const SPEEDS = [0.5, 1, 2, 5];
 
-export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
+export default function PlayBar({ frames, total, pos, onPos, lang = 'en' }: Props) {
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
-  const n = frames?.frames.length ?? 0;
+  const nBuild = frames?.frames.length ?? 0;
+  const n = total ?? nBuild;
 
   const [speed, setSpeed] = useState(1);
   const rate = BASE_LOADS_PER_S * speed;
@@ -73,14 +76,16 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
   }, [pos, n, viz]);
 
   const idx = Math.min(Math.max(Math.floor(pos), 0), Math.max(n - 1, 0));
+  const reclaiming = idx >= nBuild;
   const placed = useMemo(
     () => (frames && frames.frames[idx] ? frames.frames[idx].placed : 0),
     [frames, idx],
   );
-  const total = useMemo(
+  const built = useMemo(
     () => (frames && frames.frames.length ? frames.frames[frames.frames.length - 1].placed : 0),
     [frames],
   );
+  const nCuts = frames?.reclaim?.length ?? 0;
 
   if (!frames || n === 0) return null;
 
@@ -139,8 +144,12 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
         aria-label={t('Build progress', 'Avance de la construcción')}
       />
 
+      {/* The readout says which half of the operation is on the stage: loads going on, or cuts
+          coming off. A single "n of m" counter cannot, and the two are different machines. */}
       <span className="st-play-read">
-        {placed}/{total} {t('loads', 'cargas')}
+        {reclaiming
+          ? `${idx - nBuild + 1}/${nCuts} ${t('cuts', 'cortes')}`
+          : `${placed}/${built} ${t('loads', 'cargas')}`}
       </span>
 
       <label className="st-play-speed">

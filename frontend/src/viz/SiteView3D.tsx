@@ -519,7 +519,34 @@ export default function SiteView3D({
       // says nothing about what it is doing there: the whole event is that it arrived carrying
       // something and left without it. The heap sits in the tray on the approach, rides up as the
       // tray pitches about its rear pivot, and is gone on the way out.
-      if (play?.truck) {
+      // THE RECLAIM MACHINE IS A DIFFERENT COLOUR AND A DIFFERENT SHAPE, because it is doing the
+      // opposite job. A yellow haul truck brings material to the pile; an orange loader takes it
+      // away. Drawing both the same would say the two halves of a stockpile's life look alike.
+      if (play?.job === 'reclaim' && play.truck) {
+        const { x, y } = play.truck;
+        const g0 = groundAt(x, y);
+        const loader = new THREE.Group();
+        const mat = new THREE.MeshLambertMaterial({ color: dark ? 0xff9d4d : 0xe07b1f });
+        const hull = new THREE.Mesh(new THREE.BoxGeometry(10, 3.2, 6.2), mat);
+        hull.position.y = 2.0;
+        loader.add(hull);
+        const cabin = new THREE.Mesh(
+          new THREE.BoxGeometry(3.2, 2.6, 5.0),
+          new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 }),
+        );
+        cabin.position.set(-1.0, 4.9, 0);
+        loader.add(cabin);
+        // The bucket, raised and lowered through the cut as the material comes out.
+        const bite = Math.sin(Math.min(Math.max(play.sub, 0), 1) * Math.PI);
+        const bucket = new THREE.Mesh(new THREE.BoxGeometry(3.4, 2.2, 6.4), mat);
+        bucket.position.set(6.4, 1.4 + 3.4 * bite, 0);
+        bucket.rotation.z = -0.5 * bite;
+        loader.add(bucket);
+        loader.position.set(x - W / 2, g0, y - H / 2);
+        L.content.add(loader);
+      }
+
+      if (play?.job !== 'reclaim' && play?.truck) {
         const { x, y, heading } = play.truck;
         const laden = play.phase !== 'departure';
         const body = new THREE.Group();
@@ -539,29 +566,56 @@ export default function SiteView3D({
         body.add(cab);
 
         // The tray, and the material in it.
+        //
+        // THE BODY PITCHES UP AND THE LOAD LEAVES OVER THE TAILGATE, which is at -X, the rear. The
+        // pivot is the rear of the tray rather than its middle, so the nose of the tray rises and
+        // the material slides backwards and out, which is what a body-up haul truck does. The tray
+        // is drawn as a floor and two side walls rather than a closed box so the load inside it is
+        // visible at all.
+        const tipping = play.phase === 'tip';
+        const lift = tipping ? Math.sin(Math.min(play.sub, 1) * Math.PI) : 0;   // up and back down
+        const pitch = -0.95 * lift;
+
         const tray = new THREE.Group();
-        const shell = new THREE.Mesh(
-          new THREE.BoxGeometry(8.5, 3.2, 6.8),
-          new THREE.MeshLambertMaterial({ color: dark ? 0xffd479 : 0xd98a00 }),
-        );
-        tray.add(shell);
+        // YELLOW: a haul truck bringing material in. The reclaim machine above is orange.
+        const trayMat = new THREE.MeshLambertMaterial({ color: dark ? 0xffd94a : 0xf2c200 });
+        const floor = new THREE.Mesh(new THREE.BoxGeometry(8.6, 0.5, 6.8), trayMat);
+        floor.position.set(0, -1.3, 0);
+        tray.add(floor);
+        for (const zz of [-3.3, 3.3]) {
+          const wall = new THREE.Mesh(new THREE.BoxGeometry(8.6, 2.6, 0.4), trayMat);
+          wall.position.set(0, 0, zz);
+          tray.add(wall);
+        }
+        const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 3.4, 6.8), trayMat);
+        head.position.set(4.2, 0.4, 0);      // the headboard, at the FRONT of the tray
+        tray.add(head);
+
         if (laden) {
-          const heap = new THREE.Mesh(
-            new THREE.BoxGeometry(7.4, 1.9, 5.9),
-            new THREE.MeshLambertMaterial({ color: dark ? 0x6b5a45 : 0x5a4a38 }),
-          );
-          heap.position.y = 2.1;
-          tray.add(heap);
+          // The load slides toward the tailgate as the body rises, and shrinks as it leaves.
+          const remaining = tipping ? Math.max(0, 1 - play.sub) : 1;
+          if (remaining > 0.02) {
+            const heap = new THREE.Mesh(
+              new THREE.BoxGeometry(7.4 * remaining, 1.8 * remaining, 5.9),
+              new THREE.MeshLambertMaterial({ color: dark ? 0x7a6650 : 0x5a4a38 }),
+            );
+            heap.position.set(-4.0 + 3.7 * remaining, -0.2, 0);
+            tray.add(heap);
+          }
         }
-        // The pivot is at the back of the tray, so tipping rotates about it rather than about the
-        // tray's middle, which is what a body-up truck actually does.
-        tray.position.set(-1.2, 4.3, 0);
-        if (play.phase === 'tip') {
-          tray.rotation.z = -0.9;
-          tray.position.y = 5.0;
-          tray.position.x = -2.4;
-        }
-        body.add(tray);
+
+        // Pivot at the rear: shift the group so the tray's own back edge is the origin, rotate, and
+        // shift back. Rotating about the middle would lift the tailgate too, which is the one part
+        // that has to stay down for the load to come out.
+        const REAR = -4.3;
+        tray.position.set(-1.2 + REAR, 4.3, 0);
+        tray.rotation.z = pitch;
+        const pivot = new THREE.Group();
+        pivot.add(tray);
+        tray.position.x = 0;
+        tray.translateX(-REAR);
+        pivot.position.set(-1.2 + REAR, 4.3 + 0.5 * lift, 0);
+        body.add(pivot);
 
         body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
         body.rotation.y = -heading;

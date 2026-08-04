@@ -28,6 +28,7 @@ import {
   type Index,
   type Scenario,
   playState,
+  timelineLength,
   loadIndex,
   loadScenario,
   segregationSummary,
@@ -200,7 +201,8 @@ export default function Focus() {
           <div className="fx-play">
             <PlayBar
               frames={sc.frames}
-              pos={pos < 0 ? (sc.frames?.frames.length ?? 1) - 1 : pos}
+              total={timelineLength(sc)}
+              pos={pos < 0 ? Math.max(timelineLength(sc) - 1, 0) : pos}
               onPos={setPos}
             />
           </div>

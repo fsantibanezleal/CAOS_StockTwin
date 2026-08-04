@@ -141,6 +141,10 @@ export interface Frames {
    *  which is what lets a player show the truck working right now instead of every path ever
    *  driven. */
   step?: number;
+  /** One surface per reclaim cut, same grid and same delta encoding as the build frames. The pile
+   *  coming DOWN is as much of the operation as the pile going up, and the timeline runs through
+   *  both. */
+  reclaim?: { seq: number; placed: number; z?: number[]; d?: number[] }[];
   /** The first frame is complete; the rest carry only the cells that changed, as flat
    *  [index, value, index, value] pairs. A load touches a couple of dozen cells and leaves the rest
    *  alone, so a full surface per frame writes the same numbers hundreds of times: 2.6 MB per
@@ -153,6 +157,11 @@ export interface Cut {
   grade: number;
   disp: number;
   unc: number;
+  /** Where the loader stood: the centroid of the cells this cut engaged, in pad metres. */
+  x?: number;
+  y?: number;
+  /** How many cells it engaged, which is the size of the bite. */
+  cells?: number;
   prov: Record<string, number>;
 }
 
@@ -520,6 +529,14 @@ export interface PlayState {
   ahead: [number, number][];
   /** Which of the three phases we are in. */
   phase: 'approach' | 'tip' | 'departure';
+  /** Which machine is on the stage. A haul truck delivering, or a loader taking material away. */
+  job: 'haul' | 'reclaim';
+  /** On a reclaim step, the cut being taken. */
+  cut?: Cut | null;
+  /** How far through the current phase, 0 to 1. Lets the scene animate WITHIN a phase. */
+  sub: number;
+  /** The direction the load runs out, from the engine: the outward normal of the crest at the spot. */
+  dumpHeading: number | null;
 }
 
 const APPROACH_FRAC = 0.45;
@@ -560,10 +577,50 @@ function walk(
   return null;
 }
 
+/** The signed angle from `a` to `b`, taking the short way round, so a turn never spins the long way. */
+function shortestTurn(a: number, b: number): number {
+  let d = (b - a) % (2 * Math.PI);
+  if (d > Math.PI) d -= 2 * Math.PI;
+  if (d < -Math.PI) d += 2 * Math.PI;
+  return d;
+}
+
 /** Resolve a fractional build position into everything the scene needs to draw one moment. */
+/** How many steps the whole timeline has: every placed load, then every reclaim cut. */
+export function timelineLength(sc: Scenario | null): number {
+  const f = sc?.frames;
+  if (!f) return 0;
+  return f.frames.length + (f.reclaim?.length ?? 0);
+}
+
 export function playState(sc: Scenario, pos: number): PlayState | null {
   const f = sc.frames;
   if (!f || !f.frames.length) return null;
+
+  // THE TIMELINE RUNS PAST THE END OF THE BUILD. Everything after the last load is the reclaim
+  // campaign: an orange loader working the face, taking the pile back down cut by cut. It is the
+  // second half of what a stockpile does and it was not on the timeline at all.
+  const nBuild = f.frames.length;
+  if (f.reclaim?.length && pos >= nBuild) {
+    const k = Math.min(Math.floor(pos - nBuild), f.reclaim.length - 1);
+    const c = sc.cuts[k] ?? null;
+    const z = expandReclaim(f, k);
+    const here = c && typeof c.x === 'number' && typeof c.y === 'number'
+      ? { x: c.x, y: c.y, heading: 0 }
+      : null;
+    return {
+      seq: -1 - k,
+      z,
+      truck: here,
+      trail: [],
+      ahead: [],
+      phase: 'tip',
+      sub: pos - nBuild - k,
+      dumpHeading: null,
+      job: 'reclaim',
+      cut: c,
+    };
+  }
   const i = Math.min(Math.max(Math.floor(pos), 0), f.frames.length - 1);
   const frac = Math.min(Math.max(pos - i, 0), 1);
   const cur = f.frames[i];
@@ -590,17 +647,43 @@ export function playState(sc: Scenario, pos: number): PlayState | null {
   const path = phase === 'departure' ? (load?.departure ?? []) : (load?.approach ?? []);
   const w = walk(path as [number, number][], phase === 'tip' ? 1 : sub);
 
+  // THE TRUCK TURNS BEFORE IT TIPS, because that is what a haul truck does: it reverses to the tip
+  // head so the tray discharges over its REAR. The engine already places the material behind the
+  // truck, 0.66 of a body length back, and records the direction it runs out as the outward normal
+  // of the crest. The scene was orienting the truck by its direction of travel right through the
+  // tip, which put the load off the nose. It now swings to face AWAY from the run-out over the last
+  // stretch of the approach, holds there while the tray is up, and swings back to travel on the way
+  // out.
+  const dumpHeading = typeof load?.head === 'number' ? load.head : null;
+  const TURN_STARTS_AT = 0.7;
+  let heading = w ? w.heading : (dumpHeading ?? 0);
+  if (dumpHeading !== null) {
+    const backedIn = dumpHeading + Math.PI;   // nose away from the dump, tray over it
+    if (phase === 'tip') {
+      heading = backedIn;
+    } else if (phase === 'approach' && sub > TURN_STARTS_AT) {
+      const k = (sub - TURN_STARTS_AT) / (1 - TURN_STARTS_AT);
+      heading = heading + shortestTurn(heading, backedIn) * k;
+    } else if (phase === 'departure' && sub < 1 - TURN_STARTS_AT) {
+      const k = sub / (1 - TURN_STARTS_AT);
+      heading = backedIn + shortestTurn(backedIn, heading) * k;
+    }
+  }
+
   return {
     seq: cur.seq,
     z: phase === 'approach' ? before : after,
     truck: w
-      ? { x: w.x, y: w.y, heading: w.heading }
+      ? { x: w.x, y: w.y, heading }
       : load && load.x !== undefined && load.y !== undefined
-        ? { x: load.x, y: load.y, heading: load.head ?? 0 }
+        ? { x: load.x, y: load.y, heading }
         : null,
     trail: w ? w.done : [],
     ahead: w ? w.left : [],
     phase,
+    sub,
+    dumpHeading,
+    job: 'haul',
   };
 }
 
@@ -720,6 +803,64 @@ export function surfaceValues(sc: Scenario, key: string): (number | null)[] | nu
     const l = by.get(ev) as (Load & Record<string, number | undefined>) | undefined;
     const v = l ? l[key] : undefined;
     out[c] = typeof v === 'number' && Number.isFinite(v) ? v : null;
+  }
+  return out;
+}
+
+
+/** The surface after reclaim cut `k`, accumulated from the last build frame through the cut deltas. */
+const RECLAIM_CACHE = new WeakMap<Frames, { at: number; z: number[] }>();
+
+function expandReclaim(f: Frames, k: number): number[] | null {
+  const list = f.reclaim;
+  if (!list?.length) return null;
+  const cache = RECLAIM_CACHE.get(f);
+  let at: number;
+  let z: number[];
+  if (cache && cache.at <= k) {
+    at = cache.at;
+    z = cache.z;
+  } else {
+    const first = list[0];
+    if (!first?.z) return null;
+    at = 0;
+    z = first.z.slice();
+  }
+  for (let i = at + 1; i <= k; i++) {
+    const fr = list[i];
+    if (!fr) break;
+    if (fr.z) z = fr.z.slice();
+    else if (fr.d) for (let j = 0; j + 1 < fr.d.length; j += 2) z[fr.d[j]] = fr.d[j + 1];
+  }
+  RECLAIM_CACHE.set(f, { at: k, z });
+  return upsample(f, z);
+}
+
+/** Bilinear expansion of a coarse surface onto the full grid. Shared by both timelines. */
+function upsample(f: Frames, coarse: number[]): number[] | null {
+  const step = f.step ?? 1;
+  if (step === 1) return coarse.slice();
+  const { nx, ny } = f;
+  const hnx = Math.ceil(nx / step);
+  const hny = Math.ceil(ny / step);
+  if (coarse.length !== hnx * hny) return null;
+  const out = new Array<number>(nx * ny);
+  for (let j = 0; j < ny; j++) {
+    const v = j / step;
+    const j0 = Math.min(Math.floor(v), hny - 1);
+    const j1 = Math.min(j0 + 1, hny - 1);
+    const tj = v - j0;
+    for (let i = 0; i < nx; i++) {
+      const u = i / step;
+      const i0 = Math.min(Math.floor(u), hnx - 1);
+      const i1 = Math.min(i0 + 1, hnx - 1);
+      const ti = u - i0;
+      const a = coarse[j0 * hnx + i0];
+      const b = coarse[j0 * hnx + i1];
+      const c = coarse[j1 * hnx + i0];
+      const d = coarse[j1 * hnx + i1];
+      out[j * nx + i] = (a + (b - a) * ti) * (1 - tj) + (c + (d - c) * ti) * tj;
+    }
   }
   return out;
 }

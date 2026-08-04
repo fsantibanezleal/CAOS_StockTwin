@@ -152,9 +152,6 @@ export function PlanPanel({
         g.stroke();
         g.restore();
 
-        g.fillStyle = dark ? '#cfe6f5' : '#123';
-        g.font = '9px system-ui, sans-serif';
-        g.fillText(`${a.name} (${a.benches.length} benches)`, a.x0 + 3, a.y0 + 11);
       }
 
       // Planned tip positions against where the truck actually stood.
@@ -194,6 +191,20 @@ export function PlanPanel({
   return (
     <div className={field.nx / field.ny > 1.35 ? 'st-planpanel st-wide-pad' : 'st-planpanel'}>
       <ChartBox><canvas ref={ref} className="st-chartcanvas" /></ChartBox>
+      {/* THE AREA NAMES SIT OUTSIDE THE MAP. Drawing them onto the plan put nine-pixel type on top
+          of the thing being measured, at whatever scale the map happened to be, and it obscured the
+          tips in the corner it was anchored to. A map is a measurement; labels belong beside it. */}
+      <ul className="st-arealist">
+        {plan.areas.map((a) => (
+          <li key={a.name}>
+            <b>{a.name}</b>
+            <span>
+              {a.benches.length} {a.benches.length === 1 ? 'bench' : 'benches'} ·{' '}
+              {Math.round(a.x1 - a.x0)} x {Math.round(a.y1 - a.y0)} m
+            </span>
+          </li>
+        ))}
+      </ul>
       <p className="st-legend">
         <span className="st-key" style={{ background: '#0f7a3d' }} /> paddock tip
         <span className="st-key" style={{ background: '#b35c00' }} /> edge tip

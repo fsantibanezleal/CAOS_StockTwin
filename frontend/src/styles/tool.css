@@ -49,52 +49,104 @@
 }
 
 /* The readouts. A definition list, because that is what they are: a name and a measured value. */
-/* THE READOUTS. A two-column ledger: name on the left, value right-aligned on the right, one row
-   each, hairline between. The previous version stacked a small grey label above a large value in a
-   two-up grid, which reads as a dashboard of tiles and is exactly as hard to scan as it sounds: no
-   alignment to run your eye down, and ten of them in a narrow rail. */
+/* THE READOUTS AS TILES, grouped by the question they answer.
+ *
+ * Two earlier versions were wrong in opposite directions. A two-up grid of label-over-value read as
+ * a dashboard of unrelated numbers; a flat two-column ledger scanned better but was a wall of ten
+ * rows with nothing telling the reader which of them was the answer and which was context. These
+ * are three small groups, each with a heading, and the value is what the eye lands on.
+ */
 .st-kpis {
-  margin: 0;
+  display: grid;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.st-kpis section {
+  min-width: 0;
+}
+
+.st-kpis h3 {
+  margin: 0 0 0.3rem;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.st-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.st-tiles > div {
+  min-width: 0;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  background: color-mix(in srgb, currentColor 4%, transparent);
+  display: grid;
+  gap: 0.05rem;
+  align-content: start;
+}
+
+/* The headline number spans the row, because the variance reduction IS the answer. */
+.st-tiles > div.strong {
+  grid-column: 1 / -1;
+  background: color-mix(in srgb, var(--color-accent, #58a6ff) 10%, transparent);
+  border-color: color-mix(in srgb, var(--color-accent, #58a6ff) 34%, transparent);
+}
+
+.st-tiles b {
+  font-size: 1.02rem;
+  font-weight: 600;
+  line-height: 1.15;
   font-variant-numeric: tabular-nums;
-  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
-}
-
-.st-kpis > div {
-  display: flex;
-  align-items: first baseline;
-  justify-content: space-between;
-  gap: 0.6rem;
-  padding: 0.32rem 0;
-  border-bottom: 1px solid color-mix(in srgb, currentColor 9%, transparent);
-  min-width: 0;
-}
-
-.st-kpis dt {
-  font-size: 0.72rem;
-  opacity: 0.66;
-  line-height: 1.25;
-  min-width: 0;
-  /* WRAPPING BEATS TRUNCATION. An ellipsis on "variance reduc..." hides the word that says what the
-     number is, which is the one thing a readout cannot afford to lose. The row aligns on its first
-     line instead, so the values still make a column to scan down. */
-  hyphens: auto;
-}
-
-.st-kpis dd {
-  margin: 0;
-  font-size: 0.86rem;
-  font-weight: 500;
+  /* A long value with a unit after it must shrink rather than run out of its tile: 79,330 m3 was
+     losing the "3". */
   white-space: nowrap;
-  text-align: right;
+  overflow: hidden;
+  text-overflow: clip;
+  font-size: clamp(0.78rem, 1.6cqw + 0.55rem, 1.02rem);
 }
 
-.st-kpis .muted dd {
+.st-tiles > div {
+  container-type: inline-size;
+}
+
+.st-tiles > div.strong b {
+  font-size: 1.35rem;
+}
+
+.st-tiles b i {
+  font-style: normal;
+  font-size: 0.66em;
+  font-weight: 400;
+  opacity: 0.6;
+  margin-left: 0.15em;
+}
+
+.st-tiles span {
+  font-size: 0.66rem;
+  line-height: 1.25;
+  opacity: 0.72;
+}
+
+.st-tiles em {
+  font-style: normal;
+  font-size: 0.6rem;
+  opacity: 0.5;
+}
+
+.st-tiles > div.muted b {
   opacity: 0.45;
   font-weight: 400;
-  font-style: italic;
 }
 
-.st-kpis .ok dd {
+.st-tiles > div.ok b {
   color: #2f9e59;
 }
 
@@ -577,4 +629,27 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
   .st-caseblurb {
     font-size: 0.7rem;
   }
+}
+
+/* The dump areas, named beside the map rather than lettered onto it. */
+.st-arealist {
+  list-style: none;
+  margin: 0.4rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.st-arealist li {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6rem;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 10%, transparent);
+  padding-bottom: 0.16rem;
+}
+
+.st-arealist span {
+  opacity: 0.7;
+  white-space: nowrap;
 }

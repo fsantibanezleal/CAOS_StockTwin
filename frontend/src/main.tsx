@@ -21,11 +21,6 @@ const config: ShellConfig = {
   product: { name: 'StockTwin', mark: <Layers size={18} aria-hidden="true" /> },
   routes: [
     { path: '/', en: 'App', es: 'App' },
-    // FOCUS IS A TOP-LEVEL DESTINATION. ADR-0070 clause 8 asks for a visible, obvious entry that is
-    // not buried in a menu; a nav item is as visible as this app has. It opens the case the reader
-    // was last looking at, so the round trip still preserves the scenario, which is what the clause
-    // is protecting.
-    { path: '/focus', en: 'Focus', es: 'Foco' },
     { path: '/introduction', en: 'Introduction', es: 'Introducción' },
     { path: '/methodology', en: 'Methodology', es: 'Metodología' },
     { path: '/implementation', en: 'Implementation', es: 'Implementación' },

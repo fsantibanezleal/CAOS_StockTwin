@@ -16,8 +16,9 @@
  * So: `CaseSelector` for the scenario deck, `Tabs` for the views, `.page-body.st-layout` for width,
  * and the readouts overlaid on the stage rather than stacked beneath it.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Maximize2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Tabs, useShellLang } from '@fasl-work/caos-app-shell';
 import type { CaseDef } from '@fasl-work/caos-app-shell';
 
@@ -30,6 +31,7 @@ import {
   loadScenario,
   segregationSummary,
   surfaceValues,
+  timelineLength,
   verdict,
 } from '../lib/scenario';
 import SiteView3D, { type ColourBy } from '../viz/SiteView3D';
@@ -101,11 +103,28 @@ function readRememberedCase(): string {
   }
 }
 
+/** One readout tile. Optional fields are what makes a tile a headline, a caveat or a gate result. */
+interface Kpi {
+  k: string;
+  v: string;
+  unit?: string;
+  sub?: string;
+  muted?: boolean;
+  good?: boolean;
+  strong?: boolean;
+}
+
+interface KpiGroup {
+  head: string;
+  rows: Kpi[];
+}
+
 export default function Tool() {
   const lang = useShellLang() === 'es' ? 'es' : 'en';
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const dark = useDark();
   const [params] = useSearchParams();
+  const nav = useNavigate();
   const [stageRef, stageH] = useBoxHeight<HTMLDivElement>();
 
   const [index, setIndex] = useState<Index | null>(null);
@@ -172,6 +191,10 @@ export default function Tool() {
 
   // The surface being drawn, and the load being worked: a build frame while scrubbing, the
   // finished pile otherwise.
+  const loc = lang === 'es' ? 'es-CL' : 'en-US';
+
+  const toFocus = useCallback(() => nav(`/focus/${sid}`), [nav, sid]);
+
   const assayVars = useMemo<AssayVar[]>(
     () => (sc?.manifest.assay_variables as AssayVar[] | undefined) ?? [],
     [sc],
@@ -183,6 +206,7 @@ export default function Tool() {
   );
   const activeVar = assayVars.find((a) => a.key === colour);
 
+  const steps = useMemo(() => timelineLength(sc), [sc]);
   const play = useMemo(() => (sc && pos >= 0 ? playState(sc, pos) : null), [sc, pos]);
   const surface = play?.z ?? null;
 
@@ -289,7 +313,8 @@ export default function Tool() {
         {sc && (
           <PlayBar
             frames={sc.frames}
-            pos={pos < 0 ? (sc.frames?.frames.length ?? 1) - 1 : pos}
+            total={steps}
+            pos={pos < 0 ? Math.max(steps - 1, 0) : pos}
             onPos={setPos}
             lang={lang}
           />
@@ -352,6 +377,15 @@ export default function Tool() {
        * The shell has no dropdown variant of CaseSelector, so this is the native control the ADR
        * names rather than a re-implementation of a shell primitive. */}
       <aside className="st-rail">
+        {/* THE FOCUS ENTRY SITS WITH THE SCENARIO CONTROL, which is ADR-0070 clause 8: a visible,
+            obvious entry on the same surface as the scenario selector. It spent a version in the
+            top nav, which is visible but is not that surface, and the clause is specific for a
+            reason: the thing you are about to focus ON is chosen right underneath it. */}
+        <button type="button" className="st-focus" onClick={toFocus}>
+          <Maximize2 size={14} aria-hidden />
+          <span>{t('Focus this scenario', 'Enfocar este escenario')}</span>
+        </button>
+
         <label className="st-case">
           <span>{t('Scenario', 'Escenario')}</span>
           <select
@@ -376,31 +410,58 @@ export default function Tool() {
         {sc && <p className="st-caseblurb">{sc.manifest.summary[lang]}</p>}
 
         {sc && v && seg && (
-          <dl className="st-kpis">
-            {[
-              { k: t('variance reduction', 'reducción varianza'), v: v.vrr.toFixed(3), hint: t('var out / var in, lower is better', 'var salida / var entrada, menor es mejor') },
-              v.boundReliable
-                ? { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: v.ideal.toFixed(3) }
-                : { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: 'n/a', muted: true, hint: t('withheld: the independent-source count is not reliable here', 'omitida: el conteo de fuentes independientes no es confiable aqui') },
-              { k: t('loads placed', 'cargas colocadas'), v: sc.manifest.build.loads_placed.toLocaleString(lang === 'es' ? 'es-CL' : 'en-US') },
-              { k: t('tips refused', 'puntos rechazados'), v: `${(sc.manifest.build.refusal_rate * 100).toFixed(1)}%` },
-              { k: t('peak height', 'altura máxima'), v: `${sc.manifest.build.peak_m.toFixed(1)} m` },
-              { k: t('material placed', 'material colocado'), v: `${Math.round(sc.manifest.build.volume_m3).toLocaleString(lang === 'es' ? 'es-CL' : 'en-US')} m3` },
-              { k: t('dozer travel', 'arrastre bulldozer'), v: `${sc.manifest.build.mean_displacement_m.toFixed(1)} m` },
-              { k: t('stream range', 'rango del flujo'), v: `${sc.manifest.stream.measured_range_t.toFixed(0)} t` },
-              { k: t('sorted on a face', 'clasificadas en cara'), v: String(seg.nSorted) },
-              { k: t('pairs over repose', 'pares sobre reposo'), v: String(sc.manifest.gate.pairs_over_repose), good: sc.manifest.gate.pairs_over_repose === 0 },
-            ].map((r) => (
-              <div
-                key={r.k}
-                className={[r.muted ? 'muted' : '', r.good ? 'ok' : ''].filter(Boolean).join(' ')}
-                title={r.hint}
-              >
-                <dt>{r.k}</dt>
-                <dd>{r.v}</dd>
-              </div>
+          <div className="st-kpis">
+            {([
+              {
+                head: t('what the pile did', 'lo que hizo la pila'),
+                rows: [
+                  { k: t('variance reduction', 'reducción de varianza'), v: v.vrr.toFixed(3), sub: t('var out / var in', 'var salida / var entrada'), strong: true },
+                  v.boundReliable
+                    ? { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: v.ideal.toFixed(3), sub: t('independent layers', 'capas independientes') }
+                    : { k: t('ideal 1/N bound', 'cota ideal 1/N'), v: 'n/a', sub: t('withheld, not reliable', 'omitida, no confiable'), muted: true },
+                ],
+              },
+              {
+                head: t('what was built', 'lo que se construyó'),
+                rows: [
+                  { k: t('loads placed', 'cargas colocadas'), v: sc.manifest.build.loads_placed.toLocaleString(loc) },
+                  { k: t('tips refused', 'puntos rechazados'), v: `${(sc.manifest.build.refusal_rate * 100).toFixed(1)}%` },
+                  { k: t('peak height', 'altura máxima'), v: `${sc.manifest.build.peak_m.toFixed(1)}`, unit: 'm' },
+                  { k: t('material', 'material'), v: Math.round(sc.manifest.build.volume_m3).toLocaleString(loc), unit: 'm3' },
+                ],
+              },
+              {
+                head: t('how it got there', 'cómo llegó ahí'),
+                rows: [
+                  { k: t('dozer travel', 'arrastre bulldozer'), v: sc.manifest.build.mean_displacement_m.toFixed(1), unit: 'm' },
+                  { k: t('stream range', 'rango del flujo'), v: sc.manifest.stream.measured_range_t.toFixed(0), unit: 't' },
+                  { k: t('sorted on a face', 'clasificadas en cara'), v: String(seg.nSorted) },
+                  { k: t('over repose', 'sobre reposo'), v: String(sc.manifest.gate.pairs_over_repose), good: sc.manifest.gate.pairs_over_repose === 0 },
+                ],
+              },
+            ] as KpiGroup[]).map((g) => (
+              <section key={g.head}>
+                <h3>{g.head}</h3>
+                <div className="st-tiles">
+                  {g.rows.map((r) => (
+                    <div
+                      key={r.k}
+                      className={[r.muted ? 'muted' : '', r.good ? 'ok' : '', r.strong ? 'strong' : '']
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      <b>
+                        {r.v}
+                        {r.unit ? <i>{r.unit}</i> : null}
+                      </b>
+                      <span>{r.k}</span>
+                      {r.sub ? <em>{r.sub}</em> : null}
+                    </div>
+                  ))}
+                </div>
+              </section>
             ))}
-          </dl>
+          </div>
         )}
       </aside>
 
