@@ -485,7 +485,7 @@ export function FigRelaxation({ t }: { t: L }) {
         {t('from any cell still over the angle.', 'resembrar desde toda celda aún sobre el ángulo.')}
       </text>
       <text className="mf-m" x="412" y="212">
-        0 {t('pairs, on every one of the 20 bakes', 'pares, en cada uno de los 20 horneados')}
+        0 {t('pairs, on every one of the 22 bakes', 'pares, en cada uno de los 22 horneados')}
       </text>
     </svg>
   );
@@ -889,7 +889,7 @@ export function FigPipeline({ t }: { t: L }) {
         )}
       </text>
       <text className="mf-m" x="8" y="240">
-        {t('20 scenarios', '20 escenarios')} &#183; 21,168 {t('placed loads', 'cargas colocadas')} &#183; 0{' '}
+        {t('22 scenarios', '22 escenarios')} &#183; 22,656 {t('placed loads', 'cargas colocadas')} &#183; 0{' '}
         {t('cell pairs over repose', 'pares de celdas sobre el reposo')}
       </text>
     </svg>

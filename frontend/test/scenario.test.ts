@@ -19,8 +19,11 @@ import {
   type Plan,
   type Scenario,
   type Sector,
+  isConcurrent,
+  playState,
   profileStats,
   segregationSummary,
+  timelineLength,
   variogram,
   verdict,
   weightedVariance,
@@ -235,5 +238,116 @@ describe('the physics reached the artifact', () => {
 
     const flat = load('single').field;
     expect(Math.max(...flat.z0) - Math.min(...flat.z0)).toBeCloseTo(0, 6);
+  });
+});
+
+describe('a concurrent campaign is fed and drawn at the same time', () => {
+  // THE TWO CASES THAT ANSWER "does anything model loading and draining together". They exist
+  // because a real surge pile is worked from both ends, and they very nearly did not ship: the bake
+  // produced them and the assembly step left them out of the artifact tree, so the app offered
+  // twenty cases and neither of these was among them. These assertions are the reason that cannot
+  // happen quietly again.
+  const CONCURRENT = index.scenarios
+    .filter((s) => s.category === 'campaign')
+    .map((s) => s.id)
+    .filter((id) => read<Manifest>(id, 'manifest.json').reclaim.mode === 'concurrent');
+
+  it('ships at least one case where the loader works while the trucks are still tipping', () => {
+    expect(CONCURRENT.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('every cut records the load it was taken at, and it is DURING the build', () => {
+    for (const id of CONCURRENT) {
+      const sc = load(id);
+      const nLoads = sc.manifest.build.loads_placed;
+      expect(sc.cuts.length).toBeGreaterThan(0);
+      for (const c of sc.cuts) {
+        expect(typeof c.at).toBe('number');
+        expect(c.at!).toBeGreaterThan(0);
+        // Strictly inside the build: a cut at or past the last load is a sequential campaign wearing
+        // a concurrent label.
+        expect(c.at!).toBeLessThan(nLoads);
+      }
+      // And they are spread through it rather than bunched at the end.
+      const ats = sc.cuts.map((c) => c.at!);
+      expect(Math.min(...ats)).toBeLessThan(nLoads * 0.2);
+      expect(Math.max(...ats)).toBeGreaterThan(nLoads * 0.8);
+    }
+  });
+
+  it('a sequential campaign records no such index', () => {
+    for (const c of load('single').cuts) expect(c.at).toBeUndefined();
+  });
+
+  it('THE BUILD CHAIN ALREADY CARRIES THE BITES, so the timeline must not append the reclaim', () => {
+    for (const id of CONCURRENT) {
+      const sc = load(id);
+      // The frames of a concurrent build DECREASE in volume wherever a cut was taken. If they did
+      // not, the two chains would be separate stories and interleaving them would be wrong.
+      const f = sc.frames!;
+      let z = [...(f.frames[0].z as number[])];
+      let prev = z.reduce((a, b) => a + b, 0);
+      let dips = 0;
+      for (let i = 1; i < f.frames.length; i++) {
+        const fr = f.frames[i];
+        if (fr.z) z = [...fr.z];
+        else if (fr.d) for (let j = 0; j + 1 < fr.d.length; j += 2) z[fr.d[j]] = fr.d[j + 1];
+        const v = z.reduce((a, b) => a + b, 0);
+        if (v < prev - 1e-6) dips++;
+        prev = v;
+      }
+      expect(dips).toBeGreaterThan(0);
+
+      // So the timeline is the build ALONE. Appending the reclaim chain replays a nearly empty pile
+      // after the finished one, which is the defect this locks out.
+      expect(isConcurrent(sc)).toBe(true);
+      expect(timelineLength(sc)).toBe(f.frames.length);
+    }
+  });
+
+  it('a sequential timeline still runs build then reclaim', () => {
+    const sc = load('single');
+    expect(isConcurrent(sc)).toBe(false);
+    expect(timelineLength(sc)).toBe(sc.frames!.frames.length + (sc.frames!.reclaim?.length ?? 0));
+  });
+
+  it('the loader appears on the stage DURING the build, not after it', () => {
+    for (const id of CONCURRENT) {
+      const sc = load(id);
+      const n = timelineLength(sc);
+      let sawReclaim = 0;
+      let sawHaul = 0;
+      // Walk the whole timeline at load granularity and count which machine is on the stage.
+      for (let i = 0; i < n; i++) {
+        const st = playState(sc, i + 0.5);
+        if (!st) continue;
+        if (st.job === 'reclaim') sawReclaim++;
+        else sawHaul++;
+      }
+      expect(sawReclaim).toBeGreaterThan(0);
+      expect(sawHaul).toBeGreaterThan(0);
+
+      // And the FIRST reclaim moment is early, not at the end.
+      let firstReclaim = -1;
+      for (let i = 0; i < n; i++) {
+        const st = playState(sc, i + 0.5);
+        if (st?.job === 'reclaim') { firstReclaim = i; break; }
+      }
+      expect(firstReclaim).toBeGreaterThanOrEqual(0);
+      expect(firstReclaim).toBeLessThan(n * 0.25);
+    }
+  });
+
+  it('drawing while feeding blends WORSE than filling then drawing, which is the whole point', () => {
+    // The kill criterion, asserted on the artifact: a cut taken part-way through the build has fewer
+    // lifts available to cross, so it must homogenize less than the sequential campaign on the same
+    // seed and geometry. A pile that blended just as well either way would not be blending by
+    // residence at all.
+    const seq = verdict(load('single'));
+    for (const id of CONCURRENT) {
+      const con = verdict(load(id));
+      expect(con.vrr).toBeGreaterThan(seq.vrr);
+      expect(con.nLayers).toBeLessThan(seq.nLayers);
+    }
   });
 });

@@ -1,1 +1,1031 @@
-{"scenarios":[{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":79329.8},"category":"reference","gate":{"kill_criterion":{"en":"Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.","es":"Ningún par de celdas puede quedar más empinado que el ángulo de reposo impuesto al final de la construcción, y la masa debe conservarse hasta 1e-6 del volumen colocado. El predecesor terminó con 446 pares sobre el ángulo, el peor a 55,9 grados contra un impuesto de 37, que es lo que hacía que la pila se viera con púas."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"single","summary":{"en":"A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.","es":"Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."},"tags":["basic","physics"],"title":{"en":"One working stock","es":"Un acopio en operacion"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":79329.8},"category":"feed","gate":{"kill_criterion":{"en":"The measured stream range must be substantially SHORTER than the reference case built with the same seed and geometry. If the dwell does not move the range, the stream model is not causal and the product is claiming something it does not do.","es":"El rango medido del flujo debe ser sustancialmente MÁS CORTO que el caso de referencia construido con la misma semilla y geometría. Si la permanencia no mueve el rango, el modelo de flujo no es causal y el producto afirma algo que no hace."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"short_dwell","summary":{"en":"The same stockpile fed by a shovel that moves between dig blocks every few loads instead of every twenty. Nothing about the pile changes; only the ORDER the grades arrive in. That is the whole control an operation has over how much a stockpile can help it.","es":"El mismo acopio alimentado por una pala que cambia de bloque cada pocas cargas en vez de cada veinte. Nada de la pila cambia; solo el ORDEN en que llegan las leyes. Ese es todo el control que una operacion tiene sobre cuanto puede ayudarle un acopio."},"tags":["stream","contrast"],"title":{"en":"Short shovel dwell, decorrelated feed","es":"Permanencia corta de la pala, alimentacion descorrelacionada"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":79329.8},"category":"feed","gate":{"kill_criterion":{"en":"The measured stream range must be LONGER than the reference built with the same seed and geometry. If a longer dwell does not hurt, the stream model is not carrying the dig sequence.","es":"El rango medido del flujo debe ser MÁS LARGO que la referencia construida con la misma semilla y geometría. Si una permanencia más larga no perjudica, el modelo de flujo no está cargando la secuencia de extracción."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"long_dwell","summary":{"en":"The shovel stays in one dig block for sixty loads. Every other parameter is identical to the reference. This is the feed a stockpile can do least about, because whole regions of the pile share one grade.","es":"La pala permanece sesenta cargas en un mismo bloque. Todo lo demas es identico a la referencia. Es la alimentacion con la que un acopio menos puede ayudar, porque regiones enteras de la pila comparten una sola ley."},"tags":["stream","contrast"],"title":{"en":"Long shovel dwell, strongly correlated feed","es":"Permanencia larga de la pala, alimentacion muy correlacionada"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":79329.8},"category":"feed","gate":{"kill_criterion":{"en":"Variance reduction must come out BETTER than the reference while the reclaim stream still visibly drifts. A number that improves while the problem gets worse is the point; if the number does not improve, the trend is not reaching the input.","es":"La reducción de varianza debe resultar MEJOR que la referencia mientras el flujo recuperado sigue derivando visiblemente. Un número que mejora mientras el problema empeora es el punto; si el número no mejora, la tendencia no está llegando a la entrada."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"trending","summary":{"en":"Grade drifts steadily from the first bench to the last, which is what a dig sequence through a zoned ore body produces. A drift is not noise: no amount of mixing removes it.","es":"La ley deriva de forma sostenida desde el primer banco hasta el ultimo, que es lo que produce una secuencia a traves de un cuerpo zonificado. Una deriva no es ruido: ninguna mezcla la elimina."},"tags":["stream","trend"],"title":{"en":"Trending feed, grade drifting through the campaign","es":"Alimentacion con tendencia, ley que deriva durante la campana"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":79329.8},"category":"feed","gate":{"kill_criterion":{"en":"Output variance must be HIGHER than the reference in absolute terms while the ratio improves. If both move the same way the metric is not a ratio of what it claims.","es":"La varianza de salida debe ser MÁS ALTA que la referencia en términos absolutos mientras la razón mejora. Si ambas se mueven en el mismo sentido, la métrica no es una razón de lo que declara ser."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"erratic_feed","summary":{"en":"The dig sequence jumps between blocks of very different grade. High input variance is the condition under which a stockpile has the most to offer, and it is the case where the variance reduction ratio looks best for reasons that have nothing to do with the pile.","es":"La secuencia de extraccion salta entre bloques de leyes muy distintas. La alta varianza de entrada es la condicion en la que un acopio mas puede aportar, y es el caso en que la razon de reduccion de varianza se ve mejor por razones ajenas a la pila."},"tags":["stream","variance"],"title":{"en":"Erratic feed, high block-to-block variance","es":"Alimentacion erratica, alta varianza entre bloques"}},{"build":{"dozer_passes":168,"loads_placed":2232,"mean_displacement_m":20.47,"peak_m":13.97,"profiles":{"comet":408,"oval":728,"paddock":412,"rectangular":274,"sloughed_heap":410},"refusal_rate":0.1733,"volume_m3":238804.5},"category":"yard","gate":{"kill_criterion":{"en":"Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.","es":"Cada carga debe aterrizar en el área a la que su clase la rutea, los consolidados por área deben diferir en más que sus propios intervalos del 95 por ciento, y los invariantes de reposo y masa del caso simple deben seguir cumpliéndose en las tres áreas."},"ledger_agrees_with_terrain":true,"loads_offered":2700,"loads_placed":2232,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"yard","summary":{"en":"The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.","es":"La aplicacion completa. Tres areas nombradas contienen material de clases declaradas distintas, las cargas se enrutan a un area segun su estimacion de control de leyes, y varias areas se construyen a la vez. Aqui la vista por sector se justifica: cada area reporta una ley, el campo crudo debajo muestra cuan estratificada esta en realidad, y la secuencia de recuperacion decide cual de las dos recibe la planta."},"tags":["core","sectors","routing"],"title":{"en":"Multi-area stockyard","es":"Patio de acopios multi-area"}},{"build":{"dozer_passes":254,"loads_placed":3383,"mean_displacement_m":20.96,"peak_m":14.4,"profiles":{"comet":620,"oval":1126,"paddock":684,"rectangular":416,"sloughed_heap":537},"refusal_rate":0.2482,"volume_m3":380021.5},"category":"yard","gate":{"kill_criterion":{"en":"Within-area grade spread must be TIGHTER than the three-area yard. If it is not, the router is not separating and the extra areas cost without returning.","es":"La dispersión de ley dentro de cada área debe ser MÁS ESTRECHA que en el patio de tres áreas. Si no lo es, el ruteador no está separando y las áreas extra cuestan sin devolver nada."},"ledger_agrees_with_terrain":true,"loads_offered":4500,"loads_placed":3383,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.2482,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"yard_five","summary":{"en":"The same routed campaign split five ways instead of three. Finer classes mean tighter piles and a better-defined product, and they also mean more misroutes, longer hauls and more areas competing for the same fleet.","es":"La misma campana enrutada dividida en cinco clases en vez de tres. Clases mas finas dan pilas mas ajustadas y un producto mejor definido, y tambien mas errores de ruteo, transportes mas largos y mas areas compitiendo por la misma flota."},"tags":["core","sectors","routing"],"title":{"en":"Five-area yard, finer ore-control classes","es":"Patio de cinco areas, clases de control de leyes mas finas"}},{"build":{"dozer_passes":180,"loads_placed":2223,"mean_displacement_m":21.62,"peak_m":14.31,"profiles":{"comet":414,"oval":757,"paddock":411,"rectangular":276,"sloughed_heap":365},"refusal_rate":0.1767,"volume_m3":238933.0},"category":"yard","gate":{"kill_criterion":{"en":"Within-area grade spread must be WIDER than the clean three-area yard, and the separation between area means smaller. If misclassification costs nothing, the router is not routing on the estimate.","es":"La dispersión de ley dentro de cada área debe ser MÁS AMPLIA que en el patio limpio de tres áreas, y la separación entre las medias por área menor. Si clasificar mal no cuesta nada, el ruteador no está ruteando según la estimación."},"ledger_agrees_with_terrain":true,"loads_offered":2700,"loads_placed":2223,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1767,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"misrouted","summary":{"en":"The same three-area yard routed on a noisy estimate rather than a clean one. A load sent to the wrong pile lands there and stays there: the decision is made before placement and nothing corrects it afterwards.","es":"El mismo patio de tres areas enrutado con una estimacion ruidosa en vez de limpia. Una carga enviada a la pila equivocada aterriza ahi y ahi se queda: la decision se toma antes de colocar y nada la corrige despues."},"tags":["core","sectors","routing"],"title":{"en":"Ore-control misclassification","es":"Clasificacion erronea en control de leyes"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":29.47,"peak_m":21.49,"profiles":{"comet":136,"oval":292,"paddock":136,"rectangular":97,"sloughed_heap":83},"refusal_rate":0.1733,"volume_m3":79077.4},"category":"landform","gate":{"kill_criterion":{"en":"No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.","es":"Ninguna celda puede terminar bajo su cota de terreno ORIGINAL, porque eso es una excavación que nadie realizó. El invariante de reposo debe cumplirse sobre el material colocado sin tocar el terreno natural más empinado que el reposo, y el volumen de material debe medirse contra la superficie original y no contra cero."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":4.0,"worst_local_slope_deg":37.0},"id":"sidehill","summary":{"en":"The same stockpile built against a hillside instead of on a prepared pad. Only one of the five published stockpile fill types is flat ground; the rest are sidehill, valley, cross-valley and ridge-crest fill. Relief is not scenery here: it decides which ground equipment can occupy before a single load is placed, so the plan, the access and the shape of the finished pile all change.","es":"El mismo acopio construido contra una ladera en vez de sobre una plataforma preparada. Solo uno de los cinco tipos publicados de relleno de acopio es terreno plano; los demas son ladera, valle, valle transversal y cresta. El relieve no es decoracion: define que terreno puede ocupar el equipo antes de colocar una sola carga, de modo que el plan, los accesos y la forma final del acopio cambian."},"tags":["topography","sidehill"],"title":{"en":"Sidehill fill on real topography","es":"Acopio en ladera sobre topografia real"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":14.52,"peak_m":27.02,"profiles":{"comet":147,"oval":272,"paddock":135,"rectangular":101,"sloughed_heap":89},"refusal_rate":0.1733,"volume_m3":76641.4},"category":"landform","gate":{"kill_criterion":{"en":"The pile must stand HIGHER than the flat-pad case built from the same load budget, because that is what confinement means. If it does not, the ground is not constraining the material and the topography is decoration.","es":"La pila debe quedar MÁS ALTA que el caso de plataforma plana construido con el mismo presupuesto de cargas, porque eso es lo que significa el confinamiento. Si no lo hace, el terreno no está restringiendo el material y la topografía es decoración."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"valley","summary":{"en":"The same campaign tipped into a valley. Confinement changes the answer: the ground holds the material on two sides, so the same tonnage stands markedly higher than it does free-standing on a pad, and the working face runs along the valley rather than out in every direction.","es":"La misma campana descargada en un valle. El confinamiento cambia la respuesta: el terreno sostiene el material por dos lados, de modo que el mismo tonelaje se para bastante mas alto que libre sobre una plataforma, y la cara de trabajo corre a lo largo del valle."},"tags":["topography","valley"],"title":{"en":"Valley fill, confined on two sides","es":"Relleno de valle, confinado en dos lados"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":31.25,"peak_m":25.48,"profiles":{"comet":138,"oval":268,"paddock":135,"rectangular":101,"sloughed_heap":102},"refusal_rate":0.1733,"volume_m3":84612.9},"category":"landform","gate":{"kill_criterion":{"en":"Buildable ground before any load is placed must differ measurably from both the flat pad and the valley. If the three report the same fraction the landform is not entering the calculation and the fill type is a label.","es":"El terreno transitable antes de colocar una sola carga debe diferir de forma medible tanto de la plataforma plana como del valle. Si los tres reportan la misma fracción, el relieve no está entrando en el cálculo y el tipo de relleno es una etiqueta."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"cross_valley","summary":{"en":"The fifth published fill type, and the one that behaves least like the other four. The ground falls along one axis and rises across it, so the fill is held on two opposite sides while draining along the third.","es":"El quinto tipo publicado de relleno, y el que menos se parece a los otros cuatro. El terreno baja en un eje y sube en el otro, de modo que el relleno queda contenido en dos lados opuestos mientras drena a lo largo del tercero."},"tags":["topography","cross-valley"],"title":{"en":"Cross-valley fill, confined across the axis","es":"Relleno transversal, confinado a traves del eje"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.63,"peak_m":17.42,"profiles":{"comet":129,"oval":272,"paddock":135,"rectangular":96,"sloughed_heap":112},"refusal_rate":0.1733,"volume_m3":78590.8},"category":"landform","gate":{"kill_criterion":{"en":"Buildable ground must be below the flat pad's 100 percent while the relief stays small. A surface that is rough and fully buildable means roughness is not reaching the slope.","es":"El terreno transitable debe estar bajo el 100 por ciento de la plataforma plana mientras el relieve se mantiene pequeño. Una superficie rugosa y totalmente construible significa que la rugosidad no está llegando a la pendiente."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"rough_ground","summary":{"en":"Flat on average and rough in detail: an unprepared surface rather than a graded pad. The relief is small and the local slopes are not, which is the condition a prepared pad exists to remove.","es":"Plano en promedio y rugoso en detalle: una superficie sin preparar en vez de una plataforma nivelada. El relieve es pequeno y las pendientes locales no lo son, que es justo la condicion que una plataforma preparada existe para eliminar."},"tags":["topography","rough"],"title":{"en":"Rough ground, no prepared pad","es":"Terreno rugoso, sin plataforma preparada"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.5867,"volume_m3":79329.8},"category":"campaign","gate":{"kill_criterion":{"en":"Placed volume must approach the designed frustum volume and then STOP, with the surplus reported as refused. A pile that keeps growing past its geometric capacity is not standing at repose.","es":"El volumen colocado debe acercarse al volumen del tronco de cono diseñado y luego DETENERSE, con el excedente reportado como rechazado. Una pila que sigue creciendo más allá de su capacidad geométrica no está parada en el ángulo de reposo."},"ledger_agrees_with_terrain":true,"loads_offered":1800,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.5867,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"intensive_feed","summary":{"en":"Twice the campaign into the same footprint, without pause. The pile is pushed to the limit of what its own geometry can hold at repose, and past the point where the plan has tips left to offer.","es":"El doble de campana en la misma huella, sin pausa. La pila se lleva al limite de lo que su propia geometria puede sostener en reposo, y mas alla del punto en que el plan tiene puntos de descarga que ofrecer."},"tags":["campaign","capacity"],"title":{"en":"Intensive feeding, the whole budget into one area","es":"Alimentacion intensiva, todo el presupuesto en una sola area"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.27,"peak_m":13.56,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":73619.9},"category":"campaign","gate":{"kill_criterion":{"en":"Delivered tonnage must be several times the reference campaign's, and no cut may report negative or NaN tonnage as the pile empties. A campaign that drains a pile it has already exhausted is not tracking the material.","es":"El tonelaje entregado debe ser varias veces el de la campaña de referencia, y ningún corte puede reportar tonelaje negativo o NaN mientras la pila se vacía. Una campaña que drena una pila ya agotada no está siguiendo el material."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"intensive_drain","summary":{"en":"The same pile, reclaimed hard: many small cuts rather than a few large ones, run until the pile is substantially gone. Reclaim is where the blending actually happens, and a campaign that stops at a quarter of the pile has only sampled the top of it.","es":"La misma pila, recuperada con fuerza: muchos cortes pequenos en vez de pocos grandes, hasta desarmar buena parte de la pila. La recuperacion es donde ocurre la mezcla, y una campana que se detiene en un cuarto de la pila solo ha muestreado su parte superior."},"tags":["campaign","reclaim"],"title":{"en":"Intensive draining, the pile taken back down","es":"Drenaje intensivo, la pila desarmada"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.49,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":80562.2},"category":"campaign","gate":{"kill_criterion":{"en":"The number of independent layers a cut crosses must be HIGHER than the intensive campaign's, and the variance reduction correspondingly better per cut. If cut size does not change what a cut crosses, the face is not engaging the layers.","es":"El número de capas independientes que cruza un corte debe ser MÁS ALTO que en la campaña intensiva, y la reducción de varianza correspondientemente mejor por corte. Si el tamaño del corte no cambia lo que cruza un corte, la cara no está comprometiendo las capas."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"light_drain","summary":{"en":"The opposite reclaim campaign: six cuts of five thousand tonnes instead of ninety of nine hundred. Each cut is large enough to cross a lot of the pile at once, which is a different kind of mixing from taking it in thin slices.","es":"La campana opuesta: seis cortes de cinco mil toneladas en vez de noventa de novecientas. Cada corte es lo bastante grande para cruzar buena parte de la pila de una vez, que es un tipo de mezcla distinto al de tomarla en rebanadas finas."},"tags":["campaign","reclaim"],"title":{"en":"Light draining, a few large cuts","es":"Drenaje ligero, pocos cortes grandes"}},{"build":{"dozer_passes":112,"loads_placed":1488,"mean_displacement_m":19.76,"peak_m":14.5,"profiles":{"comet":280,"oval":514,"paddock":273,"rectangular":178,"sloughed_heap":243},"refusal_rate":0.1733,"volume_m3":158372.1},"category":"campaign","gate":{"kill_criterion":{"en":"The two areas must differ measurably in mean grade, because each received a different stretch of the dig sequence. Two areas that come out the same mean the sequence is not reaching the piles.","es":"Las dos áreas deben diferir de forma medible en ley media, porque cada una recibió un tramo distinto de la secuencia de extracción. Dos áreas que salen iguales significan que la secuencia no está llegando a las pilas."},"ledger_agrees_with_terrain":true,"loads_offered":1800,"loads_placed":1488,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"two_phase","summary":{"en":"One material class, two adjacent areas, worked one after the other rather than together. The first is finished and left; the second is started from bare ground beside it. This is how a yard grows when the fleet cannot serve two tip heads at once.","es":"Una sola clase de material, dos areas contiguas, trabajadas una despues de la otra en vez de a la vez. La primera se termina y se deja; la segunda parte de terreno limpio al lado. Asi crece un patio cuando la flota no puede atender dos frentes a la vez."},"tags":["campaign","sequencing"],"title":{"en":"Two sub-areas worked in sequence","es":"Dos sub-areas trabajadas en secuencia"}},{"build":{"dozer_passes":396,"loads_placed":545,"mean_displacement_m":75.39,"peak_m":11.55,"profiles":{"comet":101,"oval":198,"paddock":164,"rectangular":70,"sloughed_heap":12},"refusal_rate":0.3944,"volume_m3":57456.7},"category":"operations","gate":{"kill_criterion":{"en":"The spread of the coarse fraction must be NARROWER than the reference. A nine-metre bench cascades about fourteen metres, at the bottom of the measured envelope; if segregation is unchanged it is not being driven by the face at all.","es":"La dispersión de la fracción gruesa debe ser MÁS ESTRECHA que la referencia. Un banco de nueve metros cascadea unos catorce metros, en el extremo bajo de la envolvente medida; si la segregación no cambia, no está siendo impulsada por la cara en absoluto."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":545,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.3944,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"short_bench","summary":{"en":"The same footprint built as three nine-metre lifts instead of one twenty-six. More benches mean more paddock campaigns, more dozer work and a shorter cascade down every face.","es":"La misma huella construida como tres levantes de nueve metros en vez de uno de veintiseis. Mas bancos significan mas campanas de paddock, mas trabajo de bulldozer y una cascada mas corta en cada cara."},"tags":["operations","bench"],"title":{"en":"Short benches, more lifts","es":"Bancos bajos, mas levantes"}},{"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":16.01,"peak_m":12.52,"profiles":{"comet":120,"oval":251,"paddock":137,"rectangular":96,"sloughed_heap":140},"refusal_rate":0.1733,"volume_m3":78588.7},"category":"operations","gate":{"kill_criterion":{"en":"The refusal rate must be no better than the reference. A narrower way in cannot make access easier, and if it does the corridor is not the thing controlling access.","es":"La tasa de rechazo no puede ser mejor que la de referencia. Una vía de entrada más angosta no puede facilitar el acceso, y si lo hace, el corredor no es lo que controla el acceso."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"narrow_ramp","summary":{"en":"A twelve-metre corridor instead of twenty-five: single-lane access with no room to pass. The ramp still has to be cut and maintained out of the fill, with far less of it to work with.","es":"Un corredor de doce metros en vez de veinticinco: acceso de una pista sin lugar para cruzarse. La rampa igual debe cortarse y mantenerse en el relleno, con mucho menos con que trabajar."},"tags":["operations","access"],"title":{"en":"Narrow access ramp","es":"Rampa de acceso angosta"}},{"build":{"dozer_passes":50,"loads_placed":744,"mean_displacement_m":17.05,"peak_m":13.04,"profiles":{"comet":132,"oval":270,"paddock":135,"rectangular":97,"sloughed_heap":110},"refusal_rate":0.1733,"volume_m3":78520.9},"category":"operations","gate":{"kill_criterion":{"en":"The refusal rate must rise against the reference. Less blade work that placed MORE loads would mean the cadence is not connected to access at all.","es":"La tasa de rechazo debe subir respecto de la referencia. Menos trabajo de hoja que colocara MÁS cargas significaría que la cadencia no está conectada al acceso en absoluto."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"seldom_dozed","summary":{"en":"One access pass every sixty loads instead of every twelve. The blade is what turns a field of tipped heaps into a floor a truck can cross, so its cadence is the pace at which the working level becomes usable again.","es":"Una pasada de acceso cada sesenta cargas en vez de cada doce. La hoja es lo que convierte un campo de montones en un piso que un camion puede cruzar, asi que su cadencia marca el ritmo al que el nivel de trabajo vuelve a ser utilizable."},"tags":["operations","dozer"],"title":{"en":"Dozer on a long cadence","es":"Bulldozer con cadencia larga"}},{"build":{"dozer_passes":68,"loads_placed":881,"mean_displacement_m":21.5,"peak_m":15.75,"profiles":{"comet":168,"oval":323,"paddock":161,"rectangular":116,"sloughed_heap":113},"refusal_rate":0.0211,"volume_m3":93194.0},"category":"operations","gate":{"kill_criterion":{"en":"Peak height must RISE against the reference on the same footprint and the same load budget, because a steeper repose holds more in the same plan area. If it does not, the repose angle is not reaching the geometry.","es":"La altura máxima debe SUBIR respecto de la referencia sobre la misma huella y el mismo presupuesto de cargas, porque un reposo más empinado retiene más en la misma área de planta. Si no lo hace, el ángulo de reposo no está llegando a la geometría."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":881,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.0211,"stable_tolerance_deg":1.0,"worst_local_slope_deg":43.0},"id":"wet_material","summary":{"en":"The same ore after rain. Capillary bridges between grains add cohesion and the material stands steeper, which makes the pile taller on the same footprint and every face harder to drive on.","es":"El mismo mineral despues de la lluvia. Los puentes capilares entre granos anaden cohesion y el material se para mas empinado, lo que hace la pila mas alta sobre la misma huella y cada cara mas dificil de transitar."},"tags":["operations","material"],"title":{"en":"Wet material, steeper repose","es":"Material humedo, reposo mas empinado"}}],"topography":[{"buildable_fraction":1.0,"fill":"heaped","max_slope_deg":0.0,"relief_m":0.0},{"buildable_fraction":1.0,"fill":"sidehill","max_slope_deg":13.6,"relief_m":29.6},{"buildable_fraction":0.719,"fill":"valley","max_slope_deg":30.5,"relief_m":29.2},{"buildable_fraction":1.0,"fill":"cross_valley","max_slope_deg":23.8,"relief_m":32.2},{"buildable_fraction":0.719,"fill":"ridge_crest","max_slope_deg":30.5,"relief_m":29.2}]}
+{
+  "scenarios": [
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 79329.8
+      },
+      "category": "reference",
+      "gate": {
+        "kill_criterion": {
+          "en": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
+          "es": "Ning\u00fan par de celdas puede quedar m\u00e1s empinado que el \u00e1ngulo de reposo impuesto al final de la construcci\u00f3n, y la masa debe conservarse hasta 1e-6 del volumen colocado. El predecesor termin\u00f3 con 446 pares sobre el \u00e1ngulo, el peor a 55,9 grados contra un impuesto de 37, que es lo que hac\u00eda que la pila se viera con p\u00faas."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "single",
+      "summary": {
+        "en": "A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.",
+        "es": "Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."
+      },
+      "tags": [
+        "basic",
+        "physics"
+      ],
+      "title": {
+        "en": "One working stock",
+        "es": "Un acopio en operacion"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 79329.8
+      },
+      "category": "feed",
+      "gate": {
+        "kill_criterion": {
+          "en": "The measured stream range must be substantially SHORTER than the reference case built with the same seed and geometry. If the dwell does not move the range, the stream model is not causal and the product is claiming something it does not do.",
+          "es": "El rango medido del flujo debe ser sustancialmente M\u00c1S CORTO que el caso de referencia construido con la misma semilla y geometr\u00eda. Si la permanencia no mueve el rango, el modelo de flujo no es causal y el producto afirma algo que no hace."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "short_dwell",
+      "summary": {
+        "en": "The same stockpile fed by a shovel that moves between dig blocks every few loads instead of every twenty. Nothing about the pile changes; only the ORDER the grades arrive in. That is the whole control an operation has over how much a stockpile can help it.",
+        "es": "El mismo acopio alimentado por una pala que cambia de bloque cada pocas cargas en vez de cada veinte. Nada de la pila cambia; solo el ORDEN en que llegan las leyes. Ese es todo el control que una operacion tiene sobre cuanto puede ayudarle un acopio."
+      },
+      "tags": [
+        "stream",
+        "contrast"
+      ],
+      "title": {
+        "en": "Short shovel dwell, decorrelated feed",
+        "es": "Permanencia corta de la pala, alimentacion descorrelacionada"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 79329.8
+      },
+      "category": "feed",
+      "gate": {
+        "kill_criterion": {
+          "en": "The measured stream range must be LONGER than the reference built with the same seed and geometry. If a longer dwell does not hurt, the stream model is not carrying the dig sequence.",
+          "es": "El rango medido del flujo debe ser M\u00c1S LARGO que la referencia construida con la misma semilla y geometr\u00eda. Si una permanencia m\u00e1s larga no perjudica, el modelo de flujo no est\u00e1 cargando la secuencia de extracci\u00f3n."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "long_dwell",
+      "summary": {
+        "en": "The shovel stays in one dig block for sixty loads. Every other parameter is identical to the reference. This is the feed a stockpile can do least about, because whole regions of the pile share one grade.",
+        "es": "La pala permanece sesenta cargas en un mismo bloque. Todo lo demas es identico a la referencia. Es la alimentacion con la que un acopio menos puede ayudar, porque regiones enteras de la pila comparten una sola ley."
+      },
+      "tags": [
+        "stream",
+        "contrast"
+      ],
+      "title": {
+        "en": "Long shovel dwell, strongly correlated feed",
+        "es": "Permanencia larga de la pala, alimentacion muy correlacionada"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 79329.8
+      },
+      "category": "feed",
+      "gate": {
+        "kill_criterion": {
+          "en": "Variance reduction must come out BETTER than the reference while the reclaim stream still visibly drifts. A number that improves while the problem gets worse is the point; if the number does not improve, the trend is not reaching the input.",
+          "es": "La reducci\u00f3n de varianza debe resultar MEJOR que la referencia mientras el flujo recuperado sigue derivando visiblemente. Un n\u00famero que mejora mientras el problema empeora es el punto; si el n\u00famero no mejora, la tendencia no est\u00e1 llegando a la entrada."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "trending",
+      "summary": {
+        "en": "Grade drifts steadily from the first bench to the last, which is what a dig sequence through a zoned ore body produces. A drift is not noise: no amount of mixing removes it.",
+        "es": "La ley deriva de forma sostenida desde el primer banco hasta el ultimo, que es lo que produce una secuencia a traves de un cuerpo zonificado. Una deriva no es ruido: ninguna mezcla la elimina."
+      },
+      "tags": [
+        "stream",
+        "trend"
+      ],
+      "title": {
+        "en": "Trending feed, grade drifting through the campaign",
+        "es": "Alimentacion con tendencia, ley que deriva durante la campana"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 79329.8
+      },
+      "category": "feed",
+      "gate": {
+        "kill_criterion": {
+          "en": "Output variance must be HIGHER than the reference in absolute terms while the ratio improves. If both move the same way the metric is not a ratio of what it claims.",
+          "es": "La varianza de salida debe ser M\u00c1S ALTA que la referencia en t\u00e9rminos absolutos mientras la raz\u00f3n mejora. Si ambas se mueven en el mismo sentido, la m\u00e9trica no es una raz\u00f3n de lo que declara ser."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "erratic_feed",
+      "summary": {
+        "en": "The dig sequence jumps between blocks of very different grade. High input variance is the condition under which a stockpile has the most to offer, and it is the case where the variance reduction ratio looks best for reasons that have nothing to do with the pile.",
+        "es": "La secuencia de extraccion salta entre bloques de leyes muy distintas. La alta varianza de entrada es la condicion en la que un acopio mas puede aportar, y es el caso en que la razon de reduccion de varianza se ve mejor por razones ajenas a la pila."
+      },
+      "tags": [
+        "stream",
+        "variance"
+      ],
+      "title": {
+        "en": "Erratic feed, high block-to-block variance",
+        "es": "Alimentacion erratica, alta varianza entre bloques"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 168,
+        "loads_placed": 2232,
+        "mean_displacement_m": 20.47,
+        "peak_m": 13.97,
+        "profiles": {
+          "comet": 408,
+          "oval": 728,
+          "paddock": 412,
+          "rectangular": 274,
+          "sloughed_heap": 410
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 238804.5
+      },
+      "category": "yard",
+      "gate": {
+        "kill_criterion": {
+          "en": "Every load must land in the area its class routes it to, the per-area rollups must differ by more than their own 95 percent intervals, and the repose and mass invariants of the single case must still hold across all three areas.",
+          "es": "Cada carga debe aterrizar en el \u00e1rea a la que su clase la rutea, los consolidados por \u00e1rea deben diferir en m\u00e1s que sus propios intervalos del 95 por ciento, y los invariantes de reposo y masa del caso simple deben seguir cumpli\u00e9ndose en las tres \u00e1reas."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 2700,
+        "loads_placed": 2232,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "yard",
+      "summary": {
+        "en": "The full application. Three named areas hold material of different declared classes, loads are routed to an area by their ore-control estimate, and several areas are under construction at once. This is where the sector view earns its place: each area reports one grade, the raw field underneath shows how stratified it really is, and the reclaim sequence decides which of the two the plant experiences.",
+        "es": "La aplicacion completa. Tres areas nombradas contienen material de clases declaradas distintas, las cargas se enrutan a un area segun su estimacion de control de leyes, y varias areas se construyen a la vez. Aqui la vista por sector se justifica: cada area reporta una ley, el campo crudo debajo muestra cuan estratificada esta en realidad, y la secuencia de recuperacion decide cual de las dos recibe la planta."
+      },
+      "tags": [
+        "core",
+        "sectors",
+        "routing"
+      ],
+      "title": {
+        "en": "Multi-area stockyard",
+        "es": "Patio de acopios multi-area"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 254,
+        "loads_placed": 3383,
+        "mean_displacement_m": 20.96,
+        "peak_m": 14.4,
+        "profiles": {
+          "comet": 620,
+          "oval": 1126,
+          "paddock": 684,
+          "rectangular": 416,
+          "sloughed_heap": 537
+        },
+        "refusal_rate": 0.2482,
+        "volume_m3": 380021.5
+      },
+      "category": "yard",
+      "gate": {
+        "kill_criterion": {
+          "en": "Within-area grade spread must be TIGHTER than the three-area yard. If it is not, the router is not separating and the extra areas cost without returning.",
+          "es": "La dispersi\u00f3n de ley dentro de cada \u00e1rea debe ser M\u00c1S ESTRECHA que en el patio de tres \u00e1reas. Si no lo es, el ruteador no est\u00e1 separando y las \u00e1reas extra cuestan sin devolver nada."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 4500,
+        "loads_placed": 3383,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.2482,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "yard_five",
+      "summary": {
+        "en": "The same routed campaign split five ways instead of three. Finer classes mean tighter piles and a better-defined product, and they also mean more misroutes, longer hauls and more areas competing for the same fleet.",
+        "es": "La misma campana enrutada dividida en cinco clases en vez de tres. Clases mas finas dan pilas mas ajustadas y un producto mejor definido, y tambien mas errores de ruteo, transportes mas largos y mas areas compitiendo por la misma flota."
+      },
+      "tags": [
+        "core",
+        "sectors",
+        "routing"
+      ],
+      "title": {
+        "en": "Five-area yard, finer ore-control classes",
+        "es": "Patio de cinco areas, clases de control de leyes mas finas"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 180,
+        "loads_placed": 2223,
+        "mean_displacement_m": 21.62,
+        "peak_m": 14.31,
+        "profiles": {
+          "comet": 414,
+          "oval": 757,
+          "paddock": 411,
+          "rectangular": 276,
+          "sloughed_heap": 365
+        },
+        "refusal_rate": 0.1767,
+        "volume_m3": 238933.0
+      },
+      "category": "yard",
+      "gate": {
+        "kill_criterion": {
+          "en": "Within-area grade spread must be WIDER than the clean three-area yard, and the separation between area means smaller. If misclassification costs nothing, the router is not routing on the estimate.",
+          "es": "La dispersi\u00f3n de ley dentro de cada \u00e1rea debe ser M\u00c1S AMPLIA que en el patio limpio de tres \u00e1reas, y la separaci\u00f3n entre las medias por \u00e1rea menor. Si clasificar mal no cuesta nada, el ruteador no est\u00e1 ruteando seg\u00fan la estimaci\u00f3n."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 2700,
+        "loads_placed": 2223,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1767,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "misrouted",
+      "summary": {
+        "en": "The same three-area yard routed on a noisy estimate rather than a clean one. A load sent to the wrong pile lands there and stays there: the decision is made before placement and nothing corrects it afterwards.",
+        "es": "El mismo patio de tres areas enrutado con una estimacion ruidosa en vez de limpia. Una carga enviada a la pila equivocada aterriza ahi y ahi se queda: la decision se toma antes de colocar y nada la corrige despues."
+      },
+      "tags": [
+        "core",
+        "sectors",
+        "routing"
+      ],
+      "title": {
+        "en": "Ore-control misclassification",
+        "es": "Clasificacion erronea en control de leyes"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 29.47,
+        "peak_m": 21.49,
+        "profiles": {
+          "comet": 136,
+          "oval": 292,
+          "paddock": 136,
+          "rectangular": 97,
+          "sloughed_heap": 83
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 79077.4
+      },
+      "category": "landform",
+      "gate": {
+        "kill_criterion": {
+          "en": "No cell may end below its ORIGINAL ground elevation, because that is excavation nobody performed. The repose invariant must hold on the placed material while leaving natural ground steeper than repose untouched, and material volume must be measured against the original surface rather than against zero.",
+          "es": "Ninguna celda puede terminar bajo su cota de terreno ORIGINAL, porque eso es una excavaci\u00f3n que nadie realiz\u00f3. El invariante de reposo debe cumplirse sobre el material colocado sin tocar el terreno natural m\u00e1s empinado que el reposo, y el volumen de material debe medirse contra la superficie original y no contra cero."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 4.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "sidehill",
+      "summary": {
+        "en": "The same stockpile built against a hillside instead of on a prepared pad. Only one of the five published stockpile fill types is flat ground; the rest are sidehill, valley, cross-valley and ridge-crest fill. Relief is not scenery here: it decides which ground equipment can occupy before a single load is placed, so the plan, the access and the shape of the finished pile all change.",
+        "es": "El mismo acopio construido contra una ladera en vez de sobre una plataforma preparada. Solo uno de los cinco tipos publicados de relleno de acopio es terreno plano; los demas son ladera, valle, valle transversal y cresta. El relieve no es decoracion: define que terreno puede ocupar el equipo antes de colocar una sola carga, de modo que el plan, los accesos y la forma final del acopio cambian."
+      },
+      "tags": [
+        "topography",
+        "sidehill"
+      ],
+      "title": {
+        "en": "Sidehill fill on real topography",
+        "es": "Acopio en ladera sobre topografia real"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 14.52,
+        "peak_m": 27.02,
+        "profiles": {
+          "comet": 147,
+          "oval": 272,
+          "paddock": 135,
+          "rectangular": 101,
+          "sloughed_heap": 89
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 76641.4
+      },
+      "category": "landform",
+      "gate": {
+        "kill_criterion": {
+          "en": "The pile must stand HIGHER than the flat-pad case built from the same load budget, because that is what confinement means. If it does not, the ground is not constraining the material and the topography is decoration.",
+          "es": "La pila debe quedar M\u00c1S ALTA que el caso de plataforma plana construido con el mismo presupuesto de cargas, porque eso es lo que significa el confinamiento. Si no lo hace, el terreno no est\u00e1 restringiendo el material y la topograf\u00eda es decoraci\u00f3n."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "valley",
+      "summary": {
+        "en": "The same campaign tipped into a valley. Confinement changes the answer: the ground holds the material on two sides, so the same tonnage stands markedly higher than it does free-standing on a pad, and the working face runs along the valley rather than out in every direction.",
+        "es": "La misma campana descargada en un valle. El confinamiento cambia la respuesta: el terreno sostiene el material por dos lados, de modo que el mismo tonelaje se para bastante mas alto que libre sobre una plataforma, y la cara de trabajo corre a lo largo del valle."
+      },
+      "tags": [
+        "topography",
+        "valley"
+      ],
+      "title": {
+        "en": "Valley fill, confined on two sides",
+        "es": "Relleno de valle, confinado en dos lados"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 31.25,
+        "peak_m": 25.48,
+        "profiles": {
+          "comet": 138,
+          "oval": 268,
+          "paddock": 135,
+          "rectangular": 101,
+          "sloughed_heap": 102
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 84612.9
+      },
+      "category": "landform",
+      "gate": {
+        "kill_criterion": {
+          "en": "Buildable ground before any load is placed must differ measurably from both the flat pad and the valley. If the three report the same fraction the landform is not entering the calculation and the fill type is a label.",
+          "es": "El terreno transitable antes de colocar una sola carga debe diferir de forma medible tanto de la plataforma plana como del valle. Si los tres reportan la misma fracci\u00f3n, el relieve no est\u00e1 entrando en el c\u00e1lculo y el tipo de relleno es una etiqueta."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "cross_valley",
+      "summary": {
+        "en": "The fifth published fill type, and the one that behaves least like the other four. The ground falls along one axis and rises across it, so the fill is held on two opposite sides while draining along the third.",
+        "es": "El quinto tipo publicado de relleno, y el que menos se parece a los otros cuatro. El terreno baja en un eje y sube en el otro, de modo que el relleno queda contenido en dos lados opuestos mientras drena a lo largo del tercero."
+      },
+      "tags": [
+        "topography",
+        "cross-valley"
+      ],
+      "title": {
+        "en": "Cross-valley fill, confined across the axis",
+        "es": "Relleno transversal, confinado a traves del eje"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.63,
+        "peak_m": 17.42,
+        "profiles": {
+          "comet": 129,
+          "oval": 272,
+          "paddock": 135,
+          "rectangular": 96,
+          "sloughed_heap": 112
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 78590.8
+      },
+      "category": "landform",
+      "gate": {
+        "kill_criterion": {
+          "en": "Buildable ground must be below the flat pad's 100 percent while the relief stays small. A surface that is rough and fully buildable means roughness is not reaching the slope.",
+          "es": "El terreno transitable debe estar bajo el 100 por ciento de la plataforma plana mientras el relieve se mantiene peque\u00f1o. Una superficie rugosa y totalmente construible significa que la rugosidad no est\u00e1 llegando a la pendiente."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "rough_ground",
+      "summary": {
+        "en": "Flat on average and rough in detail: an unprepared surface rather than a graded pad. The relief is small and the local slopes are not, which is the condition a prepared pad exists to remove.",
+        "es": "Plano en promedio y rugoso en detalle: una superficie sin preparar en vez de una plataforma nivelada. El relieve es pequeno y las pendientes locales no lo son, que es justo la condicion que una plataforma preparada existe para eliminar."
+      },
+      "tags": [
+        "topography",
+        "rough"
+      ],
+      "title": {
+        "en": "Rough ground, no prepared pad",
+        "es": "Terreno rugoso, sin plataforma preparada"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.52,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.5867,
+        "volume_m3": 79329.8
+      },
+      "category": "campaign",
+      "gate": {
+        "kill_criterion": {
+          "en": "Placed volume must approach the designed frustum volume and then STOP, with the surplus reported as refused. A pile that keeps growing past its geometric capacity is not standing at repose.",
+          "es": "El volumen colocado debe acercarse al volumen del tronco de cono dise\u00f1ado y luego DETENERSE, con el excedente reportado como rechazado. Una pila que sigue creciendo m\u00e1s all\u00e1 de su capacidad geom\u00e9trica no est\u00e1 parada en el \u00e1ngulo de reposo."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 1800,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.5867,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "intensive_feed",
+      "summary": {
+        "en": "Twice the campaign into the same footprint, without pause. The pile is pushed to the limit of what its own geometry can hold at repose, and past the point where the plan has tips left to offer.",
+        "es": "El doble de campana en la misma huella, sin pausa. La pila se lleva al limite de lo que su propia geometria puede sostener en reposo, y mas alla del punto en que el plan tiene puntos de descarga que ofrecer."
+      },
+      "tags": [
+        "campaign",
+        "capacity"
+      ],
+      "title": {
+        "en": "Intensive feeding, the whole budget into one area",
+        "es": "Alimentacion intensiva, todo el presupuesto en una sola area"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.27,
+        "peak_m": 13.56,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 73619.9
+      },
+      "category": "campaign",
+      "gate": {
+        "kill_criterion": {
+          "en": "Delivered tonnage must be several times the reference campaign's, and no cut may report negative or NaN tonnage as the pile empties. A campaign that drains a pile it has already exhausted is not tracking the material.",
+          "es": "El tonelaje entregado debe ser varias veces el de la campa\u00f1a de referencia, y ning\u00fan corte puede reportar tonelaje negativo o NaN mientras la pila se vac\u00eda. Una campa\u00f1a que drena una pila ya agotada no est\u00e1 siguiendo el material."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "intensive_drain",
+      "summary": {
+        "en": "The same pile, reclaimed hard: many small cuts rather than a few large ones, run until the pile is substantially gone. Reclaim is where the blending actually happens, and a campaign that stops at a quarter of the pile has only sampled the top of it.",
+        "es": "La misma pila, recuperada con fuerza: muchos cortes pequenos en vez de pocos grandes, hasta desarmar buena parte de la pila. La recuperacion es donde ocurre la mezcla, y una campana que se detiene en un cuarto de la pila solo ha muestreado su parte superior."
+      },
+      "tags": [
+        "campaign",
+        "reclaim"
+      ],
+      "title": {
+        "en": "Intensive draining, the pile taken back down",
+        "es": "Drenaje intensivo, la pila desarmada"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.49,
+        "peak_m": 13.71,
+        "profiles": {
+          "comet": 136,
+          "oval": 255,
+          "paddock": 138,
+          "rectangular": 92,
+          "sloughed_heap": 123
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 80562.2
+      },
+      "category": "campaign",
+      "gate": {
+        "kill_criterion": {
+          "en": "The number of independent layers a cut crosses must be HIGHER than the intensive campaign's, and the variance reduction correspondingly better per cut. If cut size does not change what a cut crosses, the face is not engaging the layers.",
+          "es": "El n\u00famero de capas independientes que cruza un corte debe ser M\u00c1S ALTO que en la campa\u00f1a intensiva, y la reducci\u00f3n de varianza correspondientemente mejor por corte. Si el tama\u00f1o del corte no cambia lo que cruza un corte, la cara no est\u00e1 comprometiendo las capas."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "light_drain",
+      "summary": {
+        "en": "The opposite reclaim campaign: six cuts of five thousand tonnes instead of ninety of nine hundred. Each cut is large enough to cross a lot of the pile at once, which is a different kind of mixing from taking it in thin slices.",
+        "es": "La campana opuesta: seis cortes de cinco mil toneladas en vez de noventa de novecientas. Cada corte es lo bastante grande para cruzar buena parte de la pila de una vez, que es un tipo de mezcla distinto al de tomarla en rebanadas finas."
+      },
+      "tags": [
+        "campaign",
+        "reclaim"
+      ],
+      "title": {
+        "en": "Light draining, a few large cuts",
+        "es": "Drenaje ligero, pocos cortes grandes"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 112,
+        "loads_placed": 1488,
+        "mean_displacement_m": 19.76,
+        "peak_m": 14.5,
+        "profiles": {
+          "comet": 280,
+          "oval": 514,
+          "paddock": 273,
+          "rectangular": 178,
+          "sloughed_heap": 243
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 158372.1
+      },
+      "category": "campaign",
+      "gate": {
+        "kill_criterion": {
+          "en": "The two areas must differ measurably in mean grade, because each received a different stretch of the dig sequence. Two areas that come out the same mean the sequence is not reaching the piles.",
+          "es": "Las dos \u00e1reas deben diferir de forma medible en ley media, porque cada una recibi\u00f3 un tramo distinto de la secuencia de extracci\u00f3n. Dos \u00e1reas que salen iguales significan que la secuencia no est\u00e1 llegando a las pilas."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 1800,
+        "loads_placed": 1488,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "two_phase",
+      "summary": {
+        "en": "One material class, two adjacent areas, worked one after the other rather than together. The first is finished and left; the second is started from bare ground beside it. This is how a yard grows when the fleet cannot serve two tip heads at once.",
+        "es": "Una sola clase de material, dos areas contiguas, trabajadas una despues de la otra en vez de a la vez. La primera se termina y se deja; la segunda parte de terreno limpio al lado. Asi crece un patio cuando la flota no puede atender dos frentes a la vez."
+      },
+      "tags": [
+        "campaign",
+        "sequencing"
+      ],
+      "title": {
+        "en": "Two sub-areas worked in sequence",
+        "es": "Dos sub-areas trabajadas en secuencia"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 19.53,
+        "peak_m": 12.47,
+        "profiles": {
+          "comet": 131,
+          "oval": 280,
+          "paddock": 136,
+          "rectangular": 92,
+          "sloughed_heap": 105
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 62168.7
+      },
+      "category": "campaign",
+      "gate": {
+        "kill_criterion": {
+          "en": "Variance reduction must be WORSE than the sequential campaign on the same seed and geometry. A cut taken part-way through the build has fewer layers available to cross, and a pile that blends just as well whether or not it is allowed to fill is not blending by residence at all.",
+          "es": "La reducci\u00f3n de varianza debe ser PEOR que en la campa\u00f1a secuencial con la misma semilla y geometr\u00eda. Un corte tomado a mitad de la construcci\u00f3n tiene menos capas disponibles que cruzar, y una pila que mezcla igual de bien tanto si se la deja llenarse como si no, no est\u00e1 mezclando por residencia en absoluto."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 4.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "concurrent",
+      "summary": {
+        "en": "A live surge pile: trucks are still tipping while the loader is already taking material out. The pile never reaches a finished state, and a cut crosses only the layers that had arrived by the time it was taken.",
+        "es": "Una pila de amortiguacion viva: los camiones siguen descargando mientras el cargador ya esta sacando material. La pila nunca llega a un estado terminado, y un corte cruza solo las capas que habian llegado cuando se tomo."
+      },
+      "tags": [
+        "campaign",
+        "reclaim",
+        "concurrent"
+      ],
+      "title": {
+        "en": "Fed and drawn at the same time",
+        "es": "Alimentado y recuperado a la vez"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 20.09,
+        "peak_m": 12.54,
+        "profiles": {
+          "comet": 134,
+          "oval": 273,
+          "paddock": 136,
+          "rectangular": 101,
+          "sloughed_heap": 100
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 59157.9
+      },
+      "category": "campaign",
+      "gate": {
+        "kill_criterion": {
+          "en": "Variance reduction must be worse than the slower concurrent case, and the mean number of independent sources per cut lower. If drawing faster does not reduce what a cut crosses, residence is not what the blending is made of.",
+          "es": "La reducci\u00f3n de varianza debe ser peor que en el caso concurrente m\u00e1s lento, y el n\u00famero medio de fuentes independientes por corte menor. Si extraer m\u00e1s r\u00e1pido no reduce lo que cruza un corte, la residencia no es de lo que est\u00e1 hecha la mezcla."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 4.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "surge",
+      "summary": {
+        "en": "The same concurrent operation with the loader working every ten loads instead of every twenty-six. The pile barely accumulates, which is the point of a surge pile and also the limit of what one can do for you.",
+        "es": "La misma operacion concurrente con el cargador trabajando cada diez cargas en vez de cada veintiseis. La pila casi no acumula, que es el proposito de una pila de amortiguacion y tambien el limite de lo que puede hacer por uno."
+      },
+      "tags": [
+        "campaign",
+        "reclaim",
+        "concurrent"
+      ],
+      "title": {
+        "en": "Tight surge pile, drawn almost as fast as it is fed",
+        "es": "Pila de amortiguacion ajustada, recuperada casi tan rapido como se alimenta"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 396,
+        "loads_placed": 545,
+        "mean_displacement_m": 75.39,
+        "peak_m": 11.55,
+        "profiles": {
+          "comet": 101,
+          "oval": 198,
+          "paddock": 164,
+          "rectangular": 70,
+          "sloughed_heap": 12
+        },
+        "refusal_rate": 0.3944,
+        "volume_m3": 57456.7
+      },
+      "category": "operations",
+      "gate": {
+        "kill_criterion": {
+          "en": "The spread of the coarse fraction must be NARROWER than the reference. A nine-metre bench cascades about fourteen metres, at the bottom of the measured envelope; if segregation is unchanged it is not being driven by the face at all.",
+          "es": "La dispersi\u00f3n de la fracci\u00f3n gruesa debe ser M\u00c1S ESTRECHA que la referencia. Un banco de nueve metros cascadea unos catorce metros, en el extremo bajo de la envolvente medida; si la segregaci\u00f3n no cambia, no est\u00e1 siendo impulsada por la cara en absoluto."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 545,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.3944,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "short_bench",
+      "summary": {
+        "en": "The same footprint built as three nine-metre lifts instead of one twenty-six. More benches mean more paddock campaigns, more dozer work and a shorter cascade down every face.",
+        "es": "La misma huella construida como tres levantes de nueve metros en vez de uno de veintiseis. Mas bancos significan mas campanas de paddock, mas trabajo de bulldozer y una cascada mas corta en cada cara."
+      },
+      "tags": [
+        "operations",
+        "bench"
+      ],
+      "title": {
+        "en": "Short benches, more lifts",
+        "es": "Bancos bajos, mas levantes"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 56,
+        "loads_placed": 744,
+        "mean_displacement_m": 16.01,
+        "peak_m": 12.52,
+        "profiles": {
+          "comet": 120,
+          "oval": 251,
+          "paddock": 137,
+          "rectangular": 96,
+          "sloughed_heap": 140
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 78588.7
+      },
+      "category": "operations",
+      "gate": {
+        "kill_criterion": {
+          "en": "The refusal rate must be no better than the reference. A narrower way in cannot make access easier, and if it does the corridor is not the thing controlling access.",
+          "es": "La tasa de rechazo no puede ser mejor que la de referencia. Una v\u00eda de entrada m\u00e1s angosta no puede facilitar el acceso, y si lo hace, el corredor no es lo que controla el acceso."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "narrow_ramp",
+      "summary": {
+        "en": "A twelve-metre corridor instead of twenty-five: single-lane access with no room to pass. The ramp still has to be cut and maintained out of the fill, with far less of it to work with.",
+        "es": "Un corredor de doce metros en vez de veinticinco: acceso de una pista sin lugar para cruzarse. La rampa igual debe cortarse y mantenerse en el relleno, con mucho menos con que trabajar."
+      },
+      "tags": [
+        "operations",
+        "access"
+      ],
+      "title": {
+        "en": "Narrow access ramp",
+        "es": "Rampa de acceso angosta"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 50,
+        "loads_placed": 744,
+        "mean_displacement_m": 17.05,
+        "peak_m": 13.04,
+        "profiles": {
+          "comet": 132,
+          "oval": 270,
+          "paddock": 135,
+          "rectangular": 97,
+          "sloughed_heap": 110
+        },
+        "refusal_rate": 0.1733,
+        "volume_m3": 78520.9
+      },
+      "category": "operations",
+      "gate": {
+        "kill_criterion": {
+          "en": "The refusal rate must rise against the reference. Less blade work that placed MORE loads would mean the cadence is not connected to access at all.",
+          "es": "La tasa de rechazo debe subir respecto de la referencia. Menos trabajo de hoja que colocara M\u00c1S cargas significar\u00eda que la cadencia no est\u00e1 conectada al acceso en absoluto."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 744,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.1733,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 37.0
+      },
+      "id": "seldom_dozed",
+      "summary": {
+        "en": "One access pass every sixty loads instead of every twelve. The blade is what turns a field of tipped heaps into a floor a truck can cross, so its cadence is the pace at which the working level becomes usable again.",
+        "es": "Una pasada de acceso cada sesenta cargas en vez de cada doce. La hoja es lo que convierte un campo de montones en un piso que un camion puede cruzar, asi que su cadencia marca el ritmo al que el nivel de trabajo vuelve a ser utilizable."
+      },
+      "tags": [
+        "operations",
+        "dozer"
+      ],
+      "title": {
+        "en": "Dozer on a long cadence",
+        "es": "Bulldozer con cadencia larga"
+      }
+    },
+    {
+      "build": {
+        "dozer_passes": 68,
+        "loads_placed": 881,
+        "mean_displacement_m": 21.5,
+        "peak_m": 15.75,
+        "profiles": {
+          "comet": 168,
+          "oval": 323,
+          "paddock": 161,
+          "rectangular": 116,
+          "sloughed_heap": 113
+        },
+        "refusal_rate": 0.0211,
+        "volume_m3": 93194.0
+      },
+      "category": "operations",
+      "gate": {
+        "kill_criterion": {
+          "en": "Peak height must RISE against the reference on the same footprint and the same load budget, because a steeper repose holds more in the same plan area. If it does not, the repose angle is not reaching the geometry.",
+          "es": "La altura m\u00e1xima debe SUBIR respecto de la referencia sobre la misma huella y el mismo presupuesto de cargas, porque un reposo m\u00e1s empinado retiene m\u00e1s en la misma \u00e1rea de planta. Si no lo hace, el \u00e1ngulo de reposo no est\u00e1 llegando a la geometr\u00eda."
+        },
+        "ledger_agrees_with_terrain": true,
+        "loads_offered": 900,
+        "loads_placed": 881,
+        "mass_residual_rel": 0.0,
+        "pairs_over_repose": 0,
+        "refusal_rate": 0.0211,
+        "stable_tolerance_deg": 1.0,
+        "worst_local_slope_deg": 43.0
+      },
+      "id": "wet_material",
+      "summary": {
+        "en": "The same ore after rain. Capillary bridges between grains add cohesion and the material stands steeper, which makes the pile taller on the same footprint and every face harder to drive on.",
+        "es": "El mismo mineral despues de la lluvia. Los puentes capilares entre granos anaden cohesion y el material se para mas empinado, lo que hace la pila mas alta sobre la misma huella y cada cara mas dificil de transitar."
+      },
+      "tags": [
+        "operations",
+        "material"
+      ],
+      "title": {
+        "en": "Wet material, steeper repose",
+        "es": "Material humedo, reposo mas empinado"
+      }
+    }
+  ],
+  "topography": [
+    {
+      "buildable_fraction": 1.0,
+      "fill": "heaped",
+      "max_slope_deg": 0.0,
+      "relief_m": 0.0
+    },
+    {
+      "buildable_fraction": 1.0,
+      "fill": "sidehill",
+      "max_slope_deg": 13.6,
+      "relief_m": 29.6
+    },
+    {
+      "buildable_fraction": 0.719,
+      "fill": "valley",
+      "max_slope_deg": 30.5,
+      "relief_m": 29.2
+    },
+    {
+      "buildable_fraction": 1.0,
+      "fill": "cross_valley",
+      "max_slope_deg": 23.8,
+      "relief_m": 32.2
+    },
+    {
+      "buildable_fraction": 0.719,
+      "fill": "ridge_crest",
+      "max_slope_deg": 30.5,
+      "relief_m": 29.2
+    }
+  ]
+}

@@ -91,7 +91,7 @@ project.
 
 ## The scenarios are the validation design
 
-Twenty cases across six axes, against the ADR-0056 floor of a dozen. Each states in advance why it is
+Twenty-two cases across six axes, against the ADR-0056 floor of a dozen. Each states in advance why it is
 in the product and what result would mean the code is wrong, and the bake gate enforces that on the
 ACTUAL artifact rather than on the code that wrote it.
 
@@ -113,6 +113,8 @@ ACTUAL artifact rather than on the code that wrote it.
 | `intensive_drain` | campaign | 744 | 17.3% | 13.6 m | 5242 t | 0 |
 | `light_drain` | campaign | 744 | 17.3% | 13.7 m | 5242 t | 0 |
 | `two_phase` | campaign | 1488 | 17.3% | 14.5 m | 5610 t | 0 |
+| `concurrent` | campaign | 744 | 17.3% | 12.5 m | 53744 t | 0 |
+| `surge` | campaign | 744 | 17.3% | 12.5 m | 59464 t | 0 |
 | `short_bench` | operations | 545 | 39.4% | 11.6 m | 5242 t | 0 |
 | `narrow_ramp` | operations | 744 | 17.3% | 12.5 m | 5242 t | 0 |
 | `seldom_dozed` | operations | 744 | 17.3% | 13.0 m | 5242 t | 0 |
@@ -125,7 +127,7 @@ against the flat pad's 13.7 from the same load budget. Wet material at 43 degree
 15.8 m where the same tonnage at 37 stands at 13.7. A narrower ramp and a slower dozer both cost
 placement, and neither improves it.
 
-**Every one of the twenty relaxes to zero cell pairs over the angle of repose.**
+**Every one of the twenty-two relaxes to zero cell pairs over the angle of repose.**
 
 The gate, run on the artifact rather than on the code that wrote it:
 

@@ -1,0 +1,1 @@
+{"areas":[{"name":"ROM","material_class":"ROM","x0":30.0,"y0":30.0,"x1":120.0,"y1":120.0,"access":[75.0,120.0],"ramp_width_m":25.0,"benches":[{"index":0,"top_m":26.0,"designed_volume_m3":90394.8}]}],"row_spacing_m":10.0,"tip_spacing_m":8.0,"loads_per_dozer_pass":40,"shovel":[135.0,138.0]}

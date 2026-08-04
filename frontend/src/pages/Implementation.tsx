@@ -237,10 +237,10 @@ export default function Implementation() {
         )}
       </p>
       <Equation
-        tex="\lvert \text{site} \rvert : 110\ \text{MB} \longrightarrow 34\ \text{MB}"
+        tex="\lvert \text{site} \rvert : 117\ \text{MB} \longrightarrow 36\ \text{MB}"
         caption={t(
-          'Measured, over the whole twenty-scenario matrix, from delta-encoding the playback frames and voxelising the volume rather than storing a surface per frame. The reduction is a property of what a load actually changes, not a compression trick.',
-          'Medido, sobre toda la matriz de veinte escenarios, al codificar por diferencias los cuadros de reproducción y voxelizar el volumen en vez de guardar una superficie por cuadro. La reducción es una propiedad de lo que una carga realmente cambia, no un truco de compresión.',
+          'Measured, over the whole twenty-two-scenario matrix, from delta-encoding the playback frames and voxelising the volume rather than storing a surface per frame. The reduction is a property of what a load actually changes, not a compression trick.',
+          'Medido, sobre toda la matriz de veintidós escenarios, al codificar por diferencias los cuadros de reproducción y voxelizar el volumen en vez de guardar una superficie por cuadro. La reducción es una propiedad de lo que una carga realmente cambia, no un truco de compresión.',
         )}
       />
       <Refs ids={['santibanez2026']} label="Refs" />
