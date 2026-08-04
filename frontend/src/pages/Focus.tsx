@@ -55,7 +55,24 @@ export default function Focus() {
   const { caseId } = useParams<{ caseId: string }>();
   const nav = useNavigate();
   const dark = useDark();
-  const sid = caseId ?? 'single';
+  // Reached either as /focus/<id> or as the nav item, which has no id and opens the case the App
+  // last had selected.
+  const remembered = (() => {
+    try {
+      return window.localStorage.getItem('stocktwin.case') || 'single';
+    } catch {
+      return 'single';
+    }
+  })();
+  const sid = caseId ?? remembered;
+
+  // THE URL CARRIES THE CASE even when the reader arrived from the nav. ADR-0070 clause 5 wants
+  // /focus/<caseId> so a specific scenario can be shared and taught from, and a bare /focus is a
+  // link that means something different to whoever opens it next. The nav entry therefore resolves
+  // itself into the addressable form rather than staying on the generic path.
+  useEffect(() => {
+    if (!caseId) nav(`/focus/${remembered}`, { replace: true });
+  }, [caseId, remembered, nav]);
 
   const [index, setIndex] = useState<Index | null>(null);
   const [sc, setSc] = useState<Scenario | null>(null);
@@ -77,7 +94,17 @@ export default function Focus() {
   }, [sid]);
 
   // Clause 5: leaving lands back on the App WITH THIS SCENARIO, not on a default.
-  const back = useCallback(() => nav(`/?scenario=${sid}`), [nav, sid]);
+  // BACK TO THE APP ON THE SAME CASE. The param is `case`, which is what the App reads first; it
+  // used to send `scenario`, which the App accepted as a fallback but which left the two surfaces
+  // disagreeing about the name of the thing they share.
+  const back = useCallback(() => {
+    try {
+      window.localStorage.setItem('stocktwin.case', sid);
+    } catch {
+      /* private mode */
+    }
+    nav(`/?case=${sid}`, { replace: false });
+  }, [nav, sid]);
 
   // Clause 1: the stage is the viewport minus nothing. Measured, not assumed: the gate asserts the
   // instrument clears 80 percent here rather than the App route's 50.

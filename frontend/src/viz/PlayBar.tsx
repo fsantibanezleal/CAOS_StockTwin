@@ -17,7 +17,7 @@
  * defaults to paused, runs once, and halts when the tab is hidden.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { Pause, Play, RotateCcw, SkipBack, SkipForward } from 'lucide-react';
+import { Pause, Play, SkipBack, SkipForward, Square } from 'lucide-react';
 import { usePausedViz } from '@fasl-work/caos-app-shell';
 
 import type { Frames } from '../lib/scenario';
@@ -30,17 +30,20 @@ interface Props {
   lang?: 'en' | 'es';
 }
 
-/** Seconds of animation per load, at the default rate. */
-const SECONDS_PER_LOAD = 1.6;
+/** Loads per second at 1x. THE DEFAULT IS 1x, and it is the rate the previous default called 2.5x.
+ *  The scale is relative because that is what a transport control means to a reader; the absolute
+ *  rate is a truck every two thirds of a second, which is fast enough to watch a campaign and slow
+ *  enough to follow one truck. */
+const BASE_LOADS_PER_S = 1.5;
+
+const SPEEDS = [0.5, 1, 2, 5];
 
 export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const n = frames?.frames.length ?? 0;
 
-  // Loads per second. NOT a multiplier: the number on the control is the rate the pile is being
-  // built at, which is a thing a reader can reason about. The slowest setting takes about a second
-  // and a half per truck, which is enough to watch one drive in, tip and leave.
-  const [rate, setRate] = useState(1 / SECONDS_PER_LOAD);
+  const [speed, setSpeed] = useState(1);
+  const rate = BASE_LOADS_PER_S * speed;
 
   const [playing, setPlaying] = useState(false);
   const frame = useCallback(
@@ -78,9 +81,22 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
         type="button"
         onClick={() => (playing ? viz.pause() : viz.restart())}
         aria-label={playing ? t('Pause', 'Pausar') : t('Play', 'Reproducir')}
-        title={playing ? t('Pause', 'Pausar') : t('Play the build', 'Reproducir la construcción')}
+        title={playing ? t('Pause, keeping this moment', 'Pausar, manteniendo este momento') : t('Play the build', 'Reproducir la construcción')}
       >
         {playing ? <Pause size={15} aria-hidden /> : <Play size={15} aria-hidden />}
+      </button>
+
+      {/* STOP IS NOT PAUSE. Pause holds the moment you are looking at; stop ends the run and puts
+          the finished pile back on the stage, which is the state the tab opens in. Having only a
+          play/pause toggle left no way to say "I am done watching" other than dragging the scrub to
+          the end. */}
+      <button
+        type="button"
+        onClick={() => { viz.pause(); onPos(n - 1); }}
+        aria-label={t('Stop', 'Detener')}
+        title={t('Stop, and show the finished pile', 'Detener, y mostrar la pila terminada')}
+      >
+        <Square size={13} aria-hidden />
       </button>
 
       <button type="button" onClick={() => step(-1)} aria-label={t('Previous load', 'Carga anterior')}>
@@ -89,14 +105,6 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
       <button type="button" onClick={() => step(1)} aria-label={t('Next load', 'Carga siguiente')}>
         <SkipForward size={14} aria-hidden />
       </button>
-      <button
-        type="button"
-        onClick={() => { viz.pause(); onPos(0); }}
-        aria-label={t('Back to the start', 'Volver al inicio')}
-      >
-        <RotateCcw size={14} aria-hidden />
-      </button>
-
       {/* The scrub is continuous, not stepped: a load is a duration, so half way through one is a
           real position and the reader is allowed to stop there. */}
       <input
@@ -115,12 +123,13 @@ export default function PlayBar({ frames, pos, onPos, lang = 'en' }: Props) {
       </span>
 
       <label className="st-play-speed">
-        <span>{t('loads/s', 'cargas/s')}</span>
-        <select value={rate} onChange={(e) => setRate(Number(e.target.value))}>
-          <option value={1 / SECONDS_PER_LOAD}>0.6</option>
-          <option value={2}>2</option>
-          <option value={6}>6</option>
-          <option value={20}>20</option>
+        <span>{t('speed', 'velocidad')}</span>
+        <select value={speed} onChange={(e) => setSpeed(Number(e.target.value))}>
+          {SPEEDS.map((x) => (
+            <option key={x} value={x}>
+              {x}x
+            </option>
+          ))}
         </select>
       </label>
     </div>

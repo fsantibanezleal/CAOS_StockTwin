@@ -20,8 +20,8 @@
  * changes them; it costs width, which a 3-D stage has to spare, rather than height, which it does
  * not. */
 .st-rail {
-  flex: 0 0 15.5rem;
-  width: 15.5rem;
+  flex: 0 0 17rem;
+  width: 17rem;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -40,62 +40,95 @@
   flex-direction: column;
 }
 
+.st-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
 /* The readouts. A definition list, because that is what they are: a name and a measured value. */
+/* THE READOUTS. A two-column ledger: name on the left, value right-aligned on the right, one row
+   each, hairline between. The previous version stacked a small grey label above a large value in a
+   two-up grid, which reads as a dashboard of tiles and is exactly as hard to scan as it sounds: no
+   alignment to run your eye down, and ten of them in a narrow rail. */
 .st-kpis {
-  display: grid;
-  gap: 0.4rem;
   margin: 0;
   font-variant-numeric: tabular-nums;
+  border-top: 1px solid color-mix(in srgb, currentColor 12%, transparent);
 }
 
 .st-kpis > div {
-  display: grid;
-  gap: 0.05rem;
+  display: flex;
+  align-items: first baseline;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.32rem 0;
+  border-bottom: 1px solid color-mix(in srgb, currentColor 9%, transparent);
   min-width: 0;
 }
 
 .st-kpis dt {
-  font-size: 0.66rem;
-  opacity: 0.7;
-  line-height: 1.15;
+  font-size: 0.72rem;
+  opacity: 0.66;
+  line-height: 1.25;
+  min-width: 0;
+  /* WRAPPING BEATS TRUNCATION. An ellipsis on "variance reduc..." hides the word that says what the
+     number is, which is the one thing a readout cannot afford to lose. The row aligns on its first
+     line instead, so the values still make a column to scan down. */
+  hyphens: auto;
 }
 
 .st-kpis dd {
   margin: 0;
-  font-size: 0.95rem;
-  line-height: 1.1;
+  font-size: 0.86rem;
+  font-weight: 500;
+  white-space: nowrap;
+  text-align: right;
 }
 
 .st-kpis .muted dd {
-  opacity: 0.5;
+  opacity: 0.45;
+  font-weight: 400;
+  font-style: italic;
 }
 
 .st-kpis .ok dd {
   color: #2f9e59;
 }
 
-.st-kpis .bad dd {
-  color: #d1495b;
+/* The case control: one row, the whole width of the rail. */
+.st-case {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
-.st-focus {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
+.st-case > span {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.6;
+}
+
+.st-case select {
   font: inherit;
   font-size: 0.82rem;
-  padding: 0.35rem 0.85rem;
-  border-radius: 999px;
-  border: 1px solid currentColor;
+  width: 100%;
+  padding: 0.4rem 0.5rem;
+  border-radius: 7px;
+  border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
   background: transparent;
   color: inherit;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
-.st-focus:hover {
-  background: color-mix(in srgb, currentColor 12%, transparent);
+/* One sentence on what the selected case is, so the dropdown is not the only thing that says it. */
+.st-caseblurb {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  opacity: 0.75;
 }
 
 /* Per-panel controls sit with their panel, not in a global bar. ADR-0071 clause 6. */
@@ -161,8 +194,12 @@
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  min-width: 12rem;
-  flex: 1 1 18rem;
+  min-width: 0;
+  /* The transport shares the control row and must be allowed to wrap onto its own line rather than
+     pushing the speed control off the right edge, which is what a large flex-basis did. */
+  flex: 1 1 22rem;
+  max-width: 100%;
+  flex-wrap: wrap;
   padding: 0;
 }
 
@@ -184,8 +221,10 @@
 }
 
 .st-play-scrub {
-  flex: 1 1 auto;
-  min-width: 6rem;
+  /* Shrinkable to nothing rather than a fixed floor: the floor is what pushed the speed control
+     twenty-nine pixels off the right edge of a 1600px viewport. */
+  flex: 1 1 6rem;
+  min-width: 0;
 }
 
 .st-play-read {
@@ -243,205 +282,6 @@
   min-width: 0;
   overflow: hidden;
 }
-
-/* -- the HUD --------------------------------------------------------------------------------- */
-/* ADR-0070: readouts are overlaid on the stage. A vertical column at the edge, out of the way of
-   the geometry, never a row of cards under the picture. */
-
-.st-hud {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  display: grid;
-  gap: 0.3rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--st-bg, #0e1319) 72%, transparent);
-  backdrop-filter: blur(6px);
-  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
-  pointer-events: none;       /* the reader is rotating the pile, not clicking the numbers */
-  font-variant-numeric: tabular-nums;
-  max-width: 42%;
-}
-
-.st-hud > div {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-  line-height: 1.15;
-}
-
-.st-hud b {
-  font-size: 1.05rem;
-  min-width: 4.2rem;
-  text-align: right;
-}
-
-.st-hud span {
-  font-size: 0.7rem;
-  opacity: 0.78;
-  text-transform: lowercase;
-}
-
-.st-hud .ok b {
-  color: #2f9e59;
-}
-
-.st-hud .bad b {
-  color: #d1495b;
-}
-
-/* -- content inside the stage ---------------------------------------------------------------- */
-
-.st-note {
-  font-size: 0.82rem;
-  line-height: 1.5;
-  opacity: 0.85;
-  max-width: 78ch;
-  margin: 0.6rem 0;
-}
-
-.st-legend {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  font-size: 0.76rem;
-  opacity: 0.85;
-  margin: 0.5rem 0;
-}
-
-.st-key {
-  display: inline-block;
-  width: 0.85rem;
-  height: 0.85rem;
-  border-radius: 3px;
-  margin-right: 0.3rem;
-  vertical-align: -2px;
-}
-
-.st-scale {
-  display: inline-block;
-  width: 9rem;
-  height: 0.7rem;
-  border-radius: 3px;
-  background: linear-gradient(
-    to right,
-    rgb(38, 70, 120),
-    rgb(58, 140, 150),
-    rgb(120, 175, 110),
-    rgb(220, 180, 80),
-    rgb(200, 90, 60)
-  );
-}
-
-/* A wide table scrolls INSIDE its own container, so it never widens the document. Clause 3. */
-.st-tablewrap {
-  min-width: 0;
-  overflow-x: auto;
-  margin: 0.5rem 0 1rem;
-}
-
-.st-table {
-  border-collapse: collapse;
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  min-width: 34rem;
-}
-
-.st-table th,
-.st-table td {
-  text-align: right;
-  padding: 0.3rem 0.7rem;
-  border-bottom: 1px solid var(--st-line, #e0e5eb);
-  white-space: nowrap;
-}
-
-.st-table th:first-child,
-.st-table td:first-child {
-  text-align: left;
-}
-
-.st-table thead th {
-  font-weight: 600;
-  opacity: 0.75;
-}
-
-.st-table tr.st-ref td {
-  opacity: 0.72;
-  font-style: italic;
-}
-
-.st-compact th,
-.st-compact td {
-  padding: 0.2rem 0.6rem;
-}
-
-.st-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0.55rem 1.2rem;
-  margin: 0.7rem 0 1rem;
-}
-
-.st-stats > div {
-  min-width: 0;
-}
-
-.st-stats dt {
-  font-size: 0.7rem;
-  opacity: 0.72;
-  text-transform: lowercase;
-}
-
-.st-stats dd {
-  margin: 0;
-  font-size: 1rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.st-detail h4 {
-  margin: 1.1rem 0 0.3rem;
-  font-size: 0.9rem;
-}
-
-.st-ok {
-  color: #2f9e59;
-  font-weight: 600;
-}
-
-.st-bad {
-  color: #d1495b;
-  font-weight: 600;
-}
-
-.st-muted {
-  opacity: 0.65;
-  font-style: italic;
-  white-space: normal;
-}
-
-@media (max-width: 720px) {
-  .st-hud {
-    max-width: 62%;
-    font-size: 0.9em;
-  }
-  .st-focus {
-    margin-left: 0.5rem;
-  }
-}
-
-.st-hud .muted b,
-.st-hud .muted span {
-  opacity: 0.55;
-}
-
-/* -- making the shell's tab panel own the remaining height ------------------------------------- */
-/* NOT a redefinition of the primitive: the shell's `.tabs` / `.tabpanel` keep their own appearance
-   and behaviour. This only says, INSIDE the workbench layout, that the panel is the box that takes
-   what is left and scrolls internally. Without it the panel is auto-height, `.st-stagefill`'s
-   `height: 100%` resolves against nothing and the stage collapses to a quarter of the screen, while
-   the aspect-ratio canvases run hundreds of pixels past the footer. */
 
 /* Rail beside instrument. The rail is a fixed narrow column, so the stage keeps essentially all the
    width; what it costs is a fifth of the line length, not a fifth of the picture. */
@@ -719,4 +559,22 @@ body:has(.page-body.st-layout) .site-footer .footer-inner {
 
 .st-fieldpanel.st-wide-pad .st-pair .st-chartbox {
   height: clamp(260px, 46vh, 540px);
+}
+
+/* THE RAIL NARROWS ON A SMALL SCREEN. 17rem is 21 percent of a 1280px viewport, and the instrument
+   came out at 47.8 against the ADR-0071 floor of 50. It is chrome, so it gives the width up first. */
+@media (max-width: 1450px) {
+  .page-body.st-layout > .st-rail {
+    flex-basis: 13.5rem;
+    width: 13.5rem;
+    font-size: 0.76rem;
+  }
+
+  .st-kpis dt {
+    font-size: 0.68rem;
+  }
+
+  .st-caseblurb {
+    font-size: 0.7rem;
+  }
 }

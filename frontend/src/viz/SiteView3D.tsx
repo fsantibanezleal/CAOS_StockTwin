@@ -40,6 +40,9 @@ interface Props {
   plan: Plan;
   loads: Load[];
   colourBy: ColourBy;
+  /** Per-cell values that REPLACE the built-in colour fields, for any assay variable. Null entries
+   *  are bare ground. Supplied by the page, which joins the volume's top voxel to the load log. */
+  values?: (number | null)[] | null;
   /** The moment being played, or null for the finished pile.
    *
    *  WHEN SOMETHING IS PLAYING, ONE TRUCK IS DRAWN AND IT IS MOVING. Showing every path driven so far
@@ -118,6 +121,7 @@ export default function SiteView3D({
   plan,
   loads,
   colourBy,
+  values = null,
   play = null,
   showPaths,
   showCrest,
@@ -365,8 +369,15 @@ export default function SiteView3D({
       }
 
       const vals: ArrayLike<number | null> =
-        colourBy === 'grade' ? field.grade : colourBy === 'coarse' ? field.coarse : thick;
-      const [lo, hi] = colourBy === 'thickness' ? [0, maxT] : span(vals);
+        values && values.length === n
+          ? values
+          : colourBy === 'grade'
+            ? field.grade
+            : colourBy === 'coarse'
+              ? field.coarse
+              : thick;
+      const useThickness = colourBy === 'thickness' && !(values && values.length === n);
+      const [lo, hi] = useThickness ? [0, maxT] : span(vals);
 
       const bare: [number, number, number] = dark ? [42, 50, 61] : [201, 207, 216];
       for (let k = 0; k < n; k++) {
@@ -377,7 +388,7 @@ export default function SiteView3D({
           // No material. Draw the ground colour, never a ramp value: a zero-height cell coloured as
           // material at grade zero is how an empty pad came to read as a full pile in production.
           c = bare;
-        } else if (colourBy === 'thickness') {
+        } else if (useThickness) {
           c = ramp(t / maxT);
         } else {
           const v = vals[k];
@@ -390,7 +401,7 @@ export default function SiteView3D({
       pos.needsUpdate = true;
       colAttr.needsUpdate = true;
       L.mGeo.computeVertexNormals();
-      onRange?.(colourBy === 'thickness' ? { lo: 0, hi: maxT } : { lo, hi });
+      onRange?.(useThickness ? { lo: 0, hi: maxT } : { lo, hi });
     }
 
     // -- the marks -------------------------------------------------------------------------------
@@ -502,25 +513,56 @@ export default function SiteView3D({
       }
 
       // The truck itself, so the reader sees WHAT is making the pile grow rather than only the line
-      // it drove along. The tray lifts while it tips, which is the moment the material appears.
+      // it drove along.
+      //
+      // LOADED IN, EMPTY OUT, and the load is drawn. A truck that looks the same coming and going
+      // says nothing about what it is doing there: the whole event is that it arrived carrying
+      // something and left without it. The heap sits in the tray on the approach, rides up as the
+      // tray pitches about its rear pivot, and is gone on the way out.
       if (play?.truck) {
         const { x, y, heading } = play.truck;
+        const laden = play.phase !== 'departure';
         const body = new THREE.Group();
+
         const chassis = new THREE.Mesh(
           new THREE.BoxGeometry(11.5, 2.6, 6.5),
           new THREE.MeshLambertMaterial({ color: dark ? 0x59636f : 0x46505c }),
         );
         chassis.position.y = 1.6;
         body.add(chassis);
-        const tray = new THREE.Mesh(
-          new THREE.BoxGeometry(8.5, 3.4, 6.8),
+
+        const cab = new THREE.Mesh(
+          new THREE.BoxGeometry(2.6, 2.4, 5.2),
+          new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 }),
+        );
+        cab.position.set(4.6, 4.1, 0);
+        body.add(cab);
+
+        // The tray, and the material in it.
+        const tray = new THREE.Group();
+        const shell = new THREE.Mesh(
+          new THREE.BoxGeometry(8.5, 3.2, 6.8),
           new THREE.MeshLambertMaterial({ color: dark ? 0xffd479 : 0xd98a00 }),
         );
-        tray.position.set(-1.2, 4.4, 0);
-        // Tipping: the tray pitches up about its rear pivot.
-        tray.rotation.z = play.phase === 'tip' ? -0.85 : 0;
-        if (play.phase === 'tip') tray.position.y = 5.2;
+        tray.add(shell);
+        if (laden) {
+          const heap = new THREE.Mesh(
+            new THREE.BoxGeometry(7.4, 1.9, 5.9),
+            new THREE.MeshLambertMaterial({ color: dark ? 0x6b5a45 : 0x5a4a38 }),
+          );
+          heap.position.y = 2.1;
+          tray.add(heap);
+        }
+        // The pivot is at the back of the tray, so tipping rotates about it rather than about the
+        // tray's middle, which is what a body-up truck actually does.
+        tray.position.set(-1.2, 4.3, 0);
+        if (play.phase === 'tip') {
+          tray.rotation.z = -0.9;
+          tray.position.y = 5.0;
+          tray.position.x = -2.4;
+        }
         body.add(tray);
+
         body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
         body.rotation.y = -heading;
         L.content.add(body);
@@ -541,7 +583,7 @@ export default function SiteView3D({
     }
 
     L.render();
-  }, [field, surface, plan, loads, colourBy, play, showPaths, showCrest, showPlan, dark, height, onRange]);
+  }, [field, surface, plan, loads, colourBy, values, play, showPaths, showCrest, showPlan, dark, height, onRange]);
 
   return <div ref={host} style={{ width: '100%', height }} aria-label="Site in three dimensions" />;
 }

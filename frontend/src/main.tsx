@@ -21,6 +21,11 @@ const config: ShellConfig = {
   product: { name: 'StockTwin', mark: <Layers size={18} aria-hidden="true" /> },
   routes: [
     { path: '/', en: 'App', es: 'App' },
+    // FOCUS IS A TOP-LEVEL DESTINATION. ADR-0070 clause 8 asks for a visible, obvious entry that is
+    // not buried in a menu; a nav item is as visible as this app has. It opens the case the reader
+    // was last looking at, so the round trip still preserves the scenario, which is what the clause
+    // is protecting.
+    { path: '/focus', en: 'Focus', es: 'Foco' },
     { path: '/introduction', en: 'Introduction', es: 'Introducción' },
     { path: '/methodology', en: 'Methodology', es: 'Metodología' },
     { path: '/implementation', en: 'Implementation', es: 'Implementación' },
@@ -51,6 +56,8 @@ createRoot(document.getElementById('root')!).render(
           {/* ADR-0070: the focus view renders OUTSIDE the shell. The header and footer are exactly
               the chrome a focus view exists to escape, so it cannot be a child of AppShell. */}
           <Route path="/focus/:caseId" element={<Focus />} />
+          {/* The nav entry, which resolves to whichever case the App last had selected. */}
+          <Route path="/focus" element={<Focus />} />
           <Route path="*" element={
             <AppShell config={config}>
               <Routes>
