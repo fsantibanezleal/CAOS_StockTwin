@@ -162,6 +162,10 @@ export interface Cut {
   y?: number;
   /** How many cells it engaged, which is the size of the bite. */
   cells?: number;
+  /** The load index during the build at which this cut was taken. Present only on a CONCURRENT
+   *  campaign, where the loader works the pile while trucks are still tipping into it; absent on a
+   *  sequential one, where every cut happens after the last load. */
+  at?: number;
   prov: Record<string, number>;
 }
 
@@ -211,7 +215,10 @@ export interface Manifest {
     peak_m: number;
     volume_m3: number;
   };
-  reclaim: { n_cuts: number; tonnes: number };
+  /** `mode` is absent on a sequential campaign and 'concurrent' where the loader works the pile
+   *  while trucks are still tipping into it. It changes how the timeline is assembled, not just how
+   *  it is described: see `timelineLength`. */
+  reclaim: { n_cuts: number; tonnes: number; mode?: 'after' | 'concurrent' };
   gate: {
     pairs_over_repose: number;
     worst_local_slope_deg: number;
@@ -733,23 +740,61 @@ function shortestTurn(a: number, b: number): number {
   return d;
 }
 
-/** Resolve a fractional build position into everything the scene needs to draw one moment. */
-/** How many steps the whole timeline has: every placed load, then every reclaim cut. */
+/** True when the loader works the pile while trucks are still tipping into it. */
+export function isConcurrent(sc: Scenario | null): boolean {
+  return sc?.manifest.reclaim.mode === 'concurrent';
+}
+
+/**
+ * How many steps the whole timeline has.
+ *
+ * TWO SHAPES, BECAUSE THERE ARE TWO OPERATIONS. On a SEQUENTIAL campaign the pile is filled and then
+ * taken down, so the timeline is every placed load followed by every reclaim cut, and the reclaim
+ * surfaces are a second chain that starts from the finished pile.
+ *
+ * On a CONCURRENT campaign the cuts happen DURING the build, and the build chain already contains
+ * them: measured on the shipped artifact, 32 of the 744 build frames of `concurrent` and 50 of
+ * `surge` DECREASE in volume, which is the loader biting into a pile the trucks are still feeding.
+ * Appending the reclaim chain on top of that plays the whole build, then rewinds to a nearly empty
+ * pile and grows it again, because the reclaim chain is a parallel recording of the same terrain
+ * rather than a continuation of it. So on a concurrent campaign the timeline is the build alone, and
+ * the cuts are drawn where they actually happened.
+ */
 export function timelineLength(sc: Scenario | null): number {
   const f = sc?.frames;
   if (!f) return 0;
+  if (isConcurrent(sc)) return f.frames.length;
   return f.frames.length + (f.reclaim?.length ?? 0);
+}
+
+/**
+ * Which cut, if any, is being taken at this point in the build.
+ *
+ * A cut records the load index it was taken at, so a concurrent campaign can put the loader on the
+ * stage at the moment it worked rather than after everything else had finished. The cut is shown for
+ * a short window around its own load so the machine is legible at playback speed instead of flashing
+ * for a single frame.
+ */
+const CUT_WINDOW = 2;
+
+function cutAt(sc: Scenario, seq: number): { cut: Cut; k: number } | null {
+  for (let k = 0; k < sc.cuts.length; k += 1) {
+    const at = sc.cuts[k].at;
+    if (typeof at === 'number' && seq >= at && seq < at + CUT_WINDOW) return { cut: sc.cuts[k], k };
+  }
+  return null;
 }
 
 export function playState(sc: Scenario, pos: number): PlayState | null {
   const f = sc.frames;
   if (!f || !f.frames.length) return null;
 
-  // THE TIMELINE RUNS PAST THE END OF THE BUILD. Everything after the last load is the reclaim
-  // campaign: an orange loader working the face, taking the pile back down cut by cut. It is the
-  // second half of what a stockpile does and it was not on the timeline at all.
+  // THE TIMELINE RUNS PAST THE END OF THE BUILD, on a sequential campaign. Everything after the last
+  // load is the reclaim campaign: an orange loader working the face, taking the pile back down cut
+  // by cut. It is the second half of what a stockpile does and it was not on the timeline at all.
+  // On a concurrent campaign there is no "after": see `timelineLength`.
   const nBuild = f.frames.length;
-  if (f.reclaim?.length && pos >= nBuild) {
+  if (!isConcurrent(sc) && f.reclaim?.length && pos >= nBuild) {
     const k = Math.min(Math.floor(pos - nBuild), f.reclaim.length - 1);
     const c = sc.cuts[k] ?? null;
     const z = expandReclaim(f, k);
@@ -816,6 +861,30 @@ export function playState(sc: Scenario, pos: number): PlayState | null {
       const k = sub / (1 - TURN_STARTS_AT);
       heading = backedIn + shortestTurn(backedIn, heading) * k;
     }
+  }
+
+  // THE LOADER IS ON THE STAGE WHILE THE TRUCKS ARE STILL TIPPING. On a concurrent campaign a cut
+  // happens at a known load, so at that moment the machine to draw is the orange loader taking
+  // material off, not the yellow haul truck putting it on. Two machines cannot share one PlayState,
+  // and drawing the truck would be the wrong claim about what is happening, so for the short window
+  // of a cut the stage shows the loader. The surface needs no special handling: the build chain
+  // already carries the bite.
+  const active = isConcurrent(sc) ? cutAt(sc, cur.seq) : null;
+  if (active) {
+    const c = active.cut;
+    return {
+      seq: cur.seq,
+      z: after,
+      truck:
+        typeof c.x === 'number' && typeof c.y === 'number' ? { x: c.x, y: c.y, heading: 0 } : null,
+      trail: [],
+      ahead: [],
+      phase: 'tip',
+      sub: frac,
+      dumpHeading: null,
+      job: 'reclaim',
+      cut: c,
+    };
   }
 
   return {

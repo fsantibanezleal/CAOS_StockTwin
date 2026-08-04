@@ -24,8 +24,11 @@ import type { Frames } from '../lib/scenario';
 
 interface Props {
   frames: Frames | null;
-  /** Total steps: every placed load, then every reclaim cut. */
+  /** Total steps. On a sequential campaign that is every placed load then every reclaim cut; on a
+   *  concurrent one the cuts happen DURING the build, so it is the build alone. */
   total?: number;
+  /** Cuts taken during the build, so the readout can say the loader is already working. */
+  concurrentCuts?: number;
   /** Fractional position through the build, in loads. `2.4` is 40 percent through the third load. */
   pos: number;
   onPos: (p: number) => void;
@@ -40,7 +43,7 @@ const BASE_LOADS_PER_S = 1.5;
 
 const SPEEDS = [0.5, 1, 2, 5];
 
-export default function PlayBar({ frames, total, pos, onPos, lang = 'en' }: Props) {
+export default function PlayBar({ frames, total, pos, onPos, lang = 'en', concurrentCuts = 0 }: Props) {
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const nBuild = frames?.frames.length ?? 0;
   const n = total ?? nBuild;
@@ -146,10 +149,16 @@ export default function PlayBar({ frames, total, pos, onPos, lang = 'en' }: Prop
 
       {/* The readout says which half of the operation is on the stage: loads going on, or cuts
           coming off. A single "n of m" counter cannot, and the two are different machines. */}
+      {/* WHAT THE READOUT HAS TO SAY depends on which operation is running. On a sequential campaign
+          the timeline has two halves and the counter switches between them. On a CONCURRENT one there
+          is no second half: the loader is working the same timeline the trucks are, so the readout
+          carries both counts at once rather than pretending the reclaim has not started. */}
       <span className="st-play-read">
-        {reclaiming
-          ? `${idx - nBuild + 1}/${nCuts} ${t('cuts', 'cortes')}`
-          : `${placed}/${built} ${t('loads', 'cargas')}`}
+        {concurrentCuts > 0
+          ? `${placed}/${built} ${t('loads', 'cargas')} · ${concurrentCuts} ${t('cuts', 'cortes')}`
+          : reclaiming
+            ? `${idx - nBuild + 1}/${nCuts} ${t('cuts', 'cortes')}`
+            : `${placed}/${built} ${t('loads', 'cargas')}`}
       </span>
 
       <label className="st-play-speed">

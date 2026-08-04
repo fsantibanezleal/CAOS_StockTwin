@@ -1,0 +1,153 @@
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 56,
+    "loads_placed": 744,
+    "mean_displacement_m": 19.53,
+    "peak_m": 12.47,
+    "profiles": {
+      "comet": 131,
+      "oval": 280,
+      "paddock": 136,
+      "rectangular": 92,
+      "sloughed_heap": 105
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 62168.7
+  },
+  "category": "campaign",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 745,
+  "gate": {
+    "kill_criterion": {
+      "en": "Variance reduction must be WORSE than the sequential campaign on the same seed and geometry. A cut taken part-way through the build has fewer layers available to cross, and a pile that blends just as well whether or not it is allowed to fill is not blending by residence at all.",
+      "es": "La reducci\u00f3n de varianza debe ser PEOR que en la campa\u00f1a secuencial con la misma semilla y geometr\u00eda. Un corte tomado a mitad de la construcci\u00f3n tiene menos capas disponibles que cruzar, y una pila que mezcla igual de bien tanto si se la deja llenarse como si no, no est\u00e1 mezclando por residencia en absoluto."
+    },
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 744,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 4.0,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "concurrent",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "Every other scenario fills the pile and then takes it down, which is one operating mode and not the common one. A surge pile between the pit and the crusher is drawn from continuously, and that changes the answer rather than the picture: a cut taken early cannot contain material that has not been delivered yet, so the blending a pile achieves depends on how long material is allowed to sit in it.",
+  "reclaim": {
+    "mode": "concurrent",
+    "n_cuts": 28,
+    "tonnes": 53743.5
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02873124
+  },
+  "summary": {
+    "en": "A live surge pile: trucks are still tipping while the loader is already taking material out. The pile never reaches a finished state, and a cut crosses only the layers that had arrived by the time it was taken.",
+    "es": "Una pila de amortiguacion viva: los camiones siguen descargando mientras el cargador ya esta sacando material. La pila nunca llega a un estado terminado, y un corte cruza solo las capas que habian llegado cuando se tomo."
+  },
+  "tags": [
+    "campaign",
+    "reclaim",
+    "concurrent"
+  ],
+  "title": {
+    "en": "Fed and drawn at the same time",
+    "es": "Alimentado y recuperado a la vez"
+  }
+}
