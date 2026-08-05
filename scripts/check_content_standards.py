@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Fail the build if tracked product content contains an EM-DASH or an EMOJI (ADR-0067).
+"""Fail the build if tracked product content contains an EM-DASH, an EMOJI, or a CONTROL BYTE.
+
+Em-dash and emoji are ADR-0067. The control-byte check is here because it is the same kind of
+defect, a character that should not be in tracked text, and this file is already the one place that
+reads every tracked text file.
 
 Felipe's standing rule for every product: no emojis and no em-dashes in repo content. Both read as
 an AI tell and are banned from product content (code, docs, UI strings, commit-tracked files alike), ADR-0067.
@@ -11,6 +15,7 @@ What it flags (precise, to avoid punishing legitimate glyphs):
     emoji-presentation selector U+FE0F. This catches the pictographic emojis while intentionally
     NOT touching functional glyphs products do use: the info mark U+24D8 (the ADR-0058 modal button),
     the middot U+00B7 (Felipe's preferred separator), arrows like U+2197, check/cross marks, stars.
+  - CONTROL BYTES below U+0020, except tab, newline and carriage return.
 
 Not flagged: the ASCII double hyphen "--" (ubiquitous and legitimate in CLI flags and code) and the
 en-dash U+2013. The rule as stated is em-dash + emoji; keep enforcement to exactly that.
@@ -72,16 +77,26 @@ def main() -> int:
                     hits.append(f"  {rel}:{lineno}:{col}  em-dash (U+{cp:04X})")
                 elif is_emoji(cp):
                     hits.append(f"  {rel}:{lineno}:{col}  emoji (U+{cp:04X} {ch!r})")
+                elif cp < 9 or 13 < cp < 32:
+                    # A CONTROL BYTE IN TRACKED TEXT is almost always a tool's escaping accident,
+                    # and it is invisible in an editor, in a review, and in a git diff. This one
+                    # landed twice in one afternoon: a Python string holding a Windows path to
+                    # scripts/local had backslash-zero-zero read as an OCTAL escape, so the file
+                    # took a NUL and the path quietly lost its digits. Both times a human read the
+                    # line and saw nothing wrong, because there is nothing to see. Cheap to check.
+                    hits.append(f"  {rel}:{lineno}:{col}  control byte (U+{cp:04X})")
 
     if not hits:
-        print("check_content_standards: OK, no em-dash or emoji in tracked content.")
+        print("check_content_standards: OK, no em-dash, emoji or control byte in tracked content.")
         return 0
 
     print("::error::banned characters found (no em-dash, no emoji in product content, ADR-0067):")
     for h in hits:
         print(h)
     print("\nReplace an em-dash with a comma, colon, semicolon, period, parentheses, or a middot "
-          "as the sense requires. Remove emojis. This applies to code, docs, and UI strings alike.")
+          "as the sense requires. Remove emojis. This applies to code, docs, and UI strings alike. "
+          "A control byte is not something anyone typed: find the tool that wrote the line, most "
+          "often a string escape, and fix it there.")
     return 1
 
 
