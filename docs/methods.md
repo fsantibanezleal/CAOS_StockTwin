@@ -1,10 +1,13 @@
 # Methods
 
-Eighteen methods in six families. For each: what it computes, its equation, its source with a real
+Nineteen methods in eight families. For each: what it computes, its equation, its source with a real
 DOI, which lane it runs in, and where it fails.
 
 Tier: **L** runs live in the browser, **P** is precomputed offline by
-[`bedblend`](https://pypi.org/project/bedblend/), **P to L** is trained offline and executed live.
+[`bedblend`](https://pypi.org/project/bedblend/), **P to L** is trained offline and executed live, and
+**NOT IMPLEMENTED** is declared in the plan with no engine behind it. The last is a real value and it
+is used: a method name offered as though it ran, with nothing behind it, is what the acceptance
+contract forbids.
 
 The split is not arbitrary. Anything that touches the terrain is precomputed, because routing a load
 over the trafficable surface, flooding the pad for reachability and relaxing the whole height field
@@ -19,7 +22,7 @@ tell a real result from a typo.
 | 3 | Two-phase bench construction | planning | SOTA | P | [03](methods/03_bench-construction.md) |
 | 4 | Gray-Thornton kinetic segregation | segregation | SOTA | P | [04](methods/04_segregation.md) |
 | 5 | The Makse stratification regime | segregation | SOTA | P | [05](methods/05_stratification.md) |
-| 6 | Depth-averaged reclaim-face slump | segregation | SOTA | P | [06](methods/06_mu-i-slump.md) |
+| 6 | Depth-averaged reclaim-face slump. The face is the repose surface the relaxation solver produces | segregation | SOTA | NOT IMPLEMENTED | [06](methods/06_mu-i-slump.md) |
 | 7 | Discrete-element calibration heap | segregation | SOTA | P | [07](methods/07_dem-calibration.md) |
 | 8 | Per-cell lot ledger and provenance | traceability | SOTA | P | [08](methods/08_lot-ledger.md) |
 | 9 | Variance reduction ratio | blending | classical | L | [09](methods/09_vrr.md) |
@@ -32,6 +35,8 @@ tell a real result from a typo.
 | 16 | Trafficability, reachability and routing | operations | SOTA | P | [16](methods/16_trafficability.md) |
 | 17 | Topography and the five fill types | geometry | classical | P | [17](methods/17_topography.md) |
 | 18 | Material: density chain and moisture-dependent repose | material | classical | P | [18](methods/18_material.md) |
+| 19 | Reclaim haulage: loader, truck stand, routed in empty and out loaded | operations | SOTA | P | [19](methods/19_reclaim-haulage.md) |
+| 20 | The reclaim face: machine reach bounds a cut, and the stance trams | operations | SOTA | P | [20](methods/20_reclaim-face.md) |
 
 ## What changed, and why the ladder looks different
 

@@ -1,11 +1,16 @@
-# Method 11: the 1/N independent-layer bound
+# Method 11: the 1/N independent-source bound
 
 **Family:** blending · **Rung:** classical · **Tier:** live
 
 ## The derivation
 
-If the `N` layers a reclaim cut crosses were independent draws from the input distribution, the cut
-mean would have variance `var_in / N`. So
+If the `N` independent sources a reclaim cut averages were independent draws from the input
+distribution, the cut mean would have variance `var_in / N`. So
+
+`N` is NOT the raw count of layers the cut crossed, and that distinction is the whole honesty of the
+bound. It is the EFFECTIVE source count, the inverse participation ratio of the tonnage fractions in
+the cut: a cut drawing 95 percent of its tonnage from one dig block and traces of four others is
+averaging one source, not five, and counting keys would say five.
 
     VRR_ideal = 1 / N              E_ideal = sigma_in / sigma_out = sqrt(N)
 
@@ -27,11 +32,19 @@ quarter to a third of the ideal benefit, because successive layers are autocorre
 sample every layer equally, and segregation biases what each cut contains.
 
 A simulator that reported the `1/N` curve as its result would inflate the benefit by an order of
-magnitude. The product therefore always plots achieved against ideal, never achieved alone, and reports
+magnitude. The product therefore plots achieved against ideal rather than achieved alone, and reports
 
-    efficiency = VRR_ideal / VRR_achieved   in (0, 1]
+    efficiency = VRR_ideal / VRR_achieved
 
 as a first-class metric.
+
+The floor is the 1/N bound computed from the EFFECTIVE source count, the inverse participation ratio
+of the tonnage fractions in a cut rather than the raw count of layers crossed. A cut drawing 95
+percent of its tonnage from one dig block and traces of four others is averaging one source, not
+five. The efficiency, ideal over achieved, is NOT capped: a value above one is arithmetically
+impossible for independent sources, so it says the effective source count is underestimated, and
+both the bound and the efficiency are WITHHELD above 1.05 rather than clamped, because clamping
+would hide exactly that diagnostic.
 
 ## The control that proves the implementation
 

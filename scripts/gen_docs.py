@@ -34,6 +34,20 @@ def scenario_page(s) -> str:
     a = plan.areas[0]
     pad_w = s.pad_nx * s.cell_m
     pad_h = s.pad_ny * s.cell_m
+    # WHAT THE BAKE ACTUALLY DID, not what was asked for. `n_cuts` is the planned parameter and the
+    # reclaim loop does not honour it literally: a multi-area yard divides it between the areas and
+    # truncates, and a CONCURRENT campaign ignores it entirely because its cadence is one cut every
+    # `loads_per_cut` placed loads for as long as the build lasts. Printing the parameter published
+    # 24 cuts against a shipped 28, 74 and 20 on three pages. A generated page whose whole purpose is
+    # that it cannot drift from the code must not restate an input as if it were the result.
+    if s.reclaim_mode == "concurrent":
+        reclaim_rows = (
+            "| mode | concurrent: drawn down while it is still being fed |\n"
+            f"| cadence | one cut every {s.loads_per_cut} placed loads |"
+        )
+    else:
+        n_areas = max(1, s.n_areas)
+        reclaim_rows = f"| cuts | {(s.n_cuts // n_areas) * n_areas} |"
     classes = ", ".join(s.classes)
     return BANNER + f"""# Scenario `{s.id}`
 
@@ -89,7 +103,7 @@ plausible artifact.
 | parameter | value |
 |---|---|
 | cut size | {s.cut_tonnes:.0f} t |
-| cuts | {s.n_cuts} |
+{reclaim_rows}
 | method | `{ReclaimMethod.FULL_HEIGHT.value}`, a vertical face through every lift |
 
 ## Reproduce it

@@ -54,7 +54,7 @@ plausible artifact.
 | parameter | value |
 |---|---|
 | cut size | 3000 t |
-| cuts | 24 |
+| cuts | 20 |
 | method | `full_height`, a vertical face through every lift |
 
 ## Reproduce it

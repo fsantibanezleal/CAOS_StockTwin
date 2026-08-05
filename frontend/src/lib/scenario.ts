@@ -79,8 +79,19 @@ export interface Load {
   len?: number;
   wid?: number;
   thick?: number;
+  /**
+   * `seg` is the MEASURED sorting of this load, the coarse fraction of the toe half of the face minus
+   * that of the crest half, read off the profile the Gray-Thornton march produced. It used to carry
+   * `intensity`, the strength of the three published DRIVERS, which is an input to the physics and
+   * not a result of it: a field named for the answer that holds the question is the kind of thing
+   * nobody notices for several releases. `sr` is the segregation number the flowing layer was solved
+   * at, so the driver and the result stay separable.
+   */
   seg?: number;
+  sr?: number;
   overrun?: number;
+  /** What the overrun is MADE OF. Nearly all coarse, which is what the sources report. */
+  overrun_c?: number;
   drop?: number;
   approach?: XY[];
   departure?: XY[];
@@ -166,6 +177,15 @@ export interface Cut {
    *  campaign, where the loader works the pile while trucks are still tipping into it; absent on a
    *  sequential one, where every cut happens after the last load. */
   at?: number;
+  /** Where the TRUCK waits to be loaded: trafficable ground beside the face, not the face itself.
+   *  `x`/`y` above is the LOADER, which sits on the cut. A loader digs a face; a truck cannot stand
+   *  on one, and that is why the two are separate. */
+  stand?: XY;
+  /** The route the empty truck drove in, from the sited loading point off the pad. */
+  in?: XY[];
+  /** The route it drove back out, loaded. Solved separately from the way in, because the cut has
+   *  just been taken and the face relaxed, so the surface is not the same one. */
+  out?: XY[];
   prov: Record<string, number>;
 }
 
@@ -585,11 +605,14 @@ export function variogram(
 
 export interface SegSummary {
   nSorted: number;
-  meanIntensity: number;
-  maxIntensity: number;
+  meanIndex: number;
+  maxIndex: number;
+  meanSr: number;
+  maxSr: number;
   meanDrop: number;
   maxDrop: number;
   meanOverrun: number;
+  meanOverrunCoarse: number;
   coarseMin: number;
   coarseMax: number;
 }
@@ -606,11 +629,14 @@ export function segregationSummary(sc: Scenario): SegSummary {
   const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   return {
     nSorted: sorted.length,
-    meanIntensity: mean(sorted.map((l) => l.seg ?? 0)),
-    maxIntensity: sorted.length ? Math.max(...sorted.map((l) => l.seg ?? 0)) : 0,
+    meanIndex: mean(sorted.map((l) => l.seg ?? 0)),
+    maxIndex: sorted.length ? Math.max(...sorted.map((l) => l.seg ?? 0)) : 0,
+    meanSr: mean(sorted.map((l) => l.sr ?? 0)),
+    maxSr: sorted.length ? Math.max(...sorted.map((l) => l.sr ?? 0)) : 0,
     meanDrop: mean(sorted.map((l) => l.drop ?? 0)),
     maxDrop: sorted.length ? Math.max(...sorted.map((l) => l.drop ?? 0)) : 0,
     meanOverrun: mean(sorted.map((l) => l.overrun ?? 0)),
+    meanOverrunCoarse: mean(sorted.map((l) => l.overrun_c ?? 0)),
     coarseMin: coarse.length ? Math.min(...coarse) : 0,
     coarseMax: coarse.length ? Math.max(...coarse) : 0,
   };
@@ -692,6 +718,9 @@ export interface PlayState {
   sub: number;
   /** The direction the load runs out, from the engine: the outward normal of the crest at the spot. */
   dumpHeading: number | null;
+  /** On a reclaim step, where the LOADER sits: on the cut it is digging. The truck in `truck` is a
+   *  different machine in a different place, waiting beside the face to be filled. */
+  loader?: { x: number; y: number } | null;
 }
 
 const APPROACH_FRAC = 0.45;
@@ -770,19 +799,117 @@ export function timelineLength(sc: Scenario | null): number {
 /**
  * Which cut, if any, is being taken at this point in the build.
  *
- * A cut records the load index it was taken at, so a concurrent campaign can put the loader on the
- * stage at the moment it worked rather than after everything else had finished. The cut is shown for
- * a short window around its own load so the machine is legible at playback speed instead of flashing
- * for a single frame.
+ * A cut records the PLACED-load count it was taken at, so a concurrent campaign can put the loader
+ * on the stage at the moment it worked rather than after everything else had finished. The cut is
+ * shown for a short window around its own load so the machine is legible at playback speed instead
+ * of flashing for a single frame.
+ *
+ * IT IS MATCHED ON `placed`, NOT ON `seq`, AND THE TWO ARE NOT THE SAME COUNTER. `seq` is the OFFERED
+ * load index and `placed` is how many actually went down; they differ by the refusals so far, which
+ * run to 17 percent on the reference case. On the two shipped concurrent scenarios every refusal
+ * happens after the last cut, so the two agree and matching on `seq` looked correct; on any
+ * concurrent bake with a mid-build refusal it drifts by one frame per refusal and can miss a cut's
+ * whole window. Verified against the artifact: of the frames that LOSE volume, which is what a bite
+ * is, `placed - 1` lands on a recorded cut index for 26 of 32 on `concurrent` and 50 of 50 on
+ * `surge`, and `placed` alone lands on none.
+ *
+ * The minus one is the engine's ordering, not a fudge: it appends the snapshot BEFORE it fires the
+ * after-load hook, so the frame taken at the moment of a cut cannot contain that cut. The bite first
+ * appears in the following frame.
  */
-const CUT_WINDOW = 2;
+/** How many loads a cut occupies on the timeline.
+ *
+ *  WIDE ENOUGH TO FIND BY HAND. At two loads a cut was 0.27 percent of a 745-load timeline, so 28 of
+ *  them covered 7.5 percent and scrubbing for one was a lottery: Felipe went looking for the orange
+ *  truck across many cases and never saw it. A cut is an event, but the haul cycle around it is not
+ *  instantaneous, and eight loads is both truer to the operation and legible at playback speed.
+ *  Marks on the scrub bar do the rest. */
+const CUT_WINDOW = 8;
 
-function cutAt(sc: Scenario, seq: number): { cut: Cut; k: number } | null {
+function cutAt(sc: Scenario, placed: number): { cut: Cut; k: number } | null {
   for (let k = 0; k < sc.cuts.length; k += 1) {
     const at = sc.cuts[k].at;
-    if (typeof at === 'number' && seq >= at && seq < at + CUT_WINDOW) return { cut: sc.cuts[k], k };
+    if (typeof at === 'number' && placed >= at && placed < at + CUT_WINDOW) {
+      return { cut: sc.cuts[k], k };
+    }
   }
   return null;
+}
+
+/**
+ * One moment of a reclaim cut, as a HAUL CYCLE rather than a machine parked on a centroid.
+ *
+ * THE MIRROR OF THE BUILD. A yellow haul truck arrives loaded, tips, and leaves empty. An orange
+ * truck arrives EMPTY, is loaded beside the face, and leaves LOADED. Until the engine routed it
+ * there was nothing to draw: a cut recorded a tonnage and a centroid, so the pile lost volume and no
+ * vehicle ever came for the material. Felipe found it by asking the obvious question.
+ *
+ * Three phases on the same clock as a load, so the two operations read alike: drive in, load, drive
+ * out. The LOADER is a second machine and it stays on the cut throughout, because that is where it
+ * digs; the truck stands beside it.
+ */
+function reclaimState(c: Cut | null, z: number[] | null, frac: number, seq: number): PlayState {
+  const loader = c && typeof c.x === 'number' && typeof c.y === 'number'
+    ? { x: c.x, y: c.y }
+    : null;
+  const inPath = (c?.in ?? []) as [number, number][];
+  const outPath = (c?.out ?? []) as [number, number][];
+  const stand = c?.stand ? { x: c.stand[0], y: c.stand[1] } : loader;
+
+  const f = Math.min(Math.max(frac, 0), 1);
+  let phase: PlayState['phase'];
+  let sub: number;
+  let path: [number, number][];
+  if (f < APPROACH_FRAC) {
+    phase = 'approach';
+    sub = f / APPROACH_FRAC;
+    path = inPath;
+  } else if (f < APPROACH_FRAC + TIP_FRAC) {
+    phase = 'tip';                       // being loaded: the bucket works, the tray fills
+    sub = (f - APPROACH_FRAC) / TIP_FRAC;
+    path = inPath;
+  } else {
+    phase = 'departure';
+    sub = (f - APPROACH_FRAC - TIP_FRAC) / (1 - APPROACH_FRAC - TIP_FRAC);
+    path = outPath;
+  }
+
+  const w = walk(path, phase === 'tip' ? 1 : phase === 'approach' ? sub : sub);
+  const truck = w
+    ? { x: w.x, y: w.y, heading: w.heading }
+    : stand
+      ? { x: stand.x, y: stand.y, heading: 0 }
+      : null;
+
+  return {
+    seq,
+    z,
+    truck,
+    trail: w ? w.done : [],
+    ahead: w ? w.left : [],
+    phase,
+    sub,
+    dumpHeading: null,
+    job: 'reclaim',
+    cut: c,
+    loader,
+  };
+}
+
+/** Where every cut sits on the timeline, in the same units the scrub bar uses.
+ *
+ *  A reader cannot look for something they cannot see the position of. The transport marks these, so
+ *  finding the reclaim is a click rather than a hunt. */
+export function cutMarks(sc: Scenario | null): number[] {
+  if (!sc?.frames) return [];
+  const nBuild = sc.frames.frames.length;
+  if (isConcurrent(sc)) {
+    return sc.cuts
+      .map((c) => c.at)
+      .filter((a): a is number => typeof a === 'number')
+      .map((a) => Math.min(a, Math.max(nBuild - 1, 0)));
+  }
+  return (sc.frames.reclaim ?? []).map((_, k) => nBuild + k);
 }
 
 export function playState(sc: Scenario, pos: number): PlayState | null {
@@ -798,21 +925,7 @@ export function playState(sc: Scenario, pos: number): PlayState | null {
     const k = Math.min(Math.floor(pos - nBuild), f.reclaim.length - 1);
     const c = sc.cuts[k] ?? null;
     const z = expandReclaim(f, k);
-    const here = c && typeof c.x === 'number' && typeof c.y === 'number'
-      ? { x: c.x, y: c.y, heading: 0 }
-      : null;
-    return {
-      seq: -1 - k,
-      z,
-      truck: here,
-      trail: [],
-      ahead: [],
-      phase: 'tip',
-      sub: pos - nBuild - k,
-      dumpHeading: null,
-      job: 'reclaim',
-      cut: c,
-    };
+    return reclaimState(c, z, pos - nBuild - k, -1 - k);
   }
   const i = Math.min(Math.max(Math.floor(pos), 0), f.frames.length - 1);
   const frac = Math.min(Math.max(pos - i, 0), 1);
@@ -869,22 +982,11 @@ export function playState(sc: Scenario, pos: number): PlayState | null {
   // and drawing the truck would be the wrong claim about what is happening, so for the short window
   // of a cut the stage shows the loader. The surface needs no special handling: the build chain
   // already carries the bite.
-  const active = isConcurrent(sc) ? cutAt(sc, cur.seq) : null;
+  const active = isConcurrent(sc) ? cutAt(sc, cur.placed - 1) : null;
   if (active) {
-    const c = active.cut;
-    return {
-      seq: cur.seq,
-      z: after,
-      truck:
-        typeof c.x === 'number' && typeof c.y === 'number' ? { x: c.x, y: c.y, heading: 0 } : null,
-      trail: [],
-      ahead: [],
-      phase: 'tip',
-      sub: frac,
-      dumpHeading: null,
-      job: 'reclaim',
-      cut: c,
-    };
+    // The same haul cycle the sequential path draws, on the build's own surface: the bite is already
+    // in this frame, so nothing about the terrain needs special handling here.
+    return { ...reclaimState(active.cut, after, frac, cur.seq), seq: cur.seq };
   }
 
   return {

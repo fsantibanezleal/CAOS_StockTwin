@@ -54,7 +54,8 @@ plausible artifact.
 | parameter | value |
 |---|---|
 | cut size | 3000 t |
-| cuts | 24 |
+| mode | concurrent: drawn down while it is still being fed |
+| cadence | one cut every 26 placed loads |
 | method | `full_height`, a vertical face through every lift |
 
 ## Reproduce it

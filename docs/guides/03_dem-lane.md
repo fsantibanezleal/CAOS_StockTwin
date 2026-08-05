@@ -1,5 +1,9 @@
 # Guide: the discrete-element lane
 
+**The DEM calibration lane exists and has NOT been run in this release, so the segregation number
+`Sr` uses the published Gray and Thornton anchor rather than a measured fit.** What follows is the
+lane as it stands, not a record of a calibration that happened.
+
 ## What it is for
 
 Calibrating the Gray-Thornton segregation number `Sr` against a measured apex-to-toe coarse-fraction
@@ -18,9 +22,12 @@ python -c "import pychrono; print(pychrono.__file__)"
 
 ## The kill criterion
 
-If the environment cannot be built on the host, method 7 is DELISTED from the ladder, the calibration
-falls back to published experimental segregation distances, and the Benchmark page says so rather than
-the product continuing to describe itself as DEM-calibrated.
+If the environment cannot be built on the host, method 7 is DELISTED from the ladder and the Benchmark
+page says so, rather than the product continuing to describe itself as DEM-calibrated.
+
+THAT IS NOT THE STATE TODAY. The DEM calibration lane exists and has NOT been run in this release, so the segregation number `Sr` uses the published Gray and Thornton anchor rather than a measured fit. The anchor is a statement of the model, not an independent measurement, and the lane is present rather than delisted. The distinction matters: a delisted method is one
+the product no longer offers, and this one is offered, described, and uncounted against a measurement
+that has not been made.
 
 **That is the state of this release.** The fallback is in use and the product does not claim DEM
 calibration anywhere.

@@ -1,1 +1,152 @@
-{"assay_variables":[{"decimals":3,"hi":1.1,"key":"cu","label":"Cu","lo":0.3,"unit":"%"},{"decimals":0,"hi":450.0,"key":"mo","label":"Mo","lo":20.0,"unit":"ppm"},{"decimals":3,"hi":0.3,"key":"au","label":"Au","lo":0.01,"unit":"g/t"},{"decimals":2,"hi":6.0,"key":"ag","label":"Ag","lo":0.5,"unit":"g/t"},{"decimals":2,"hi":7.0,"key":"fe","label":"Fe","lo":1.5,"unit":"%"},{"decimals":1,"hi":18.0,"key":"clay","label":"clay","lo":1.0,"unit":"%"},{"decimals":2,"hi":8.5,"key":"ph","label":"natural pH","lo":4.0,"unit":""},{"decimals":2,"hi":12.0,"key":"moisture","label":"moisture","lo":1.5,"unit":"%"},{"decimals":1,"hi":94.0,"key":"recovery","label":"estimated recovery","lo":58.0,"unit":"%"}],"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":14.52,"peak_m":27.02,"profiles":{"comet":147,"oval":272,"paddock":135,"rectangular":101,"sloughed_heap":89},"refusal_rate":0.1733,"volume_m3":76641.4},"category":"landform","engine":"bedblend","files":["plan.json","loads.json","sectors.json","field.json","cuts.json","frames.json","volume.json"],"frames":745,"gate":{"kill_criterion":{"en":"The pile must stand HIGHER than the flat-pad case built from the same load budget, because that is what confinement means. If it does not, the ground is not constraining the material and the topography is decoration.","es":"La pila debe quedar MÁS ALTA que el caso de plataforma plana construido con el mismo presupuesto de cargas, porque eso es lo que significa el confinamiento. Si no lo hace, el terreno no está restringiendo el material y la topografía es decoración."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"valley","material":{"loose_density_t_m3":1.957,"repose_deg":37.0},"pad":{"cell_m":2.5,"nx":60,"ny":60},"reason":"Confinement is why the fill taxonomy exists at all. A valley holds the same tonnage higher and narrower than a pad does, which changes the drop height, and drop height is one of the three drivers of size segregation. It is the cleanest contrast against the flat case.","reclaim":{"n_cuts":24,"tonnes":26245.3},"seed":20260802,"stream":{"loads_per_block":20,"measured_range_t":5242.5,"n_loads":900,"var_in":0.02873124},"summary":{"en":"The same campaign tipped into a valley. Confinement changes the answer: the ground holds the material on two sides, so the same tonnage stands markedly higher than it does free-standing on a pad, and the working face runs along the valley rather than out in every direction.","es":"La misma campana descargada en un valle. El confinamiento cambia la respuesta: el terreno sostiene el material por dos lados, de modo que el mismo tonelaje se para bastante mas alto que libre sobre una plataforma, y la cara de trabajo corre a lo largo del valle."},"tags":["topography","valley"],"title":{"en":"Valley fill, confined on two sides","es":"Relleno de valle, confinado en dos lados"}}
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 56,
+    "loads_placed": 744,
+    "mean_displacement_m": 14.95,
+    "peak_m": 27.02,
+    "profiles": {
+      "comet": 147,
+      "oval": 272,
+      "paddock": 135,
+      "rectangular": 101,
+      "sloughed_heap": 89
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 52560.0
+  },
+  "category": "landform",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 745,
+  "gate": {
+    "kill_criterion": {
+      "en": "The pile must stand HIGHER than the flat-pad case built from the same load budget, because that is what confinement means. If it does not, the ground is not constraining the material and the topography is decoration.",
+      "es": "La pila debe quedar M\u00c1S ALTA que el caso de plataforma plana construido con el mismo presupuesto de cargas, porque eso es lo que significa el confinamiento. Si no lo hace, el terreno no est\u00e1 restringiendo el material y la topograf\u00eda es decoraci\u00f3n."
+    },
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 744,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 4.0,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "valley",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "Confinement is why the fill taxonomy exists at all. A valley holds the same tonnage higher and narrower than a pad does, which changes the drop height, and drop height is one of the three drivers of size segregation. It is the cleanest contrast against the flat case.",
+  "reclaim": {
+    "mode": "after",
+    "n_cuts": 24,
+    "tonnes": 72000.0
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02873124
+  },
+  "summary": {
+    "en": "The same campaign tipped into a valley. Confinement changes the answer: the ground holds the material on two sides, so the same tonnage stands markedly higher than it does free-standing on a pad, and the working face runs along the valley rather than out in every direction.",
+    "es": "La misma campana descargada en un valle. El confinamiento cambia la respuesta: el terreno sostiene el material por dos lados, de modo que el mismo tonelaje se para bastante mas alto que libre sobre una plataforma, y la cara de trabajo corre a lo largo del valle."
+  },
+  "tags": [
+    "topography",
+    "valley"
+  ],
+  "title": {
+    "en": "Valley fill, confined on two sides",
+    "es": "Relleno de valle, confinado en dos lados"
+  }
+}

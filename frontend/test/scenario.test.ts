@@ -19,6 +19,7 @@ import {
   type Plan,
   type Scenario,
   type Sector,
+  cutMarks,
   isConcurrent,
   playState,
   profileStats,
@@ -348,6 +349,83 @@ describe('a concurrent campaign is fed and drawn at the same time', () => {
       const con = verdict(load(id));
       expect(con.vrr).toBeGreaterThan(seq.vrr);
       expect(con.nLayers).toBeLessThan(seq.nLayers);
+    }
+  });
+});
+
+
+describe('something comes for the reclaimed material', () => {
+  // A cut used to be a tonnage, a grade and a centroid: the ore left the ledger and no vehicle on
+  // site carried it away, so the pile lost volume with no machine in the picture. Felipe found it by
+  // asking the obvious question, which no gate here was asking.
+  it('every scenario routes a truck to its cuts', () => {
+    for (const id of IDS) {
+      const sc = load(id);
+      const served = sc.cuts.filter((c) => c.stand);
+      expect(served.length, `${id} has no cut a truck could reach`).toBeGreaterThan(0);
+      expect(served.length / sc.cuts.length, `${id} strands most of its reclaim`).toBeGreaterThan(0.5);
+    }
+  });
+
+  it('the truck drives in and out, and the legs are not the same walk reversed', () => {
+    let differing = 0;
+    for (const id of IDS) {
+      for (const c of load(id).cuts.filter((x) => x.stand)) {
+        expect(c.in!.length).toBeGreaterThanOrEqual(2);
+        expect(c.out!.length).toBeGreaterThanOrEqual(2);
+        // In ends where out begins: the truck is loaded where it stopped.
+        expect(c.in![c.in!.length - 1]).toEqual(c.stand);
+        expect(c.out![0]).toEqual(c.stand);
+        const reversed = [...c.in!].reverse();
+        if (JSON.stringify(reversed) !== JSON.stringify(c.out)) differing++;
+      }
+    }
+    // The cut has just been taken and the face relaxed, so on at least some cuts the way out is a
+    // different walk. If every leg were an exact mirror the second solve would be doing nothing.
+    expect(differing).toBeGreaterThan(0);
+  });
+
+  it('the truck stands beside the face, not on the loader', () => {
+    for (const id of IDS) {
+      for (const c of load(id).cuts.filter((x) => x.stand)) {
+        const dx = c.stand![0] - (c.x ?? 0);
+        const dy = c.stand![1] - (c.y ?? 0);
+        expect(Math.hypot(dx, dy), `${id}: the truck is parked on the loader`).toBeGreaterThan(0);
+      }
+    }
+  });
+
+  it('a reclaim moment puts BOTH machines on the stage, and the truck leaves loaded', () => {
+    const sc = load('single');
+    const nBuild = sc.frames!.frames.length;
+    // Walk one whole cut: drive in, load, drive out.
+    const seen = new Set<string>();
+    let sawLoader = 0;
+    for (let f = 0.05; f < 0.98; f += 0.05) {
+      const st = playState(sc, nBuild + f);
+      if (!st) continue;
+      expect(st.job).toBe('reclaim');
+      seen.add(st.phase);
+      if (st.loader) sawLoader++;
+      expect(st.truck, 'no truck on a reclaim step').not.toBeNull();
+    }
+    expect(seen.has('approach')).toBe(true);
+    expect(seen.has('tip')).toBe(true);        // being loaded
+    expect(seen.has('departure')).toBe(true);
+    expect(sawLoader).toBeGreaterThan(0);
+  });
+
+  it('the cuts are marked on the timeline, so they can be found', () => {
+    for (const id of IDS) {
+      const sc = load(id);
+      const marks = cutMarks(sc);
+      expect(marks.length, `${id} marks no cuts`).toBeGreaterThan(0);
+      const n = timelineLength(sc);
+      expect(n).toBeGreaterThan(0);
+      for (const m of marks) {
+        expect(m).toBeGreaterThanOrEqual(0);
+        expect(m).toBeLessThan(n);
+      }
     }
   });
 });

@@ -29,8 +29,8 @@ const AXES = [
     blurbEn: 'The ground underneath. Only one of the five published fill types is a flat pad, and relief and difficulty are not the same thing.',
     blurbEs: 'El terreno debajo. Solo uno de los cinco tipos publicados de relleno es una plataforma plana, y relieve y dificultad no son lo mismo.' },
   { key: 'campaign', en: 'Campaign', es: 'Campaña',
-    blurbEn: 'How hard the pile is fed and how hard it is taken back down, and what happens when two areas are worked one after the other instead of together.',
-    blurbEs: 'Con cuánta intensidad se alimenta la pila y con cuánta se desarma, y qué pasa cuando dos áreas se trabajan una tras otra en vez de a la vez.' },
+    blurbEn: 'How hard the pile is fed and how hard it is taken back down, what happens when two areas are worked one after the other instead of together, and what happens when the two run AT THE SAME TIME: a live surge pile is fed by trucks while a loader is already drawing it down, and a cut taken part-way through the build has fewer lifts available to cross.',
+    blurbEs: 'Con cuánta intensidad se alimenta la pila y con cuánta se desarma, qué pasa cuando dos áreas se trabajan una tras otra en vez de a la vez, y qué pasa cuando las dos corren AL MISMO TIEMPO: una pila de amortiguación viva se alimenta con camiones mientras un cargador ya la está bajando, y un corte tomado a mitad de la construcción tiene menos bancos disponibles que cruzar.' },
   { key: 'operations', en: 'Operating choices', es: 'Decisiones operativas',
     blurbEn: 'The levers a planner actually has: bench height, ramp width, dozer cadence, and the material arriving wet.',
     blurbEs: 'Las palancas que un planificador realmente tiene: altura de banco, ancho de rampa, cadencia del bulldozer, y material que llega húmedo.' },
@@ -57,8 +57,8 @@ const SOURCES = [
   {
     what: { en: 'Fill-type taxonomy', es: 'Taxonomía de tipos de relleno' },
     detail: {
-      en: 'Five published fill types: heaped, sidehill, valley, cross-valley, ridge crest. Four are in the matrix; the ridge crest is withdrawn',
-      es: 'Cinco tipos publicados de relleno: montículo, ladera, valle, valle transversal y cresta. Cuatro están en la matriz; la cresta está retirada',
+      en: 'Five published fill types: heaped, sidehill, valley, cross-valley, ridge crest. Four are in the matrix; a steep sidehill and the ridge crest are both withdrawn for failing the repose invariant, so the matrix does not cover all five',
+      es: 'Cinco tipos publicados de relleno: montículo, ladera, valle, valle transversal y cresta. Cuatro están en la matriz; una ladera empinada y la cresta están retiradas por fallar el invariante de reposo, así que la matriz no cubre los cinco',
     },
     cite: 'baffinland2017',
   },

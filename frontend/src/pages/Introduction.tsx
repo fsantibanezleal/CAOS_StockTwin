@@ -82,8 +82,8 @@ export default function Introduction() {
             </li>
             <li>
               {t(
-                'Kinetic sieving is solved down that path, and the size shift it produces is applied to the lots the avalanche moved.',
-                'El tamizado cinético se resuelve por ese camino, y el desplazamiento de granulometría que produce se aplica a los lotes que movió la avalancha.',
+                'Kinetic sieving is solved down that path, with diffusive remixing opposing it, and the material laid down at each point along the face carries the size split the solver gives it.',
+                'El tamizado cinético se resuelve por ese camino, con el remezclado difusivo oponiéndose, y el material depositado en cada punto de la cara lleva la granulometría que le da el solucionador.',
               )}
             </li>
             <li>

@@ -88,6 +88,12 @@ export const CITATIONS: Citation[] = [
     doi: '10.1098/rspa.2004.1420',
   },
   {
+    id: 'gray2006',
+    label: 'Gray and Chugunov (2006)',
+    citation: 'Gray, J.M.N.T. and Chugunov, V.A. Particle-size segregation and diffusive remixing in shallow granular avalanches. Journal of Fluid Mechanics 569, 365-398, 2006.',
+    doi: '10.1017/S0022112006002977',
+  },
+  {
     id: 'kumral2006',
     label: 'Kumral (2006)',
     citation: 'Kumral, M. Bed blending design incorporating multiple regression modelling and genetic algorithms. Journal of the South African Institute of Mining and Metallurgy 106(3), 229-236, 2006. No DOI is registered for this volume; the publisher hosts the full text.',

@@ -37,8 +37,14 @@ from pathlib import Path
 from bedblend.blending import tonnage_weighted_variance
 from bedblend.build import BuildResult, build
 from bedblend.material import Material
-from bedblend.reclaim import Cut, ReclaimFace, ReclaimMethod, advance
-from bedblend.reclaim import cut as cut_one
+from bedblend.reclaim import (
+    Cut,
+    LoaderSpec,
+    ReclaimFace,
+    ReclaimMethod,
+    haul_cycle,
+    next_cut,
+)
 from bedblend.relax import STABLE_TOL_DEG, count_over_repose
 from bedblend.sectors import quadrants, rollup
 from bedblend.stream import dig_sequence, measured_range_t, payloads_from
@@ -146,7 +152,11 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
     cut_at: list[int] = []
     reclaim_frames: list[list[float]] = []
     live_faces = _faces(plan, scn) if scn.reclaim_mode == "concurrent" else []
+    live_exits = _exits(shovel)
     live = {"n": 0, "fi": 0}
+    # The same limit the haul trucks are held to, so a reclaim truck cannot drive anywhere a loaded
+    # haul truck could not: two thirds of the tangent of the angle of repose.
+    max_grade = math.tan(math.radians(scn.repose_deg)) / 1.5
 
     def after_load(placed: int, terr, mdl) -> None:
         if not live_faces or placed - live["n"] < scn.loads_per_cut:
@@ -154,10 +164,18 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
         live["n"] = placed
         face = live_faces[live["fi"] % len(live_faces)]
         live["fi"] += 1
-        c = cut_one(terr, mdl, face, scn.cut_tonnes, repose_deg=scn.repose_deg)
-        if c.tonnes <= 0:
-            advance(face, terr)
+        # `next_cut`, not `cut`: the machine works out the ground within its reach, then trams along
+        # the face, and only when it has swept the width does the face advance a cut deeper. Calling
+        # `cut` alone pins it to one stance, which is what made every cut the size of the whole face.
+        got = next_cut(terr, mdl, face, scn.cut_tonnes, repose_deg=scn.repose_deg)
+        if got is None:
             return
+        c = got
+        # THE TRUCK THAT COMES FOR IT. Routed on the surface the cut just left, from the sited
+        # loading point, so an empty truck arrives, is loaded beside the face, and leaves loaded.
+        # Without this the material left the ledger and nothing on site carried it away.
+        fi = (live["fi"] - 1) % max(1, len(live_exits))
+        haul_cycle(terr, c.cells, exit_xy=live_exits[fi], max_grade=max_grade).apply_to(c)
         cuts.append(c)
         cut_at.append(placed)
         reclaim_frames.append(list(terr.z))
@@ -181,7 +199,10 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
     # mean, and the variance reduction comes out better than the independent-source bound, which is
     # arithmetically impossible and was the signal that the setup was wrong.
     per_area = max(1, scn.n_cuts // max(1, len(plan.areas)))
-    for face in ([] if scn.reclaim_mode == "concurrent" else _faces(plan, scn)):
+    seq_faces = [] if scn.reclaim_mode == "concurrent" else _faces(plan, scn)
+    seq_exits = _exits(shovel)
+    for fi, face in enumerate(seq_faces):
+        exit_xy = seq_exits[fi % len(seq_exits)]
         # ONE CUT AT A TIME, SO THE PILE COMING DOWN CAN BE WATCHED. `campaign` runs the whole
         # sequence and returns the feed; that is the right shape for the engine and the wrong one
         # for a product whose subject is the operation. Reclaim is a machine in a place taking
@@ -189,13 +210,11 @@ def run(scenario_id: str, *, seed_offset: int = 0, n_loads: int | None = None) -
         # what came out. The loop here mirrors `campaign` exactly and snapshots the surface after
         # every cut.
         for _ in range(per_area):
-            c = cut_one(res.terrain, res.model, face, scn.cut_tonnes, repose_deg=scn.repose_deg)
-            if c.tonnes <= 0:
-                if not advance(face, res.terrain):
-                    break
-                c = cut_one(res.terrain, res.model, face, scn.cut_tonnes, repose_deg=scn.repose_deg)
-                if c.tonnes <= 0:
-                    break
+            got = next_cut(res.terrain, res.model, face, scn.cut_tonnes, repose_deg=scn.repose_deg)
+            if got is None:
+                break
+            c = got
+            haul_cycle(res.terrain, c.cells, exit_xy=exit_xy, max_grade=max_grade).apply_to(c)
             cuts.append(c)
             # Sequential: every cut is taken after the last load was placed.
             cut_at.append(len(res.placed))
@@ -407,9 +426,41 @@ def _faces(plan, scn) -> list:
             depth_m=10.0,
             width_m=a.length_m,
             max_face_m=15.0,
+            # ANCHORED ON THE AREA, NOT ON THE PAD. The across-face window used to be centred on the
+            # middle of the pad, which is only the middle of the pile when there is exactly one pile
+            # sitting centred on it. A yard tiles five areas and each face belongs to one of them.
+            # It happened to be harmless for the current layouts, which tile along x and share their
+            # y extent, and it would have been silently wrong for the first layout that did not.
+            centre_t_m=0.5 * (a.y0_m + a.y1_m),
+            # THE MACHINE, which bounds what one cut can touch. Without it a cut was a proportional
+            # skim over the whole face: measured across the shipped artifacts, 632 cuts at a mean
+            # footprint of 594 square metres, one scenario taking 355 tonnes off 486 of them, and a
+            # single 881 tonne cut reporting material from 108 distinct dig blocks.
+            loader=LoaderSpec(),
         )
         for a in plan.areas
     ]
+
+
+def _exits(shovel: tuple[float, float]) -> list[tuple[float, float]]:
+    """Where a loaded truck leaves the site by: the same point off the pad the haul trucks work from.
+
+    NOT THE AREA ACCESS CORRIDOR, which was the first choice and was wrong in a way worth recording.
+    The corridor is the right idea, but it is a point INSIDE the yard, and by the end of a campaign
+    the pile has grown over it: measured on the finished surface, the corridor entrance was not
+    drivable on `yard`, `rough_ground`, `seldom_dozed` or `short_bench`, so the flood fill from it
+    reached 0.0 percent of the pad and every cut on those four was refused. That refusal says
+    nothing about the pile; it says the exit was buried.
+
+    The loading point is sited before the build precisely so that it is passable and outside every
+    dump area, and it is the site's connection to the road. Measured from there on the same four
+    surfaces: 72 to 92 percent of the pad reachable. Reclaimed ore leaving by the point the ore
+    arrived from is also the honest model of a pre-crusher stockpile, which sits between the pit and
+    the plant rather than on its own haul network.
+
+    A refusal from HERE means something: the campaign really has cut away access to that face.
+    """
+    return [tuple(shovel)]
 
 
 def _centroid(terrain, cells: list[int]) -> tuple[float, float]:
@@ -488,8 +539,14 @@ def _loads_json(res: BuildResult, seed: int) -> list[dict]:
                     "head": _r(r.heading_rad, 4),
                     "len": _r(r.length_m, 2), "wid": _r(r.width_m, 2),
                     "thick": _r(r.max_thickness_m, 3),
+                    # `seg` IS THE MEASURED SORTING of this load, from the Gray-Thornton profile.
+                    # It used to be `intensity`, the strength of the published DRIVERS, which is an
+                    # input to the physics rather than a result of it. `sr` is the segregation
+                    # number the flowing layer was solved at, so driver and result stay separable.
                     "seg": _r(r.segregation_index, 4),
+                    "sr": _r(r.sr, 4),
                     "overrun": _r(r.overrun_fraction, 4),
+                    "overrun_c": _r(r.overrun_coarse_fraction, 4),
                     "drop": _r(r.drop_m, 2),
                     # THE PATHS. Kept so the app can draw the truck coming in and going away, which is
                     # the whole reason a load is an entity and not a coordinate.
@@ -626,10 +683,33 @@ def write(bake: BakeResult, out_dir: Path) -> dict:
                 {
                     "t": _r(c.tonnes, 1), "grade": _r(c.grade, 4),
                     "disp": _r(c.displacement_m, 2), "unc": _r(c.grade_uncertainty, 4),
+                    # THE SIZE OF THE FEED. Coarse runs to the toe of a dumped face, so a campaign
+                    # that cuts the toe delivers coarse feed. Until this was carried the engine
+                    # modelled the sorting in detail and discarded the answer at the one moment it
+                    # became a number the plant would care about.
+                    "coarse": _r(c.coarse_fraction, 4),
                     "x": _r(_centroid(res.terrain, c.cells)[0], 1),
                     "y": _r(_centroid(res.terrain, c.cells)[1], 1),
                     "cells": len(c.cells),
-                    "at": bake.cut_at[i] if i < len(bake.cut_at) else 0,
+                    # THE HAUL CYCLE. `x`/`y` is the LOADER, sitting on the cut. `stand` is where the
+                    # truck waits beside it, on ground it can actually climb, and the two legs are
+                    # the routes it drove: in empty, out loaded. Without these the app can draw a
+                    # machine parked on a face but not the operation that takes the ore off site,
+                    # which is the half of the reclaim that was missing entirely.
+                    **({"stand": [_r(c.stand[0], 1), _r(c.stand[1], 1)]} if c.stand else {}),
+                    **({"in": [[_r(x, 1), _r(y, 1)] for x, y in c.approach]} if c.approach else {}),
+                    **({"out": [[_r(x, 1), _r(y, 1)] for x, y in c.departure]} if c.departure else {}),
+                    # `at` MEANS SOMETHING ONLY WHILE THE PILE IS STILL BEING FED. On a
+                    # sequential campaign every cut happens after the last load, so the field
+                    # would carry the same final placed count on every row: true, identical,
+                    # and no information. Worse, it is the field the app keys the concurrent
+                    # timeline on, so writing it everywhere invites a reader of the artifact
+                    # to believe a sequential case interleaves. It is omitted there.
+                    **(
+                        {"at": bake.cut_at[i]}
+                        if scn.reclaim_mode == "concurrent" and i < len(bake.cut_at)
+                        else {}
+                    ),
                     "prov": {str(k): _r(v, 4) for k, v in sorted(c.provenance.items())},
                 }
                 for i, c in enumerate(bake.cuts)

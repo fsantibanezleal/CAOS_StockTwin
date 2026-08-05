@@ -18,11 +18,14 @@ say how much that ground matters before a single load is placed.
 **Only one of the five is a flat pad.** A product that models a flat pad and calls it a stockpile is
 modelling one member of a taxonomy and presenting it as the subject.
 
-**Four of the five are in the shipped matrix**, plus an unprepared rough-ground case. The ridge crest
-is NOT: the relaxation leaves one cell pair of a three thousand six hundred cell pad at 41.5 degrees
-against an imposed 37, and the scenario is withdrawn rather than shipped with a surface the product's
-own invariant rejects. The engine still implements it and it is still described here, because the
-taxonomy is what the method is about; the scenario matrix is a separate question. See finding F-020.
+**Four of the five are in the shipped matrix**, plus an unprepared rough-ground case. TWO scenarios
+are withdrawn for the same reason. A steep sidehill leaves 22 cell pairs at 45.9 degrees, and a ridge
+crest leaves one cell pair of a three thousand six hundred cell pad at 41.5 degrees, both against an
+imposed 37. Both are withdrawn rather than shipped with a surface the product's own invariant
+rejects, and rather than widening the tolerance to fit them. The engine still implements both and
+they are still described here, because the taxonomy is what the method is about; the scenario matrix
+is a separate question. The consequence is that the matrix does NOT cover all five published fill
+types. See finding F-020.
 
 ## What is reported before anything is built
 

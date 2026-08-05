@@ -76,17 +76,17 @@
   "build": {
     "dozer_passes": 56,
     "loads_placed": 744,
-    "mean_displacement_m": 20.09,
-    "peak_m": 12.54,
+    "mean_displacement_m": 15.35,
+    "peak_m": 6.77,
     "profiles": {
-      "comet": 134,
-      "oval": 273,
+      "comet": 140,
+      "oval": 267,
       "paddock": 136,
-      "rectangular": 101,
-      "sloughed_heap": 100
+      "rectangular": 95,
+      "sloughed_heap": 106
     },
     "refusal_rate": 0.1733,
-    "volume_m3": 59157.9
+    "volume_m3": 23010.6
   },
   "category": "campaign",
   "engine": "bedblend",
@@ -128,7 +128,7 @@
   "reclaim": {
     "mode": "concurrent",
     "n_cuts": 74,
-    "tonnes": 59464.0
+    "tonnes": 128143.8
   },
   "seed": 20260802,
   "stream": {

@@ -49,6 +49,34 @@ def main() -> None:
     if sorted(ids) != on_disk:
         fail(f"the index lists {sorted(ids)} but the tree holds {on_disk}")
 
+    # WHAT THE REGISTRY DECLARES, AGAINST WHAT THE TREE SHIPS.
+    #
+    # Everything above this point compares the artifact with itself, and a check that iterates the
+    # output can only ever confirm the output is well formed: it cannot know something is ABSENT.
+    # That is not hypothetical. Twenty-two scenarios were declared, all twenty-two baked with exit
+    # zero, and TWO were never assembled into the tree. The index is built from the manifests present
+    # on disk, deliberately, so a partial bake refreshes what it rebuilt and leaves the rest alone,
+    # which means two missing folders produce a perfectly valid smaller product. Every gate passed.
+    # Every page said "twenty", because every page had been written from the same shipped artifact.
+    # The two missing cases were the only ones modelling a pile fed and drawn at the same time, and
+    # they were found by a reader asking whether the product covered that, not by any check here.
+    sys.path.insert(0, str(ROOT / "data-pipeline"))
+    try:
+        from pipeline.scenarios import SCENARIOS  # noqa: PLC0415
+    except ModuleNotFoundError as e:  # the engine is a separate published package
+        fail(f"cannot read the scenario registry to compare against the artifacts: {e}")
+    declared = sorted(s.id for s in SCENARIOS)
+    if declared != sorted(ids):
+        missing = sorted(set(declared) - set(ids))
+        extra = sorted(set(ids) - set(declared))
+        parts = []
+        if missing:
+            parts.append(f"DECLARED BUT NOT SHIPPED: {missing} (re-bake them, or remove them from "
+                         f"the registry if they are withdrawn)")
+        if extra:
+            parts.append(f"SHIPPED BUT NOT DECLARED: {extra} (a stale folder from an earlier matrix)")
+        fail("; ".join(parts))
+
     total = 0
     for sid in ids:
         d = DERIVED / sid
@@ -83,6 +111,117 @@ def main() -> None:
             fail(f"{sid}: the manifest says {g['loads_placed']} placed, the log holds {len(placed)}")
         if not all("approach" in x and "departure" in x for x in placed):
             fail(f"{sid}: a placed load carries no truck path, so the site view cannot draw it")
+
+        # THE PILE MUST BE WATCHABLE COMING DOWN, not only going up.
+        #
+        # Twenty of the twenty-two shipped artifacts carried NO reclaim frames and cuts with no
+        # position at all: the app's whole reclaim half was dead on every sequential case, the orange
+        # loader never drew, and nothing failed, because a cut with a tonnage and a grade is still a
+        # valid cut and a frames file with no `reclaim` key is still valid JSON. They had been baked
+        # before the pipeline learned to record any of it and were never re-baked. Absence again, and
+        # again invisible to a check that only asks whether what is present is well formed.
+        frames = json.loads((d / "frames.json").read_text(encoding="utf-8"))
+        cuts = json.loads((d / "cuts.json").read_text(encoding="utf-8"))
+        concurrent = m["reclaim"].get("mode") == "concurrent"
+        if not frames.get("frames"):
+            fail(f"{sid}: no build frames, so the pile cannot be watched going up")
+        if concurrent:
+            # The build chain already carries the bites, so the timeline is the build alone and a
+            # separate reclaim chain would be a second, contradictory story.
+            if not all("at" in c for c in cuts):
+                fail(f"{sid}: a concurrent campaign has a cut with no `at`, so it cannot be placed "
+                     f"on the build timeline")
+        else:
+            if not frames.get("reclaim"):
+                fail(f"{sid}: no reclaim frames, so the pile is never seen coming down. Re-bake it: "
+                     f"this artifact predates the reclaim recording.")
+            if any("at" in c for c in cuts):
+                fail(f"{sid}: a sequential campaign records `at` on a cut, which only means "
+                     f"something while the pile is still being fed")
+        for i, c in enumerate(cuts):
+            missing = [k for k in ("x", "y", "cells") if k not in c]
+            if missing:
+                fail(f"{sid}: cut {i} is missing {missing}, so the app cannot draw the loader where "
+                     f"it stood")
+
+        # AND SOMETHING HAS TO COME FOR THE MATERIAL.
+        #
+        # A cut used to record a tonnage and a centroid and nothing else: the ore left the ledger and
+        # no vehicle on site carried it away, so the pile lost volume with no machine in the picture.
+        # Every cut now carries its haul cycle, an empty truck in and a loaded truck out over the
+        # sited loading point. A cut with no `stand` is a real refusal, the campaign having cut
+        # away its own access, and a whole scenario of them means the reclaim is unserved.
+        served = [c for c in cuts if c.get("stand")]
+        if not served:
+            fail(f"{sid}: not one cut has a truck routed to it, so nothing carries the reclaimed "
+                 f"material off site. Re-bake: this artifact predates the reclaim haulage.")
+        if len(served) < 0.5 * len(cuts):
+            fail(f"{sid}: only {len(served)} of {len(cuts)} cuts could be reached by a truck, so "
+                 f"most of the reclaim has no way off site")
+        for i, c in enumerate(served):
+            for leg in ("in", "out"):
+                if len(c.get(leg) or []) < 2:
+                    fail(f"{sid}: cut {i} has no `{leg}` route, so the truck teleports")
+
+        # THE FOOTPRINT OF A CUT IS THE MACHINE'S, NOT THE FACE'S. Before the loader had a reach, a
+        # cut was a proportional skim over every cell of the working face: 632 cuts at a mean 594
+        # square metres, one scenario removing 355 tonnes off 486 of them, and a single 881 tonne cut
+        # reporting material from 108 dig blocks. All of it shipped, because nothing measured the
+        # ground a cut disturbed. Two independent symptoms are checked, since either alone can be
+        # argued away and together they cannot.
+        cell_area = json.loads((d / "field.json").read_text(encoding="utf-8"))["cell_m"] ** 2
+        sized = [(c["t"], c["cells"] * cell_area) for c in cuts if c.get("cells") and c.get("t")]
+        if sized:
+            # A CUT MUST DIG, NOT SKIM, and depth is the way to say that. An absolute area threshold
+            # is the wrong test: the same honest 3000 tonne parcel covers a small hole in a tall pile
+            # and a wide one in a young thin pile, so an area limit would fail a correct concurrent
+            # scenario and pass a skim on a deep one. Mean removed depth, tonnage over area over
+            # density, is the invariant. Before the machine had a reach, `intensive_drain` came out at
+            # 0.37 m: seven centimetres of skim per pass over half a football pitch.
+            t_all = sum(t for t, _ in sized)
+            a_all = sum(a for _, a in sized)
+            depth = t_all / (a_all * 2.0) if a_all else 0.0
+            if depth < 0.5:
+                fail(
+                    f"{sid}: the mean cut removes {depth:.2f} m of material across "
+                    f"{a_all / len(sized):.0f} m2, which is a skim over the face rather than a "
+                    f"machine digging it. A cut is bounded by the loader's reach and takes a bench "
+                    f"lift at a time; check `LoaderSpec` is wired into the reclaim faces."
+                )
+            # AND IT MUST NOT SATURATE. The defect's other signature is a footprint that pins to the
+            # same value cut after cut, because the value is the whole face rather than anything the
+            # machine chose. Measured across the 22 scenarios, the share of cuts sitting at the
+            # campaign's own maximum footprint ran to a mean of 0.371 and a worst case of 1.000, a
+            # whole scenario where every single cut engaged the entire slab; it is now 0.052 and 0.167.
+            #
+            # Deliberately NOT a check that the footprint grows with the tonnage. That holds only at
+            # constant pile thickness, and a concurrent scenario reclaims a pile that thickens under
+            # it, so its early cuts are small and wide and its late cuts large and compact. Tonnage
+            # and area are genuinely anti-correlated there, and a gate saying otherwise fails correct
+            # work. Saturation does not care how thick the pile is.
+            if len(sized) >= 6:
+                peak = max(a for _, a in sized)
+                at_peak = sum(1 for _, a in sized if a >= peak * 0.995) / len(sized)
+                if at_peak > 0.35:
+                    fail(
+                        f"{sid}: {at_peak:.0%} of cuts engage the same {peak:.0f} m2 footprint. A "
+                        f"footprint that pins to one value is the face, not the machine; check "
+                        f"`LoaderSpec` is wired into the reclaim faces."
+                    )
+
+        # THE SIZE OF THE FEED must be carried, and must not be zero. `coarse_fraction` died silently
+        # once already, in `blocks.py`, and it is the observable the whole segregation half of the
+        # product is read from. A reclaimed parcel at exactly zero coarse is not material anybody put
+        # in the pile.
+        if any("coarse" not in c for c in cuts):
+            fail(f"{sid}: a cut records no coarse fraction, so the feed has no size. Re-bake.")
+        dead = [i for i, c in enumerate(cuts) if c["coarse"] == 0.0]
+        if dead:
+            fail(
+                f"{sid}: {len(dead)} of {len(cuts)} cuts deliver feed at exactly zero coarse "
+                f"fraction, which is impossible for material that was placed with a size split. "
+                f"This is the positional-rebuild defect: use dataclasses.replace."
+            )
 
         field = json.loads((d / "field.json").read_text(encoding="utf-8"))
         n = field["nx"] * field["ny"]

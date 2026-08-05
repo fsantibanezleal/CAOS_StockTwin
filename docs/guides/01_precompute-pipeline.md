@@ -26,27 +26,40 @@ repository on this product line once overwrote a committed bake, and two release
 python data-pipeline/run.py
 ```
 
-This writes `data/derived/<case>/{trace,metrics}.json`, `data/derived/manifests/<case>.json`,
-`data/derived/manifests/index.json` and `data/derived/matrix.json`, then runs the release gate. It takes
-a few minutes: 17 cases at 31 seeds each.
+This writes one folder per scenario, `data/derived/<case>/{manifest,plan,loads,field,cuts,sectors,
+frames,volume}.json`, plus the rolled-up `data/derived/index.json`, and runs the gate on what it
+wrote. Twenty-two scenarios, one seed each, and it is not fast: routing every load, flooding the pad
+for reachability and relaxing the whole field after every operation is tens of seconds per few
+hundred loads, so the full matrix is tens of minutes even run in parallel.
+
+`--output` writes somewhere else and is what CI and every test use. Omitting it writes the CANONICAL
+tree, which is the one the site serves, so the default is deliberately the one that hurts if you get
+it wrong.
 
 ## Validate an existing tree
 
 ```bash
-python data-pipeline/run.py --validate-only
+python scripts/check_artifacts.py
 ```
 
-Checks completeness (every registered case present), integrity (every trace still hashes to what its
-manifest recorded), the invariants and control verdicts recorded at bake time, and lane honesty (no case
-tagged `live` while the gate recorded a reason it should not be).
+Checks what is COMMITTED rather than what a run had in memory. Completeness in both directions, which
+is the half that is easy to miss: every scenario the registry DECLARES must be shipped, not merely
+every shipped scenario well formed, because a validator that iterates the output cannot see something
+absent. Then the invariants re-read from the files: zero cell pairs over the angle of repose, the
+ledger agreeing with the terrain, mass conserved to one part in a million, no cell below original
+ground. Then the reclaim must be watchable and served: reclaim frames present on every sequential
+case, a position on every cut, and a truck routed to it.
 
 ## Regenerate the derived documentation and the case registry
 
 ```bash
-python scripts/export_cases.py        # frontend/src/engine/cases.generated.ts
-python scripts/gen_docs.py            # docs/cases/*.md and docs/data-contract.md
-python scripts/make_arch_svgs.py      # the five architecture-modal diagrams
+python scripts/gen_docs.py            # docs/scenarios/*.md and docs/data-contract.md
 ```
 
-Each has a `--check` mode that CI runs, so a stale generated file fails the build instead of quietly
+It has a `--check` mode that CI runs, so a stale generated page fails the build instead of quietly
 disagreeing with the code.
+
+There is no case-registry export: the TypeScript mirror of the case list is gone with the TypeScript
+engine, so there is no second copy to drift. And there is no architecture-diagram generator: ADR-0058
+makes those five files hand-authored source, and the generator that used to own them is exactly what
+let the whole set drift as one block.

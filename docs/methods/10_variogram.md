@@ -28,7 +28,7 @@ TypeScript lanes where an optimiser's convergence path would not.
 
 ## Why it earns its place
 
-The fitted range, compared against the tonnes laid down per stacker pass, is what decides whether the
+The fitted range, compared against the tonnes laid down per lift, is what decides whether the
 layers a cut crosses are independent. It is the single most useful diagnostic in the product for
 explaining why one configuration blends and another does not.
 

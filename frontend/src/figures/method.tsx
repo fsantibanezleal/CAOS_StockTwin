@@ -810,7 +810,7 @@ export function FigPipeline({ t }: { t: L }) {
         {t('the published engine, pinned', 'el motor publicado, fijado')}
       </text>
       <text className="mf-m" x="20" y="86">
-        bedblend 0.05.002 (MIT)
+        bedblend {__ENGINE_VERSION__} (MIT)
       </text>
       <text className="mf-s" x="20" y="108">
         {t('routes every load over the trafficable', 'rutea cada carga sobre la superficie')}
