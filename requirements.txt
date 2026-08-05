@@ -9,6 +9,6 @@
 #
 # bedblend itself declares no dependencies, so this whole lane installs in seconds and every test
 # runs with no heavy engine present.
-bedblend==0.7.1
+bedblend==0.7.2
 
 numpy>=1.26

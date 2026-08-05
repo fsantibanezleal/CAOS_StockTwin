@@ -88,24 +88,39 @@ shear rate, `q = kappa (U/H) d`. Then
 and **U has cancelled**: how fast the layer runs does not change how much it sieves per metre of slope,
 because a slower layer takes longer over the same path.
 
-**Which regime binds, measured rather than assumed.** For run-of-mine rock at a 120 mm d50 the
-flux-limited thickness `Q/U` comes out between 0.09 and 0.35 m across every drop and angle the product
-runs, against a grain floor of 0.60 m. The layer is GRAIN-limited in every case and never flux-limited,
-so `H` is constant and `Sr` is proportional to the path length `L = drop / sin(t)` alone.
+**Which regime binds, measured across the loads that actually occur.** Both do, and an earlier
+version of this page got that wrong by sampling only tall faces. With `Q = 1 m2/s` and a grain floor
+of 0.60 m for a 120 mm d50, the crossover sits at a drop of about **1.02 m** at 37 degrees. Measured
+over the 16762 loads that formed a face in the shipped scenarios, median drop 1.38 m: **42 percent are
+flux-limited and 58 percent grain-limited.** The product straddles the crossover rather than sitting
+on one side of it.
 
-### The disagreement
+    flux-limited   H = Q/U      Sr = kappa d L U^2 / Q^2   rises steeply with drop AND with angle
+    grain-limited  H = h_min    Sr = kappa d L / h_min^2   rises with drop, FALLS with angle
 
-That makes kinetic sieving rise with the drop height, which is the published direction, and **fall
-gently with the face angle**, because a steeper face is a shorter run from crest to toe. The sources
-say the opposite about angle: steeper faces "create faster material flow down the face, increasing
-trajectory segregation".
+In the grain-limited regime the thickness stops responding to anything, so all that is left of the
+face angle is the path length `L = drop / sin(t)`, which a steeper face shortens.
 
-Both are right, about different mechanisms. Trajectory segregation is BALLISTIC and Gray-Thornton's
-equation does not contain it. The fitted curve this page used to describe had merged the two, so it
-made a single index rise with angle and read as agreement with the source; it agreed because it had no
-way to disagree. The engine now reports them separately: the on-face sieving index, and the material
-thrown clear of the toe, which grows with angle and is almost pure coarse. A reader can check each
-against the source it came from.
+### Where the solver and the sources agree, and where they part
+
+Steeper faces are reported to "create faster material flow down the face, increasing trajectory
+segregation". Measured on this solver at 35, 37, 40 and 45 degrees:
+
+| drop | 35 deg | 37 deg | 40 deg | 45 deg | |
+|---|---|---|---|---|---|
+| 0.50 m | 0.022 | 0.041 | 0.062 | 0.071 | rises with angle, as reported |
+| 1.54 m | 0.212 | 0.256 | 0.240 | 0.218 | turns over |
+| 11.06 m | 1.928 | 1.838 | 1.721 | 1.564 | falls with angle |
+
+**The reported direction is the flux-limited one**, which is 42 percent of loads and the regime a
+truck tipping over a modest crest is in. A tall face reverses it, because the layer has bottomed out
+on its own grains and only the shortened run remains. Trajectory segregation, which is ballistic and
+which this equation does not contain, is reported separately as the overrun and rises with angle
+throughout.
+
+None of that is imposed. The fitted curve this replaced made a single index rise with angle
+everywhere, which read as agreement with the source and was really a model with no way to disagree,
+nor any way to be right for a different reason in a different regime.
 
 A face standing below the material's dynamic friction angle does not avalanche, so it does not sort,
 and the model says so. The old angle term was a ramp from 28 degrees with nothing physical underneath
