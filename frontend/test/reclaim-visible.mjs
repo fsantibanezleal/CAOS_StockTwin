@@ -46,25 +46,33 @@ try {
     const stage = page.locator(SEL).first();
     await stage.waitFor({ state: 'attached', timeout: 30000 });
 
-    const marks = page.locator('.st-play-marks button[data-cut]');
-    await marks.first().waitFor({ state: 'attached', timeout: 30000 }).catch(() => {});
-    const nMarks = await marks.count();
-    check(nMarks > 0, `[${theme}] the play track carries ${nMarks} clickable cut marks`);
-    if (!nMarks) {
-      await page.close();
-      continue;
-    }
+    // DRIVEN THROUGH THE SCRUB, which is the control a reader actually has. This used to click cut
+    // ticks on the track; those were removed because on a 90-cut campaign they covered three quarters
+    // of the scrub and made the timeline undraggable. A gate must not be the reason a control exists.
+    const scrub = page.locator('.st-play-scrub');
+    await scrub.waitFor({ state: 'visible', timeout: 30000 });
+    const max = Number(await scrub.getAttribute('max'));
+    check(max > 0, `[${theme}] the timeline has ${max} steps`);
+    const seek = (v) =>
+      scrub.evaluate((el, val) => {
+        const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;
+        setter.call(el, String(val));
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }, v);
 
     // A BUILD FRAME FIRST, so the reclaim assertion has something to differ from. Without it the
     // gate cannot tell "the machines were drawn" from "the attribute is always set".
+    await seek(Math.round(max * 0.5));
+    await page.waitForTimeout(900);
     const before = await stage.getAttribute('data-machines');
     const shotBefore = await canvas.screenshot();
     check(
       !(before ?? '').includes('loader'),
-      `[${theme}] a frame with no cut selected draws no loader (declared "${before}")`,
+      `[${theme}] a build frame draws no loader (declared "${before}")`,
     );
 
-    await marks.nth(nMarks - 1).click();
+    // Into the reclaim half of the timeline, where the machines belong.
+    await seek((max * 0.9).toFixed(2));
     // WAIT for the declaration to change rather than sampling and hoping. Sampling for a state
     // instead of waiting for it is how the focus gate passed while the return button was unclickable.
     await page

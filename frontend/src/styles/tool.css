@@ -422,32 +422,6 @@
   min-width: 0;
 }
 
-.st-play-marks {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.st-play-marks button {
-  position: absolute;
-  top: 50%;
-  width: 8px;
-  height: 14px;
-  margin-left: -4px;
-  padding: 0;
-  transform: translateY(-50%);
-  border: 0;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--color-warn, #d29922) 82%, transparent);
-  pointer-events: auto;
-  cursor: pointer;
-}
-
-.st-play-marks button:hover {
-  background: var(--color-warn, #d29922);
-  height: 18px;
-}
-
 .st-play-scrub {
   /* Shrinkable to nothing rather than a fixed floor: the floor is what pushed the speed control
      twenty-nine pixels off the right edge of a 1600px viewport. */

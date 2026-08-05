@@ -29,8 +29,6 @@ interface Props {
   total?: number;
   /** Cuts taken during the build, so the readout can say the loader is already working. */
   concurrentCuts?: number;
-  /** Timeline positions of every reclaim cut, marked on the scrub so the reader can find them. */
-  marks?: number[];
   /** Fractional position through the build, in loads. `2.4` is 40 percent through the third load. */
   pos: number;
   onPos: (p: number) => void;
@@ -45,7 +43,7 @@ const BASE_LOADS_PER_S = 1.5;
 
 const SPEEDS = [0.5, 1, 2, 5];
 
-export default function PlayBar({ frames, total, pos, onPos, lang = 'en', concurrentCuts = 0, marks = [] }: Props) {
+export default function PlayBar({ frames, total, pos, onPos, lang = 'en', concurrentCuts = 0 }: Props) {
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
   const nBuild = frames?.frames.length ?? 0;
   const n = total ?? nBuild;
@@ -138,9 +136,12 @@ export default function PlayBar({ frames, total, pos, onPos, lang = 'en', concur
       </button>
       {/* The scrub is continuous, not stepped: a load is a duration, so half way through one is a
           real position and the reader is allowed to stop there. */}
-      {/* THE CUTS ARE MARKED ON THE TRACK. A reader cannot look for something whose position is
-          invisible: at eight loads out of 745 a cut is a tenth of the bar, and hunting for the
-          orange truck by dragging was a lottery. Each tick is a cut, and clicking one jumps to it. */}
+      {/* NO MARKS ON THE TRACK. Ticking every cut was meant to make the reclaim findable, and on a
+          campaign with 90 cuts it did the opposite: 90 ticks at 8px across a 982px track is 720px of
+          yellow, which reads as a solid bar rather than as marks, and because each tick re-enables
+          pointer events inside the marks overlay it also swallowed three quarters of the scrub's own
+          hit area. The control that mattered, dragging to a frame, stopped working so that a hint
+          could be displayed. The scrub is the control; it is left alone. */}
       <span className="st-play-track">
         <input
           className="st-play-scrub"
@@ -152,22 +153,6 @@ export default function PlayBar({ frames, total, pos, onPos, lang = 'en', concur
           onChange={(e) => { viz.pause(); onPos(Number(e.target.value)); }}
           aria-label={t('Build progress', 'Avance de la construcción')}
         />
-        {marks.length > 0 && n > 1 && (
-          <span className="st-play-marks" aria-hidden="true">
-            {marks.map((m, i) => (
-              <button
-                key={i}
-                type="button"
-                // Addressable, so the release gate can click a cut and check the reclaim machines
-                // are actually on screen. A mark nothing can select is a mark nothing can verify.
-                data-cut={i}
-                style={{ left: `${(m / (n - 1)) * 100}%` }}
-                title={t(`Cut ${i + 1}: jump here`, `Corte ${i + 1}: saltar aquí`)}
-                onClick={() => { viz.pause(); onPos(m + 0.5); }}
-              />
-            ))}
-          </span>
-        )}
       </span>
 
       {/* The readout says which half of the operation is on the stage: loads going on, or cuts

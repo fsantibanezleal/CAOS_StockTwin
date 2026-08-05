@@ -9,6 +9,38 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.06.001] - 2026-08-05
+
+Three things the release broke or left broken on the stage, all reported by watching the app.
+
+### Fixed
+
+- **The timeline was unusable.** Every reclaim cut was ticked on the scrub track, and on a 90-cut
+  campaign that is 90 ticks at 8px across a 982px track: 720px of yellow, which reads as a solid bar
+  rather than as marks. Worse, each tick re-enabled pointer events inside the marks overlay, so three
+  quarters of the scrub's own hit area belonged to the ticks and dragging to a frame mostly did
+  nothing. A hint had been allowed to break the control it was hinting about. The ticks are gone and
+  the scrub is the scrub again.
+
+- **The haul truck's tray floated a truck's height above the chassis and swung away from it.** The
+  tray's height was applied twice, once on the tray and again on its pivot, putting it at y = 8.6
+  with the chassis topping out at 2.9. It is now hinged properly: the pivot sits where the tray's
+  back edge rests on the deck, the pivot rotates, and the tray hangs forward of it, so the tailgate
+  end stays put and only the nose rises.
+
+- **Machines were half buried in the pile.** A machine is a rigid box about eleven metres long, drawn
+  axis-aligned and level, and it was placed at the ground height under its CENTRE. A stockpile is
+  mostly flank, and on a flank the uphill half of the box goes into the hill. They now stand on the
+  highest ground under their own footprint. The downhill end can sit slightly proud, which reads as a
+  machine; sunk to its windows does not.
+
+- **The renderer's declaration of what it drew was a lie.** `data-machines` pushed `loader,truck`
+  whenever a reclaim frame ran, but each machine is drawn behind its own guard. The release gate that
+  reads that attribute would have passed with neither drawn, which is the exact defect it exists to
+  catch. Each name is now pushed where the machine is actually built, and the gate correspondingly
+  reports `haul` on a build frame instead of nothing.
+
+
 ## [0.06.000] - 2026-08-04
 
 Engine 0.07.001. Two defects of the same kind: the code that was documented and the code that ran
