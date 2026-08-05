@@ -158,6 +158,9 @@ export default function PlayBar({ frames, total, pos, onPos, lang = 'en', concur
               <button
                 key={i}
                 type="button"
+                // Addressable, so the release gate can click a cut and check the reclaim machines
+                // are actually on screen. A mark nothing can select is a mark nothing can verify.
+                data-cut={i}
                 style={{ left: `${(m / (n - 1)) * 100}%` }}
                 title={t(`Cut ${i + 1}: jump here`, `Corte ${i + 1}: saltar aquí`)}
                 onClick={() => { viz.pause(); onPos(m + 0.5); }}

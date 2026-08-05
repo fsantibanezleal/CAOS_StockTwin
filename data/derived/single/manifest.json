@@ -1,1 +1,152 @@
-{"assay_variables":[{"decimals":3,"hi":1.1,"key":"cu","label":"Cu","lo":0.3,"unit":"%"},{"decimals":0,"hi":450.0,"key":"mo","label":"Mo","lo":20.0,"unit":"ppm"},{"decimals":3,"hi":0.3,"key":"au","label":"Au","lo":0.01,"unit":"g/t"},{"decimals":2,"hi":6.0,"key":"ag","label":"Ag","lo":0.5,"unit":"g/t"},{"decimals":2,"hi":7.0,"key":"fe","label":"Fe","lo":1.5,"unit":"%"},{"decimals":1,"hi":18.0,"key":"clay","label":"clay","lo":1.0,"unit":"%"},{"decimals":2,"hi":8.5,"key":"ph","label":"natural pH","lo":4.0,"unit":""},{"decimals":2,"hi":12.0,"key":"moisture","label":"moisture","lo":1.5,"unit":"%"},{"decimals":1,"hi":94.0,"key":"recovery","label":"estimated recovery","lo":58.0,"unit":"%"}],"build":{"dozer_passes":56,"loads_placed":744,"mean_displacement_m":19.52,"peak_m":13.71,"profiles":{"comet":136,"oval":255,"paddock":138,"rectangular":92,"sloughed_heap":123},"refusal_rate":0.1733,"volume_m3":79329.8},"category":"reference","engine":"bedblend","files":["plan.json","loads.json","sectors.json","field.json","cuts.json","frames.json","volume.json"],"frames":745,"gate":{"kill_criterion":{"en":"Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.","es":"Ningún par de celdas puede quedar más empinado que el ángulo de reposo impuesto al final de la construcción, y la masa debe conservarse hasta 1e-6 del volumen colocado. El predecesor terminó con 446 pares sobre el ángulo, el peor a 55,9 grados contra un impuesto de 37, que es lo que hacía que la pila se viera con púas."},"ledger_agrees_with_terrain":true,"loads_offered":900,"loads_placed":744,"mass_residual_rel":0.0,"pairs_over_repose":0,"refusal_rate":0.1733,"stable_tolerance_deg":1.0,"worst_local_slope_deg":37.0},"id":"single","material":{"loose_density_t_m3":1.957,"repose_deg":37.0},"pad":{"cell_m":2.5,"nx":60,"ny":60},"reason":"The reference case for the physics. One area, one material class, nothing competing for attention, so the two construction phases and the four dump profiles can actually be seen.","reclaim":{"n_cuts":24,"tonnes":21137.4},"seed":20260802,"stream":{"loads_per_block":20,"measured_range_t":5242.5,"n_loads":900,"var_in":0.02873124},"summary":{"en":"A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.","es":"Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."},"tags":["basic","physics"],"title":{"en":"One working stock","es":"Un acopio en operacion"}}
+{
+  "assay_variables": [
+    {
+      "decimals": 3,
+      "hi": 1.1,
+      "key": "cu",
+      "label": "Cu",
+      "lo": 0.3,
+      "unit": "%"
+    },
+    {
+      "decimals": 0,
+      "hi": 450.0,
+      "key": "mo",
+      "label": "Mo",
+      "lo": 20.0,
+      "unit": "ppm"
+    },
+    {
+      "decimals": 3,
+      "hi": 0.3,
+      "key": "au",
+      "label": "Au",
+      "lo": 0.01,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 6.0,
+      "key": "ag",
+      "label": "Ag",
+      "lo": 0.5,
+      "unit": "g/t"
+    },
+    {
+      "decimals": 2,
+      "hi": 7.0,
+      "key": "fe",
+      "label": "Fe",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 18.0,
+      "key": "clay",
+      "label": "clay",
+      "lo": 1.0,
+      "unit": "%"
+    },
+    {
+      "decimals": 2,
+      "hi": 8.5,
+      "key": "ph",
+      "label": "natural pH",
+      "lo": 4.0,
+      "unit": ""
+    },
+    {
+      "decimals": 2,
+      "hi": 12.0,
+      "key": "moisture",
+      "label": "moisture",
+      "lo": 1.5,
+      "unit": "%"
+    },
+    {
+      "decimals": 1,
+      "hi": 94.0,
+      "key": "recovery",
+      "label": "estimated recovery",
+      "lo": 58.0,
+      "unit": "%"
+    }
+  ],
+  "build": {
+    "dozer_passes": 56,
+    "loads_placed": 744,
+    "mean_displacement_m": 17.55,
+    "peak_m": 9.92,
+    "profiles": {
+      "comet": 136,
+      "oval": 255,
+      "paddock": 138,
+      "rectangular": 92,
+      "sloughed_heap": 123
+    },
+    "refusal_rate": 0.1733,
+    "volume_m3": 52560.0
+  },
+  "category": "reference",
+  "engine": "bedblend",
+  "files": [
+    "plan.json",
+    "loads.json",
+    "sectors.json",
+    "field.json",
+    "cuts.json",
+    "frames.json",
+    "volume.json"
+  ],
+  "frames": 745,
+  "gate": {
+    "kill_criterion": {
+      "en": "Zero cell pairs may stand steeper than the imposed angle of repose at the end of the build, and mass must be conserved to 1e-6 of the volume placed. The predecessor finished with 446 over-steep pairs, the worst at 55.9 degrees against an imposed 37, which is what the pile rendered as spikes.",
+      "es": "Ning\u00fan par de celdas puede quedar m\u00e1s empinado que el \u00e1ngulo de reposo impuesto al final de la construcci\u00f3n, y la masa debe conservarse hasta 1e-6 del volumen colocado. El predecesor termin\u00f3 con 446 pares sobre el \u00e1ngulo, el peor a 55,9 grados contra un impuesto de 37, que es lo que hac\u00eda que la pila se viera con p\u00faas."
+    },
+    "ledger_agrees_with_terrain": true,
+    "loads_offered": 900,
+    "loads_placed": 744,
+    "mass_residual_rel": 0.0,
+    "pairs_over_repose": 0,
+    "refusal_rate": 0.1733,
+    "stable_tolerance_deg": 4.0,
+    "worst_local_slope_deg": 37.0
+  },
+  "id": "single",
+  "material": {
+    "loose_density_t_m3": 1.957,
+    "repose_deg": 37.0
+  },
+  "pad": {
+    "cell_m": 2.5,
+    "nx": 60,
+    "ny": 60
+  },
+  "reason": "The reference case for the physics. One area, one material class, nothing competing for attention, so the two construction phases and the four dump profiles can actually be seen.",
+  "reclaim": {
+    "mode": "after",
+    "n_cuts": 24,
+    "tonnes": 72000.0
+  },
+  "seed": 20260802,
+  "stream": {
+    "loads_per_block": 20,
+    "measured_range_t": 5242.5,
+    "n_loads": 900,
+    "var_in": 0.02873124
+  },
+  "summary": {
+    "en": "A single ROM stockpile on a prepared pad. Trucks arrive at the stock, spot against the working face, discharge and leave. The haul from the pit is out of frame so that the construction itself is legible: the base layer goes down as paddock heaps, the dozer turns them into a floor, and the upper lift then advances a crest.",
+    "es": "Un solo acopio ROM sobre una plataforma preparada. Los camiones llegan al acopio, se ubican contra la cara de trabajo, descargan y se retiran. El transporte desde el rajo queda fuera de cuadro para que la construccion sea legible: la capa base se coloca como montones de paddock, el bulldozer los convierte en piso, y el banco superior avanza una cresta."
+  },
+  "tags": [
+    "basic",
+    "physics"
+  ],
+  "title": {
+    "en": "One working stock",
+    "es": "Un acopio en operacion"
+  }
+}

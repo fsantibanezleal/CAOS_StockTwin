@@ -36,6 +36,13 @@ jobs:
         run: python data-pipeline/run.py single --loads 120 --output "${{ runner.temp }}/st-smoke"
       - name: CONTRACT 2, manifests and artifacts consistent (no drift)
         run: python scripts/check_artifacts.py
+      # Every method the ladder rates SOTA must name code the pipeline actually runs. The engine
+      # carried a complete, tested Gray-Thornton solver that nothing in any shipped path called,
+      # while three fitted curves stood in for it and every document described the solver. No
+      # existing check could see that, because the docs agreed with each other and the solver's own
+      # tests exercised the solver directly.
+      - name: Every SOTA method is backed by code the bake reaches
+        run: python scripts/check_method_ladder.py
       # The core job has only the core lane, so this executes the one example that lives there and
       # reports the rest as skipped with their reason. The `examples` job below installs the
       # precompute lane and runs the others for real.
@@ -123,6 +130,16 @@ jobs:
           npx vite preview --port 4188 --strictPort --host 127.0.0.1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:4188/ >/dev/null && break; sleep 1; done
           node test/focus-flow.mjs http://127.0.0.1:4188
+        working-directory: frontend
+      # SOMETHING COMES FOR THE ORE, verified on the stage rather than in the numbers. The reclaim
+      # shipped for several releases with correct tonnages and no machine attending them: the ore
+      # left the ledger and nothing on site carried it away. Every test asserted numbers, and the
+      # defect was a missing machine, so nothing caught it until a reader looked.
+      - name: THE RECLAIM IS ON THE STAGE, in both themes
+        run: |
+          npx vite preview --port 4189 --strictPort --host 127.0.0.1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:4189/ >/dev/null && break; sleep 1; done
+          node test/reclaim-visible.mjs http://127.0.0.1:4189
         working-directory: frontend
 
   guards:

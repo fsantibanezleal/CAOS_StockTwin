@@ -191,12 +191,36 @@ def test_the_sidehill_has_real_relief_and_the_flat_pads_do_not(baked):
 
 
 def test_segregation_reaches_the_ledger(baked):
-    """A flat coarse field would mean the sorting never got past the solver."""
-    for sid in ("single", "yard", "sidehill"):
-        bake, _ = baked[sid]
+    """Where a face formed, the sorting must reach the ledger. Where none formed, nothing may move.
+
+    ASKED OF EACH SCENARIO RATHER THAN OF A HAND-PICKED LIST. The list was `single`, `yard` and
+    `sidehill`, and `yard` does not belong on it at this budget: five dump areas share the loads, so
+    at 140 each area is still laying its paddock base layer and nothing ever cascades over a face. A
+    flat coarse field there is the CORRECT answer, and this test was red on develop for exactly that
+    reason before anyone looked at why. Deriving the expectation from whether a face formed cannot go
+    stale when the matrix changes, and it pins the inverse defect too: a coarse field that varies on a
+    pile with no face is sorting that did not come from the solver.
+    """
+    sorted_cases = 0
+    for sid, (bake, _out) in sorted(baked.items()):
         cf = [v for v in bake.result.model.coarse_field() if v is not None]
         assert cf, f"{sid} has no coarse field at all"
-        assert max(cf) - min(cf) > 0.01, f"{sid} coarse field is flat, so nothing sorted"
+        spread = max(cf) - min(cf)
+        faced = [r for r in bake.result.loads if r.placed and r.sr > 0]
+        if faced:
+            sorted_cases += 1
+            assert spread > 0.01, (
+                f"{sid}: {len(faced)} loads cascaded over a face and the coarse field is still flat, "
+                f"so the solver's answer never reached the ledger"
+            )
+        else:
+            assert spread < 1e-9, (
+                f"{sid}: no load ever formed a face, yet the coarse field varies by {spread:.4f}. "
+                f"Sorting with nothing to sort along did not come from the solver."
+            )
+    assert sorted_cases >= 3, (
+        f"only {sorted_cases} scenarios reached a face at this budget, too few to test the coupling"
+    )
 
 
 def test_the_topography_report_shows_only_heaped_fill_is_flat():

@@ -11,7 +11,7 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [0.06.000] - 2026-08-04
 
-Engine 0.07.000. Two defects of the same kind: the code that was documented and the code that ran
+Engine 0.07.001. Two defects of the same kind: the code that was documented and the code that ran
 were different code, and nothing compared them. Both were found by reading what the product actually
 produced rather than by reading the product.
 
@@ -50,6 +50,13 @@ produced rather than by reading the product.
 
 - **Cuts carry the size of the feed they delivered** (`coarse`). The engine modelled the sorting in
   detail and discarded the answer at the one moment it became a number a plant would care about.
+
+- **The truck no longer parks on the cell the loader is digging** (engine 0.07.001). Found by this
+  product's own test suite the moment the compact bite landed: with the footprint reduced, the cut
+  centroid lands on freshly levelled and perfectly drivable ground, so the nearest stand to the loader
+  became the loader's own cell. Measured on `intensive_drain`, a separation of exactly zero. Two
+  machines in one cell is the defect the reclaim module was written to remove, and the old geometry
+  had been hiding it behind a skim.
 
 ### Added
 

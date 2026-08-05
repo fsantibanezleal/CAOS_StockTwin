@@ -1,7 +1,7 @@
 {
   "name": "stocktwin-frontend",
   "private": true,
-  "version": "0.5.0",
+  "version": "0.6.0",
   "type": "module",
   "scripts": {
     "predev": "node copy-data.mjs",
@@ -11,7 +11,8 @@
     "postbuild": "node spa-404.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "gate:flow": "vite preview --port 4173 --strictPort & sleep 4 && node test/focus-flow.mjs && kill %1"
+    "gate:flow": "vite preview --port 4173 --strictPort & sleep 4 && node test/focus-flow.mjs && kill %1",
+    "gate:reclaim": "vite preview --port 4189 --strictPort & sleep 4 && node test/reclaim-visible.mjs http://127.0.0.1:4189 && kill %1"
   },
   "dependencies": {
     "@fasl-work/caos-app-shell": "^0.3.0",

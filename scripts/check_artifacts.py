@@ -188,21 +188,25 @@ def main() -> None:
                     f"machine digging it. A cut is bounded by the loader's reach and takes a bench "
                     f"lift at a time; check `LoaderSpec` is wired into the reclaim faces."
                 )
-            # And it has to SCALE with the tonnage rather than being the same slab every time. A
-            # constant footprint across a tenfold range of cut sizes is the signature of the defect.
-            if len(sized) >= 8:
-                sized.sort()
-                lo = sized[: len(sized) // 4]
-                hi = sized[-(len(sized) // 4) :]
-                lo_t = sum(t for t, _ in lo) / len(lo)
-                hi_t = sum(t for t, _ in hi) / len(hi)
-                lo_a = sum(a for _, a in lo) / len(lo)
-                hi_a = sum(a for _, a in hi) / len(hi)
-                if hi_t > 1.5 * lo_t and hi_a <= lo_a:
+            # AND IT MUST NOT SATURATE. The defect's other signature is a footprint that pins to the
+            # same value cut after cut, because the value is the whole face rather than anything the
+            # machine chose. Measured across the 22 scenarios, the share of cuts sitting at the
+            # campaign's own maximum footprint ran to a mean of 0.371 and a worst case of 1.000, a
+            # whole scenario where every single cut engaged the entire slab; it is now 0.052 and 0.167.
+            #
+            # Deliberately NOT a check that the footprint grows with the tonnage. That holds only at
+            # constant pile thickness, and a concurrent scenario reclaims a pile that thickens under
+            # it, so its early cuts are small and wide and its late cuts large and compact. Tonnage
+            # and area are genuinely anti-correlated there, and a gate saying otherwise fails correct
+            # work. Saturation does not care how thick the pile is.
+            if len(sized) >= 6:
+                peak = max(a for _, a in sized)
+                at_peak = sum(1 for _, a in sized if a >= peak * 0.995) / len(sized)
+                if at_peak > 0.35:
                     fail(
-                        f"{sid}: cuts averaging {hi_t:.0f} t disturb {hi_a:.0f} m2 while cuts "
-                        f"averaging {lo_t:.0f} t disturb {lo_a:.0f} m2. The footprint does not "
-                        f"respond to the tonnage, so it is not the machine that is setting it."
+                        f"{sid}: {at_peak:.0%} of cuts engage the same {peak:.0f} m2 footprint. A "
+                        f"footprint that pins to one value is the face, not the machine; check "
+                        f"`LoaderSpec` is wired into the reclaim faces."
                     )
 
         # THE SIZE OF THE FEED must be carried, and must not be zero. `coarse_fraction` died silently

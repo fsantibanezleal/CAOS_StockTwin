@@ -616,6 +616,11 @@ export default function SiteView3D({
       );
     };
 
+    // WHAT THIS FRAME PUTS ON THE STAGE, collected as it is drawn and published below for the
+    // release gate. Declared out here rather than beside the machines because the machines are
+    // drawn inside the paths block and the declaration has to outlive it.
+    const machines: string[] = [];
+
     if (showPaths) {
       if (play) {
         // THE TRUCK IS DRIVING. Trail solid behind it, road ahead faint, so a paused frame still
@@ -650,6 +655,14 @@ export default function SiteView3D({
       // haul truck, which arrives loaded and leaves empty, and the two are drawn to the same
       // silhouette so the comparison is legible: same chassis, same cab, same tray, opposite cargo.
       if (play?.job === 'reclaim') {
+        // THE RENDERER DECLARES WHAT IT PUT ON THE STAGE, so a release gate can check that the
+        // machines are there instead of guessing from pixels. Guessing does not work here and the
+        // attempt is worth recording: sampling the drawing buffer for orange matched 21022 pixels of
+        // TERRAIN with no cut selected at all, and narrowing it to the livery's hue did not separate
+        // them either, because the light-theme ground sits in the same band. A gate built on that
+        // would have passed whether or not a machine was ever drawn, which is precisely the defect
+        // it exists to catch.
+        machines.push('loader', 'truck');
         const orange = new THREE.MeshLambertMaterial({ color: dark ? 0xff9d4d : 0xe07b1f });
         const steel = new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 });
 
@@ -754,6 +767,7 @@ export default function SiteView3D({
         // the material slides backwards and out, which is what a body-up haul truck does. The tray
         // is drawn as a floor and two side walls rather than a closed box so the load inside it is
         // visible at all.
+        machines.push('haul');
         const tipping = play.phase === 'tip';
         const lift = tipping ? Math.sin(Math.min(play.sub, 1) * Math.PI) : 0;   // up and back down
         const pitch = -0.95 * lift;
@@ -803,6 +817,13 @@ export default function SiteView3D({
         body.rotation.y = -heading;
         L.content.add(body);
       }
+    }
+
+    // WHAT THIS FRAME PUT ON THE STAGE, published for the release gate. See the note beside the
+    // reclaim branch: a pixel sampler could not tell the machines from the ground, so the renderer
+    // says what it drew instead of the gate guessing.
+    if (host.current) {
+      host.current.dataset.machines = machines.join(',');
     }
 
     // The shovel.
