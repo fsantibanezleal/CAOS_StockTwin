@@ -52,6 +52,14 @@ FORBIDDEN_CONTENT = (
     "PENDING-training",
     "EX01_subcritical",
     "EX02_epidemic",
+    # `stlab` was the package name this product was instantiated with, and then the product stopped
+    # declaring a package at all (ADR-0057). What survived was worse than a stale name: two guides and
+    # two architecture pages documented `stlab.stages.calibrate`, `stlab/core/rng.py::derive` and
+    # `stlab/core/gate.py::classify_lane()`, none of which existed in any form, and the pipeline
+    # README described a seven-module layout that was pure template. Documentation naming a module
+    # that is not there is this product line's most expensive recurring defect, so the dead namespace
+    # is banned outright rather than left to be noticed.
+    "stlab",
 )
 
 TEXT_SUFFIXES = {

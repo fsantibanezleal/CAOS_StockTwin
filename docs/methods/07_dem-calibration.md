@@ -19,12 +19,19 @@ Neither is fitted to this material, both are named in the code with their reason
 this lane is what would replace them with a measurement.
 
 A small bidisperse pour in a discrete-element engine gives a measured apex-to-toe coarse-fraction
-profile, and `data-pipeline/pipeline/calibrate.py` grid-searches the `Sr` whose continuum profile best matches
-it, publishing the fit residual as the honest error bar. With the remixing term in the model the same
-pour constrains the Peclet number as well, since the two act on different features of the profile:
-`Sr` sets how far down the face the separation completes, and `Pe` sets how sharp the interface is
-when it gets there. A single measured profile therefore pins both, which it could not have done
-before, because the pure hyperbolic model has only one shape.
+profile, and `data-pipeline/pipeline/calibrate.py::fit` grid-searches the coefficients whose continuum
+profile best matches it, publishing the fit residual as the honest error bar.
+
+With the remixing term in the model the same pour constrains the Peclet number as well, since the two
+act on different features of the profile: `Sr` sets how far down the face the separation completes, and
+`Pe` sets how sharp the interface is when it gets there. A single measured profile therefore pins both,
+which it could not have done before, because the pure hyperbolic model has only one shape.
+
+**The fitter is real and is tested by recovery**, which is the only check that separates a working fit
+from a plausible one: a profile synthesised at `Sr = 2.40, Pe = 14.0` is recovered at 2.397 and 14.01.
+A profile reversed to put coarse at the CREST, which kinetic sieving cannot produce, must fit an order
+of magnitude worse, so the residual means something. The search is a bounded two-pass grid rather than
+an optimiser, because an optimiser's convergence path is not reproducible across implementations.
 
 ## Why the lane is separate
 

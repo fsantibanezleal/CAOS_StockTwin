@@ -12,7 +12,10 @@
 #
 #   conda env create -f environment-dem.yml
 #   conda activate stocktwin-dem
-#   python -m stlab.stages.dem --out models/dem
+#   python -c "import sys; sys.path.insert(0,'data-pipeline'); from pipeline.calibrate import fit; ..."
+#
+# The fitter itself needs no conda: `pipeline/calibrate.py` takes a measured apex-to-toe profile
+# from ANY source. This environment exists only to produce one with a discrete-element pour.
 name: stocktwin-dem
 channels:
   - conda-forge

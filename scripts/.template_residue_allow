@@ -1,3 +1,8 @@
 # Path fragments exempt from scripts/check_template_residue.py (one per line, '#' comments ignored).
 # A fragment matches if it appears anywhere in a tracked file's path. Keep this list tiny and
 # justified: it exists for the rare genuine collision, not to silence real residue.
+# A changelog is a record of what was true at each release, so an entry that names the package the
+# product used to declare is history rather than residue. Rewriting it would be the lie.
+CHANGELOG.md
+# Dated working notes, same reasoning.
+wip/

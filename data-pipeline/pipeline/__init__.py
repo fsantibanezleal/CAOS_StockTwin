@@ -1,4 +1,8 @@
-"""stlab, the StockTwin offline engine and shared analytic core (ADR-0057, ADR-0069).
+"""The StockTwin offline bake: product-specific plumbing over the `bedblend` engine.
+
+NOT a package to install and not the physics. The physics is `bedblend`, published from its own
+repository and consumed pinned; a product that declares its own package advertises a library nobody
+can install (ADR-0057, ADR-0069). Invoked by path from `data-pipeline/run.py`.
 
 StockTwin simulates a physical open-pit stockpile: haul trucks deposit lots onto a pad, the pile
 relaxes to its angle of repose, granular size segregation redistributes the material along each

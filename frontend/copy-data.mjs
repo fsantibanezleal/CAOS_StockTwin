@@ -3,7 +3,7 @@
 // is git-ignored.
 //
 // This script COPIES. It never runs science, never regenerates a trace and never writes into
-// data/derived. The canonical bake is an explicit release operation (`python -m stlab.pipeline`), and
+// data/derived. The canonical bake is an explicit release operation (`python data-pipeline/run.py`), and
 // keeping the two apart is what stops a web build from quietly changing the scientific evidence.
 import { cpSync, existsSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
