@@ -34,9 +34,18 @@ def is_emoji(cp: int) -> bool:
     return 0x1F000 <= cp <= 0x1FAFF or cp == EMOJI_SELECTOR
 
 
-TEXT_SUFFIXES = {
-    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".md", ".json",
-    ".css", ".html", ".yml", ".yaml", ".toml", ".txt", ".cfg", ".ini", ".svg",
+# AN ALLOW-LIST OF SUFFIXES IS THE WRONG SHAPE FOR THIS GATE, and it had a hole. Any tracked text
+# file that happened not to end in one of eighteen extensions was simply not read: measured, five
+# files carried eight em-dashes the gate could not see, among them `.gitignore`, `scripts/dev.sh`,
+# and two deployment templates. A rule that applies to "tracked content" has to be checked against
+# tracked content, not against a list of file types somebody remembered to add.
+#
+# So the filter is inverted: everything tracked is read EXCEPT what is provably binary. A file is
+# binary if it will not decode as UTF-8 or carries a NUL, which is the same test `git diff` uses, and
+# the handful of genuinely binary suffixes are skipped up front to avoid reading megabytes of them.
+BINARY_SUFFIXES = {
+    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".zip", ".gz", ".woff", ".woff2",
+    ".ttf", ".otf", ".eot", ".mp4", ".webm", ".parquet", ".npy", ".h5",
 }
 
 
@@ -50,7 +59,7 @@ def tracked_files() -> list[str]:
 def main() -> int:
     hits: list[str] = []
     for rel in tracked_files():
-        if rel == SELF or Path(rel).suffix.lower() not in TEXT_SUFFIXES:
+        if rel == SELF or Path(rel).suffix.lower() in BINARY_SUFFIXES:
             continue
         try:
             lines = (ROOT / rel).read_text(encoding="utf-8").splitlines()

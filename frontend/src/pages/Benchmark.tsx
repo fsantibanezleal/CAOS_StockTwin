@@ -185,8 +185,8 @@ export default function Benchmark() {
           </li>
           <li>
             {es
-              ? 'Las formas funcionales de la segregacion son las curvas mas simples que reproducen afirmaciones verbales publicadas. La direccion de cada efecto esta respaldada; las magnitudes no estan validadas contra DEM ni contra un ensayo de laboratorio.'
-              : 'The segregation functional forms are the simplest curves reproducing published verbal statements. The direction of each effect is supported; the magnitudes are not validated against DEM or a laboratory test.'}
+              ? 'La segregacion se resuelve con la ley de conservacion de Gray y Thornton mas el remezclado de Gray y Chugunov, no con curvas ajustadas. Lo que no esta validado son sus dos coeficientes anclados, el de percolacion y el de Peclet: ambos vienen de la literatura y ninguno esta medido contra DEM ni contra un ensayo de laboratorio sobre este material.'
+              : 'Segregation is solved with the Gray-Thornton conservation law plus Gray-Chugunov remixing, not with fitted curves. What is not validated is its two anchored coefficients, the percolation coefficient and the Peclet number: both come from the literature and neither is measured against DEM or a laboratory test on this material.'}
           </li>
           <li>
             {es

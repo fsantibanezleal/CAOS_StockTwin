@@ -9,6 +9,34 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.06.002] - 2026-08-05
+
+Engine 0.07.002. Findings from an adversarial audit of the release: 46 candidates from six
+independent auditors, 24 surviving a refutation pass. These are the ones on this side.
+
+### Fixed
+
+- **The live app still told the reader the segregation model was fitted curves with one free
+  parameter.** The Methodology honesty callout and the Benchmark page's "What is NOT done" list both
+  described the model that 0.06.000 replaced, and the segregation diagram still taught the SHIFT
+  coupling that the changelog claimed had been removed. All three were on the deployed bundle. This is
+  the third time in two releases that the honest-limits text has been the LAST thing to learn what the
+  code does, which is the wrong way round for a section whose whole job is to be trustworthy.
+
+- **The regime claim was wrong, and the correction is more interesting than the error.** Method 4 said
+  the flowing layer is grain-limited in every case the product runs and derived a flat disagreement
+  with the sources about face angle from it. The crossover is at about 1.02 m of drop, and 42 percent
+  of the 16762 loads that form a face are flux-limited. The two regimes scale differently: flux-limited
+  the segregation number RISES with angle, which is the published direction, and grain-limited it
+  falls. The solver and the sources agree where most of the material is and part company on tall faces.
+
+- **The content-standards gate had a hole the shape of its own allow-list.** It read eighteen file
+  suffixes, so any tracked text file outside that list was never checked: five files carried eight
+  em-dashes it could not see, including `.gitignore`, `scripts/dev.sh` and two deploy templates. The
+  filter is inverted now, reading everything tracked except what is provably binary, and the eight are
+  fixed.
+
+
 ## [0.06.001] - 2026-08-05
 
 Three things the release broke or left broken on the stage, all reported by watching the app.

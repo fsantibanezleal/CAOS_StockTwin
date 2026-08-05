@@ -560,22 +560,22 @@ export function FigSegregation({ t }: { t: L }) {
 
       <rect className="mf-box-warn" x="440" y="144" width="252" height="94" rx="8" />
       <text className="mf-t" x="452" y="164">
-        {t('What is written to the ledger is a SHIFT', 'Lo que se escribe al registro es un DESPLAZAMIENTO')}
+        {t('What is written is the NEW parcel', 'Lo que se escribe es el lote NUEVO')}
       </text>
       <text className="mf-s" x="452" y="182">
-        {t('An avalanche also carries what it dislodged,', 'Una avalancha también arrastra lo que soltó,')}
+        {t('Each cell takes the local coarse fraction', 'Cada celda toma la fracción gruesa local')}
       </text>
       <text className="mf-s" x="452" y="196">
-        {t('from earlier dumps with their own splits.', 'de descargas previas con sus propias fracciones.')}
+        {t('of the station it lands in. The ledger stores', 'de la estación donde cae. El registro guarda')}
       </text>
       <text className="mf-s" x="452" y="210">
-        {t('Writing an absolute composition stamps this', 'Escribir una composición absoluta estampa la')}
+        {t('parcels, so recording a split for what was', 'lotes, así que anotar la granulometría de lo')}
       </text>
       <text className="mf-s" x="452" y="224">
-        {t("truck's size split onto older material.", 'granulometría de este camión sobre material viejo.')}
+        {t('just tipped cannot restamp what is beneath.', 'recién volcado no reescribe lo que está debajo.')}
       </text>
       <text className="mf-m" x="452" y="236">
-        Sr = 0 &#8658; {t('no lot touched', 'ningún lote tocado')}
+        Sr = 0 &#8658; {t('the load own unsorted split', 'la granulometría sin clasificar de la carga')}
       </text>
     </svg>
   );
