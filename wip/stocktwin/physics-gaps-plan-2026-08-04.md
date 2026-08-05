@@ -11,9 +11,8 @@
 | Self-weight compaction + degradation | `compaction-degradation-2026-08-04.md` | no (compaction), yes-with-caveats (degradation) | honest, compaction under-argued, degradation over-claimed |
 
 **Engine boundary.** The product declares no package. Every engine change below is a `bedblend`
-release in `D:\_Repos\_FASL_Projects\CAOS_BedBlend`, published to PyPI, then re-pinned in
-`D:\_Repos\_Web_Projects\CAOS_StockTwin\requirements.txt` and re-baked. Local bedblend is at
-`0.06.000`; StockTwin pins `bedblend==0.6.0`. StockTwin is at `0.05.000`.
+release in its own repository, https://github.com/fsantibanezleal/CAOS_BedBlend, published to
+PyPI, then re-pinned in this repository's `requirements.txt` and re-baked.
 
 **Everything quantitative below was re-derived in this session against the actual artifacts and the
 installed package, not copied from the dossiers.** The reproductions are listed in appendix A.

@@ -17,7 +17,7 @@ consistent; they are just not consistent with EACH OTHER, and no per-scenario ch
 So this refuses unless the bake is complete, every scenario exited zero, and every scenario in the
 registry is present. It replaces the destination wholesale rather than merging into it.
 
-    python scripts/install_bake.py E:/_Temp/rb13
+    python scripts/install_bake.py <bake-output-dir>
 """
 from __future__ import annotations
 
