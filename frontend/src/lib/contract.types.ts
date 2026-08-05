@@ -1,7 +1,8 @@
 // CONTRACT 2 mirrored in TypeScript. A drift against the Python schema fails `tsc --noEmit`, which is
 // the build, so the browser can never quietly read a shape the pipeline stopped writing.
 //
-// Source of truth: data-pipeline/stlab/core/trace.py and data-pipeline/stlab/core/manifest.py.
+// Source of truth: data-pipeline/pipeline/bake.py, which writes these artifacts, and
+// data-pipeline/pipeline/io/contract.py, which defines the ingestion contract.
 
 export const TRACE_SCHEMA = 'stocktwin.trace/v1';
 export const MANIFEST_SCHEMA = 'stocktwin.manifest/v1';

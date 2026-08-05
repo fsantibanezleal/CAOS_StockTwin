@@ -1,4 +1,7 @@
-"""Make ``stlab`` importable whether or not ``pip install -e .`` has run.
+"""Make ``pipeline`` importable without installing anything.
+
+This repo declares no package, so the bake is reached by putting ``data-pipeline/`` on the path
+rather than by an editable install.
 
 Belt and braces for CI and for a local clone that has not been installed."""
 import pathlib
