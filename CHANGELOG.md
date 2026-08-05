@@ -9,6 +9,75 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.06.000] - 2026-08-04
+
+Engine 0.07.000. Two defects of the same kind: the code that was documented and the code that ran
+were different code, and nothing compared them. Both were found by reading what the product actually
+produced rather than by reading the product.
+
+### Changed
+
+- **The Gray-Thornton solver is now what runs.** Method 4 cited `bedblend/segregation.py`, described
+  its equations across the docs, the App and the Methodology page, and rated it SOTA. Nothing in any
+  shipped path called it: three fitted curves with six constants stood in for it. The directions those
+  curves encoded were published and correct, which is why it survived. Every existing check passed,
+  and the documentation audit made it worse rather than better, because it was built from a
+  ground-truth file written by reading the docs and so only ever enforced agreement.
+
+  Wiring the 2005 model alone was not enough. The pure hyperbolic flux separates the species
+  completely and then stops, reading 0.5162 at `Sr = 1.5` and 0.5162 at `Sr = 15`, so every scenario
+  would have reported the same segregation whatever its drop height. Gray and Chugunov's diffusive
+  remixing (doi:10.1017/S0022112006002977) restores the dependence across the operating range.
+
+  **On the artifacts the cell coarse fraction now spans 0.256 to 0.608 between the 5th and 95th
+  percentiles, reaching 0.98 in toe cells and 0.08 in fine-rich crest cells, against the 0.332 to
+  0.400 band the fitted curves produced.** A band that narrow is why the segregation half of the
+  product had almost nothing to show.
+
+- **A reclaim cut is bounded by the machine, not by the face.** Cuts spread their tonnage
+  proportionally over the entire working face: 632 cuts at a mean 594 m2, one scenario taking 355 t
+  off 486 m2, a single 881 t cut reporting material from 108 distinct dig blocks. `intensive_drain`
+  now removes 900 t across 137 m2, a 3.3 m bite, against 355 t across 486 m2, a 0.37 m skim. Reported
+  by a reader watching the playback and saying the area coming down looked too big for the machine.
+
+  Campaigns also now deliver the tonnage they ask for. The old proportional skim silently
+  under-delivered, taking 881 t where the scenario specified 3000.
+
+- **`seg` in the load log is the MEASURED sorting** of that load, from the profile the march produced,
+  and the new `sr` carries the segregation number it was solved at. It used to hold the strength of
+  the published DRIVERS, which is an input to the physics rather than a result of it. The App panel
+  labels both, and reports what the overrun is made of rather than only how much of it there is.
+
+- **Cuts carry the size of the feed they delivered** (`coarse`). The engine modelled the sorting in
+  detail and discarded the answer at the one moment it became a number a plant would care about.
+
+### Added
+
+- **`scripts/check_method_ladder.py`**, the gate that would have caught the unwired solver. It walks
+  the import graph from the bake and fails if a method rated SOTA names a module nothing invokes. The
+  subtlety that makes it work: an edge only counts when the importing module USES the imported name,
+  so `bedblend/__init__.py`, which re-exports every module as strings in `__all__`, contributes
+  nothing and cannot launder an orphan into the graph. Verified against the defect: before the fix
+  `segregation.py` was reachable from nothing, and method 4 would have failed.
+- **Method 20, the reclaim face**, covering the machine, the stance, the bite and the tramming. The
+  ladder had method 19 for the haulage and nothing at all for the geometry of the cut.
+- **Artifact gates**: a cut must remove at least 0.5 m of depth rather than skimming, its footprint
+  must respond to its tonnage, and the reclaimed feed must carry a non-zero size split. Depth rather
+  than area on purpose: the same honest parcel covers a small hole in a tall pile and a wide one in a
+  young thin pile, so an area limit would fail a correct concurrent scenario and pass a skim on a
+  deep one.
+
+### Fixed
+
+- **The engine version was hardcoded in four places in the frontend** and a fifth inside the engine,
+  where it had drifted two releases behind its own manifest. It now comes from the `bedblend==` pin in
+  `requirements.txt`, injected at build time beside `__APP_VERSION__`, which is the pattern the app
+  version already used and for the same reason.
+- Documentation that described a coupling the code does not have. The Methodology page and method 4
+  both explained the ledger coupling as a SHIFT away from the layer's mean; the engine writes the
+  solver's composition onto the new parcel, which is correct because the ledger stores parcels.
+
+
 ## [0.05.000] - 2026-08-04
 
 The two cases where the pile is fed and drawn at the same time. They existed, they

@@ -37,8 +37,8 @@ const config: ShellConfig = {
       es: 'Ensenanza e investigacion. Sin contabilidad metalurgica, sin optimizador de mezcla, sin consignas de planta.',
     },
     provenance: {
-      en: 'Engine: bedblend 0.6.0 (MIT); dump geometry calibrated to 28 UAV-surveyed dumps, Young and Rogers 2022, doi:10.3390/mining2010006.',
-      es: 'Motor: bedblend 0.6.0 (MIT); geometria de descarga calibrada contra 28 descargas levantadas con UAV, Young y Rogers 2022, doi:10.3390/mining2010006.',
+      en: `Engine: bedblend ${__ENGINE_VERSION__} (MIT); dump geometry calibrated to 28 UAV-surveyed dumps, Young and Rogers 2022, doi:10.3390/mining2010006.`,
+      es: `Motor: bedblend ${__ENGINE_VERSION__} (MIT); geometria de descarga calibrada contra 28 descargas levantadas con UAV, Young y Rogers 2022, doi:10.3390/mining2010006.`,
     },
   },
 };

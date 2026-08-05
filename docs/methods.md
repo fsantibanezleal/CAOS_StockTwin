@@ -36,6 +36,7 @@ tell a real result from a typo.
 | 17 | Topography and the five fill types | geometry | classical | P | [17](methods/17_topography.md) |
 | 18 | Material: density chain and moisture-dependent repose | material | classical | P | [18](methods/18_material.md) |
 | 19 | Reclaim haulage: loader, truck stand, routed in empty and out loaded | operations | SOTA | P | [19](methods/19_reclaim-haulage.md) |
+| 20 | The reclaim face: machine reach bounds a cut, and the stance trams | operations | SOTA | P | [20](methods/20_reclaim-face.md) |
 
 ## What changed, and why the ladder looks different
 

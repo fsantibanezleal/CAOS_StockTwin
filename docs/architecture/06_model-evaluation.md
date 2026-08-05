@@ -27,10 +27,18 @@ Each has a numerical kill criterion, stated in advance.
 * **C01, the perfect mixer.** A single-cell pad has no geometry, so a cut is the tonnage-weighted mean
   of the whole pile and the achieved ratio must contain the `1/N` bound inside its band. If it does
   not, the ratio implementation is wrong and every number in the product is in doubt.
-* **C02, zero segregation.** At `Sr = 0` the solver must not change any lot's size split, so every
-  cut's coarse fraction must equal the provenance-weighted mix of its source dumps. Applied at lot
-  level, where it is exact, this caught a real modelling error by a quarter of the full range: an
-  early version wrote the solver's absolute composition onto lots that had come from earlier dumps.
+* **C02, zero segregation.** At `Sr = 0` the solver must not sort anything, so every station down the
+  face receives the load's own unsorted split and every cut's coarse fraction equals the
+  provenance-weighted mix of its source dumps. It holds EXACTLY rather than to a tolerance, which is
+  deliberate: the flowing layer short-circuits a uniform profile instead of integrating it, and the
+  diffusivity is `Sr / Pe`, so switching off the sieving switches off the remixing with it. "The
+  solver did nothing" has to be provable, not approximately true.
+
+  This control is also what makes the segregation claim falsifiable in the one way that matters. It
+  cannot, on its own, distinguish a real solver from a stand-in that also returns nothing at zero, and
+  for several releases that is exactly what it failed to catch. `scripts/check_method_ladder.py` is
+  the companion check: it walks the import graph from the bake and fails if a method rated SOTA names
+  code the pipeline never invokes.
 * **C03, starvation.** Reclaiming three times faster than the trucks deliver must empty the pile
   and report starvation, with no negative or NaN tonnage at the boundary.
 

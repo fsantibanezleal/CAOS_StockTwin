@@ -896,8 +896,8 @@ export function DumpDetailPanel({ sc, lang = 'en' }: { sc: Scenario; lang?: Lang
       <h4>{t('Size segregation down the face', 'Segregación granulométrica cara abajo')}</h4>
       <p className="st-note">
         {t(
-          'A cascading load sorts itself: coarse runs to the toe, fines stay near the crest, and part of the coarse rolls beyond the toe entirely. It gets stronger with drop height and face angle. A load tipped on flat ground does not sort at all, which is why the paddock heaps report zero.',
-          'Una carga que cascadea se clasifica sola: el grueso corre al pie, el fino queda cerca de la cresta y parte del grueso rueda más allá del pie. Se intensifica con la altura de caída y el ángulo de la cara. Una carga descargada en terreno plano no se clasifica, por eso los montones en playa reportan cero.',
+          'A cascading load sorts itself: coarse runs to the toe, fines stay near the crest, and part of the coarse rolls beyond the toe entirely. Kinetic sieving is solved down the real face, so the sorting is stronger the further the material runs, and a load tipped on flat ground does not sort at all, which is why the paddock heaps report zero. What rolls past the toe is a separate ballistic mechanism, and it is the one that grows with face angle.',
+          'Una carga que cascadea se clasifica sola: el grueso corre al pie, el fino queda cerca de la cresta y parte del grueso rueda más allá del pie. El tamizado cinético se resuelve sobre la cara real, así que la clasificación es más fuerte cuanto más lejos corre el material, y una carga descargada en terreno plano no se clasifica, por eso los montones en playa reportan cero. Lo que rueda más allá del pie es un mecanismo balístico aparte, y es el que crece con el ángulo de la cara.',
         )}
       </p>
       <dl className="st-stats">
@@ -906,16 +906,25 @@ export function DumpDetailPanel({ sc, lang = 'en' }: { sc: Scenario; lang?: Lang
           <dd>{seg.nSorted}</dd>
         </div>
         <div>
-          <dt>{t('mean intensity', 'intensidad media')}</dt>
-          <dd>{seg.meanIntensity.toFixed(3)}</dd>
+          <dt>{t('mean sorting, toe minus crest', 'clasificación media, pie menos cresta')}</dt>
+          <dd>{seg.meanIndex.toFixed(3)}</dd>
+        </div>
+        <div>
+          <dt>{t('segregation number Sr, mean / max', 'número de segregación Sr, media / máx')}</dt>
+          <dd>
+            {seg.meanSr.toFixed(2)} / {seg.maxSr.toFixed(2)}
+          </dd>
         </div>
         <div>
           <dt>{t('mean drop', 'caída media')}</dt>
           <dd>{seg.meanDrop.toFixed(1)} m</dd>
         </div>
         <div>
-          <dt>{t('coarse past the toe', 'grueso más allá del pie')}</dt>
-          <dd>{(seg.meanOverrun * 100).toFixed(1)} %</dd>
+          <dt>{t('mass past the toe', 'masa más allá del pie')}</dt>
+          <dd>
+            {(seg.meanOverrun * 100).toFixed(1)} %{' '}
+            {t('at', 'a')} {seg.meanOverrunCoarse.toFixed(2)} {t('coarse', 'grueso')}
+          </dd>
         </div>
         <div>
           <dt>{t('coarse fraction across the pile', 'fracción gruesa en la pila')}</dt>
@@ -926,8 +935,8 @@ export function DumpDetailPanel({ sc, lang = 'en' }: { sc: Scenario; lang?: Lang
       </dl>
       <p className="st-note">
         {t(
-          'Published guidance limits conical stockpiles to 10 to 12 m because each additional metre increases percolation segregation. This pile is shorter than that, so a low intensity here is the correct answer rather than a weak model.',
-          'La guía publicada limita las pilas cónicas a 10 a 12 m porque cada metro adicional aumenta la segregación por percolación. Esta pila es más baja que eso, así que una intensidad baja aquí es la respuesta correcta y no un modelo débil.',
+          'Published guidance limits conical stockpiles to 10 to 12 m because each additional metre increases percolation segregation. The drops here are per LOAD rather than the full bench, so the segregation number sits well below the point where the layer would separate completely, and a modest sorting is the correct answer rather than a weak model.',
+          'La guía publicada limita las pilas cónicas a 10 a 12 m porque cada metro adicional aumenta la segregación por percolación. Las caídas aquí son por CARGA y no la banca completa, así que el número de segregación queda bien por debajo del punto donde la capa se separaría del todo, y una clasificación moderada es la respuesta correcta y no un modelo débil.',
         )}
       </p>
     </div>

@@ -79,8 +79,19 @@ export interface Load {
   len?: number;
   wid?: number;
   thick?: number;
+  /**
+   * `seg` is the MEASURED sorting of this load, the coarse fraction of the toe half of the face minus
+   * that of the crest half, read off the profile the Gray-Thornton march produced. It used to carry
+   * `intensity`, the strength of the three published DRIVERS, which is an input to the physics and
+   * not a result of it: a field named for the answer that holds the question is the kind of thing
+   * nobody notices for several releases. `sr` is the segregation number the flowing layer was solved
+   * at, so the driver and the result stay separable.
+   */
   seg?: number;
+  sr?: number;
   overrun?: number;
+  /** What the overrun is MADE OF. Nearly all coarse, which is what the sources report. */
+  overrun_c?: number;
   drop?: number;
   approach?: XY[];
   departure?: XY[];
@@ -594,11 +605,14 @@ export function variogram(
 
 export interface SegSummary {
   nSorted: number;
-  meanIntensity: number;
-  maxIntensity: number;
+  meanIndex: number;
+  maxIndex: number;
+  meanSr: number;
+  maxSr: number;
   meanDrop: number;
   maxDrop: number;
   meanOverrun: number;
+  meanOverrunCoarse: number;
   coarseMin: number;
   coarseMax: number;
 }
@@ -615,11 +629,14 @@ export function segregationSummary(sc: Scenario): SegSummary {
   const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
   return {
     nSorted: sorted.length,
-    meanIntensity: mean(sorted.map((l) => l.seg ?? 0)),
-    maxIntensity: sorted.length ? Math.max(...sorted.map((l) => l.seg ?? 0)) : 0,
+    meanIndex: mean(sorted.map((l) => l.seg ?? 0)),
+    maxIndex: sorted.length ? Math.max(...sorted.map((l) => l.seg ?? 0)) : 0,
+    meanSr: mean(sorted.map((l) => l.sr ?? 0)),
+    maxSr: sorted.length ? Math.max(...sorted.map((l) => l.sr ?? 0)) : 0,
     meanDrop: mean(sorted.map((l) => l.drop ?? 0)),
     maxDrop: sorted.length ? Math.max(...sorted.map((l) => l.drop ?? 0)) : 0,
     meanOverrun: mean(sorted.map((l) => l.overrun ?? 0)),
+    meanOverrunCoarse: mean(sorted.map((l) => l.overrun_c ?? 0)),
     coarseMin: coarse.length ? Math.min(...coarse) : 0,
     coarseMax: coarse.length ? Math.max(...coarse) : 0,
   };

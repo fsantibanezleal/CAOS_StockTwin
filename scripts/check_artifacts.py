@@ -163,6 +163,62 @@ def main() -> None:
                 if len(c.get(leg) or []) < 2:
                     fail(f"{sid}: cut {i} has no `{leg}` route, so the truck teleports")
 
+        # THE FOOTPRINT OF A CUT IS THE MACHINE'S, NOT THE FACE'S. Before the loader had a reach, a
+        # cut was a proportional skim over every cell of the working face: 632 cuts at a mean 594
+        # square metres, one scenario removing 355 tonnes off 486 of them, and a single 881 tonne cut
+        # reporting material from 108 dig blocks. All of it shipped, because nothing measured the
+        # ground a cut disturbed. Two independent symptoms are checked, since either alone can be
+        # argued away and together they cannot.
+        cell_area = json.loads((d / "field.json").read_text(encoding="utf-8"))["cell_m"] ** 2
+        sized = [(c["t"], c["cells"] * cell_area) for c in cuts if c.get("cells") and c.get("t")]
+        if sized:
+            # A CUT MUST DIG, NOT SKIM, and depth is the way to say that. An absolute area threshold
+            # is the wrong test: the same honest 3000 tonne parcel covers a small hole in a tall pile
+            # and a wide one in a young thin pile, so an area limit would fail a correct concurrent
+            # scenario and pass a skim on a deep one. Mean removed depth, tonnage over area over
+            # density, is the invariant. Before the machine had a reach, `intensive_drain` came out at
+            # 0.37 m: seven centimetres of skim per pass over half a football pitch.
+            t_all = sum(t for t, _ in sized)
+            a_all = sum(a for _, a in sized)
+            depth = t_all / (a_all * 2.0) if a_all else 0.0
+            if depth < 0.5:
+                fail(
+                    f"{sid}: the mean cut removes {depth:.2f} m of material across "
+                    f"{a_all / len(sized):.0f} m2, which is a skim over the face rather than a "
+                    f"machine digging it. A cut is bounded by the loader's reach and takes a bench "
+                    f"lift at a time; check `LoaderSpec` is wired into the reclaim faces."
+                )
+            # And it has to SCALE with the tonnage rather than being the same slab every time. A
+            # constant footprint across a tenfold range of cut sizes is the signature of the defect.
+            if len(sized) >= 8:
+                sized.sort()
+                lo = sized[: len(sized) // 4]
+                hi = sized[-(len(sized) // 4) :]
+                lo_t = sum(t for t, _ in lo) / len(lo)
+                hi_t = sum(t for t, _ in hi) / len(hi)
+                lo_a = sum(a for _, a in lo) / len(lo)
+                hi_a = sum(a for _, a in hi) / len(hi)
+                if hi_t > 1.5 * lo_t and hi_a <= lo_a:
+                    fail(
+                        f"{sid}: cuts averaging {hi_t:.0f} t disturb {hi_a:.0f} m2 while cuts "
+                        f"averaging {lo_t:.0f} t disturb {lo_a:.0f} m2. The footprint does not "
+                        f"respond to the tonnage, so it is not the machine that is setting it."
+                    )
+
+        # THE SIZE OF THE FEED must be carried, and must not be zero. `coarse_fraction` died silently
+        # once already, in `blocks.py`, and it is the observable the whole segregation half of the
+        # product is read from. A reclaimed parcel at exactly zero coarse is not material anybody put
+        # in the pile.
+        if any("coarse" not in c for c in cuts):
+            fail(f"{sid}: a cut records no coarse fraction, so the feed has no size. Re-bake.")
+        dead = [i for i, c in enumerate(cuts) if c["coarse"] == 0.0]
+        if dead:
+            fail(
+                f"{sid}: {len(dead)} of {len(cuts)} cuts deliver feed at exactly zero coarse "
+                f"fraction, which is impossible for material that was placed with a size split. "
+                f"This is the positional-rebuild defect: use dataclasses.replace."
+            )
+
         field = json.loads((d / "field.json").read_text(encoding="utf-8"))
         n = field["nx"] * field["ny"]
         for key in ("z", "z0", "grade", "coarse"):
