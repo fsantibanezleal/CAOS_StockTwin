@@ -770,7 +770,14 @@ export default function SiteView3D({
         machines.push('haul');
         const tipping = play.phase === 'tip';
         const lift = tipping ? Math.sin(Math.min(play.sub, 1) * Math.PI) : 0;   // up and back down
-        const pitch = -0.95 * lift;
+        // POSITIVE, and the sign is the whole of it. The cab and the headboard are at +X, so +X is
+        // the FRONT and the tailgate at -X is the rear. A rotation about +Z carries +X toward +Y,
+        // which is up, so a POSITIVE pitch raises the nose and the load slides back and out over the
+        // tailgate. This was negative, which raised the REAR and tipped the body forward over the
+        // cab: the paragraph above described the right manoeuvre and the code performed its mirror.
+        // Nothing numeric could see it, and no still frame either, since the tray is symmetric until
+        // you notice which end went up. It was caught by watching the playback.
+        const pitch = 0.95 * lift;
 
         const tray = new THREE.Group();
         // YELLOW: a haul truck bringing material in. The reclaim machine above is orange.

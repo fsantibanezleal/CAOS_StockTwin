@@ -76,6 +76,13 @@ produced rather than by reading the product.
 
 ### Fixed
 
+- **The haul truck tipped its body the wrong way.** The cab and the headboard are at +X, so +X is the
+  front and the tailgate at -X is the rear; a rotation about +Z carries +X upward, so raising the nose
+  needs a POSITIVE pitch. It was negative, which raised the REAR and tipped the body forward over the
+  cab. The comment beside it described the right manoeuvre and the code performed its mirror. Nothing
+  numeric could see it and no still frame either, since a tray is symmetric until you notice which end
+  went up; it was caught by watching the playback.
+
 - **The engine version was hardcoded in four places in the frontend** and a fifth inside the engine,
   where it had drifted two releases behind its own manifest. It now comes from the `bedblend==` pin in
   `requirements.txt`, injected at build time beside `__APP_VERSION__`, which is the pattern the app

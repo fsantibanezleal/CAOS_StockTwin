@@ -52,18 +52,27 @@ def main() -> None:
     done_file = src / "DONE"
     if not done_file.exists():
         fail(f"{src} has no DONE log, so there is no evidence the bake finished")
-    done: dict[str, set[str]] = {}
+    # The LAST outcome per scenario wins, because a re-run supersedes the run before it. The log is
+    # append-only, so its order is completion order and "last" is well defined. A scenario that failed
+    # and was never retried still fails here; one that failed and was rerun clean does not, and every
+    # retry is printed so a re-run can never pass unnoticed.
+    done: dict[str, str] = {}
+    retried: dict[str, int] = {}
     for line in done_file.read_text(encoding="utf-8").split("\n"):
         parts = line.split()
         if len(parts) == 2:
-            done.setdefault(parts[1], set()).add(parts[0])
+            if parts[1] in done:
+                retried[parts[1]] = retried.get(parts[1], 1) + 1
+            done[parts[1]] = parts[0]
 
     missing = [s for s in want if s not in done]
     if missing:
         fail(f"{len(missing)} scenario(s) never finished: {', '.join(missing)}")
-    nonzero = sorted(s for s, codes in done.items() if codes != {"0"})
+    nonzero = sorted(s for s, code in done.items() if code != "0")
     if nonzero:
         fail(f"{len(nonzero)} scenario(s) exited non-zero: {', '.join(nonzero)}")
+    for sid, n in sorted(retried.items()):
+        print(f"  note: {sid} ran {n} times; taking the last outcome, which was clean")
     extra = sorted(set(done) - set(want))
     if extra:
         fail(f"the bake carries {len(extra)} scenario(s) the registry does not declare: {extra}")
