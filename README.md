@@ -183,18 +183,35 @@ of the dump location polygon, easting and northing, tonnage.
 
 ## Run it locally
 
+Everything is in [`scripts/local/`](scripts/local/), numbered in the order you run it. PowerShell is
+the primary shell; every script has a `.sh` twin with the same behaviour.
+
 ```powershell
-py -3.13 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt -r requirements-dev.txt
-.\.venv\Scripts\python.exe -m pytest tests -q
-.\.venv\Scripts\python.exe -m ruff check data-pipeline tests scripts
-
-# a sandboxed bake; NEVER omit --output unless this is an intentional release bake.
-# invoked BY PATH: this repo declares no package.
-.\.venv\Scripts\python.exe data-pipeline\run.py single --output build\smoke
-
-cd frontend ; npm ci ; npm run dev
+.\scripts\local\00_install-prereqs.ps1     # check Python 3.12+, Node 22+, git. Installs nothing without -Install
+.\scripts\local\01_init.ps1                # both venvs, the frontend packages. Idempotent
+.\scripts\local\03_dev.ps1                 # http://localhost:5173
 ```
+
+```bash
+./scripts/local/00_install-prereqs.sh
+./scripts/local/01_init.sh
+./scripts/local/03_dev.sh
+```
+
+**A fresh clone runs without generating anything.** There is no `.env`, no backend, no database and no
+secret: the 22 baked scenarios are committed in `data/derived/`, so `01_init` then `03_dev` is the
+whole path from clone to a running app.
+
+To regenerate the artifacts, which takes about half an hour for all 22:
+
+```powershell
+.\scripts\local\02_generate-data.ps1                 # all, into build/local, nothing tracked touched
+.\scripts\local\02_generate-data.ps1 -Scenario yard  # one case
+.\scripts\local\02_generate-data.ps1 -Release        # all, then install as canonical
+```
+
+[`scripts/local/README.md`](scripts/local/README.md) documents each script, its options, and how to
+run the release gates.
 
 The canonical bake, the web build and the deploy are separate operations. Deployment verifies the
 committed artifacts and publishes them; it never runs science.
