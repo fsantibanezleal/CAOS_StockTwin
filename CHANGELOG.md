@@ -9,6 +9,57 @@ While the product is pre-release and its at-bar review is open, the version stay
 
 ## [Unreleased]
 
+## [0.06.003] - 2026-08-05
+
+Engine 0.07.003, which adds the wiki the engine repo did not have: 21 pages written from the source
+with every number reproduced by running it. Documentation-only on the engine side, verified rather
+than assumed by re-baking `single` and comparing byte for byte.
+
+### Fixed
+
+- **The `stlab` namespace is gone.** Four documents and three source files referenced the package name
+  this product was instantiated with, before it stopped declaring a package at all. What survived was
+  worse than a stale name: they documented `stlab.stages.calibrate`, `stlab/core/rng.py::derive` and
+  `stlab/core/gate.py::classify_lane()`, none of which existed in any form, and
+  `data-pipeline/README.md` described a seven-module layout that was pure template, down to
+  "EXAMPLE = SIR".
+
+- **Two architecture pages described machinery this product never built.**
+  `02_determinism-and-trace.md` claimed one hash-derived seeded stream per concern; there is one seed
+  per scenario, carried explicitly, and that is now what the page says.
+  `03_the-gate.md` documented a lane gate with millisecond budgets and a `classify_lane` function.
+  There is no such gate; there are nine real release gates, so the page documents those instead, each
+  with the defect that shaped it.
+
+- **The bedblend framework card documented a `RunConfig` control surface** that has never existed in
+  this engine. The control surface is `Scenario`, and the page now lists the knobs that change an
+  answer rather than a picture, and says plainly that the segregation number is NOT among them
+  because it is derived per load.
+
+- **The bring-your-own-data guide was fiction end to end.** It imported three modules from a namespace
+  that does not exist. It now uses the real `validate_rows` and `read_csv_rows`, quotes output from a
+  run, and carries an adapter from accepted rows to `Payload` that was executed end to end before
+  being written down.
+
+### Added
+
+- **`data-pipeline/pipeline/calibrate.py`, because two documents said it existed and it did not.** One
+  of those was edited earlier the same day without checking. The honest repair is to write the module,
+  not to soften the sentence.
+
+  It fits the segregation number and the Peclet number to a measured apex-to-toe profile with a
+  bounded two-pass grid search, never an optimiser, because an optimiser's convergence path is not
+  reproducible across implementations and the determinism contract does not allow it. **Tested by
+  recovery**, which is the only check separating a working fit from a plausible one: a profile
+  synthesised at `Sr = 2.40, Pe = 14.0` is recovered at 2.397 and 14.01. A profile reversed to put
+  coarse at the crest, which kinetic sieving cannot produce, must fit an order of magnitude worse, so
+  the residual is an error bar rather than a decoration.
+
+- **`stlab` is now forbidden content in `check_template_residue.py`**, with `CHANGELOG.md` and `wip/`
+  exempted because a dated record of what was true then is history rather than residue. Verified it
+  catches a reintroduction.
+
+
 ## [0.06.002] - 2026-08-05
 
 Engine 0.07.002. Findings from an adversarial audit of the release: 46 candidates from six
