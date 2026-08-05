@@ -54,7 +54,7 @@ from each dump, and those fractions sum to one, checked numerically on every cut
 **How much is size segregation biasing the cut?** The flowing layer on each avalanche is solved with
 the Gray and Thornton kinetic-sieving model, down a REAL face taken from the terrain rather than down a
 nominal slope. A load that never ran out on a face is not sorted at all, which is why the coarse
-fraction across a shipped pile spans 0.000 to 0.483 rather than sitting at a uniform 0.350.
+fraction across a shipped pile spans 0.137 to 0.940 rather than sitting at the feed's uniform 0.350.
 
 ## How the pile is built
 

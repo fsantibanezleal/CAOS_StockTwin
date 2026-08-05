@@ -62,8 +62,15 @@ because relaxation moves it downhill from wherever it first landed.
 Each load carries a coarse and a fine fraction. The split is a property of the material as it leaves
 the shovel, and it is what [method 4](04_segregation.md) redistributes down a face. A load that never
 ran out on a face keeps its own split unchanged, which is why the coarse fraction across a shipped
-pile spans 0.000 to 0.483 rather than sitting at a uniform value: only the loads that cascaded were
-sorted.
+pile spans a real range rather than sitting at a uniform value: only the loads that cascaded were
+sorted. On the reference pile the field runs 0.137 to 0.940, with a median of 0.331 against a feed
+split of 0.350, and 28 of 2,825 occupied cells still sitting on the feed value untouched.
+
+> Measured on the committed `single` bake, `field.json`, on 2026-08-05. An earlier version of this
+> page put the range at 0.000 to 0.483, which was true of a bake two engine versions ago and false
+> after the Gray-Thornton solver was wired into `segregate_face`. The zeros in particular were an
+> artifact and not unsorted loads. A number quoted from a previous bake is the easiest thing in this
+> wiki to leave stale, so it is dated.
 
 ## Where it fails
 

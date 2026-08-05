@@ -29,5 +29,5 @@ consume, and it emits no plant setpoint.
 
 The reciprocal convention also circulates in the literature, and the product's own plan was written
 against it before the research pass caught it. Building on the wrong direction would have inverted
-every number and made the recommendation layer advise the worse stacking method, so the formula is
-rendered next to the value on every surface and pinned by a test.
+every number and made every comparison between stacking methods point the wrong way, so the formula
+is rendered next to the value on every surface and pinned by a test.
