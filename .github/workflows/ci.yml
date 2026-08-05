@@ -174,6 +174,12 @@ jobs:
             echo "::error::an editable install of this repo reappeared; the pipeline is invoked by path"; fail=1; fi
           if grep -rqE 'python -m (pipeline|[a-z_]+lab)\.' .github scripts 2>/dev/null; then
             echo "::error::the pipeline is being invoked as a module; use python data-pipeline/run.py"; fail=1; fi
+          # A TRACKED .sh MUST BE MODE 100755. Committed from Windows they default to 100644, so a
+          # Linux or macOS clone gets "Permission denied" on the exact command the README prints.
+          # Git stores the bit, the working tree on Windows does not show it, and nothing else notices.
+          if git ls-files -s '*.sh' | grep -qv '^100755'; then
+            echo "::error::a tracked .sh is not executable; fix with git update-index --chmod=+x <file>"
+            git ls-files -s '*.sh' | grep -v '^100755'; fail=1; fi
           if [ "$fail" -eq 0 ]; then echo "guards: OK"; fi
           exit $fail
       - uses: actions/setup-python@v5
@@ -181,5 +187,5 @@ jobs:
           python-version: "3.12"
       - name: No template residue (an instantiated product must replace the example lab)
         run: python scripts/check_template_residue.py
-      - name: No em-dash or emoji in product content (ADR-0067)
+      - name: No em-dash, emoji or control byte in product content (ADR-0067)
         run: python scripts/check_content_standards.py
