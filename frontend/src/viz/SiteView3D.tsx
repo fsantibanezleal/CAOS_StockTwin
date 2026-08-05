@@ -599,6 +599,28 @@ export default function SiteView3D({
       const j = Math.min(Math.max(Math.floor(y / cm), 0), ny - 1);
       return Z[j * nx + i];
     };
+
+    /**
+     * The height to stand a MACHINE at: the highest ground under its footprint, not the ground under
+     * its centre.
+     *
+     * A machine is a rigid box about eleven metres long and it is drawn axis-aligned and level. On
+     * flat ground the centre sample is right, but a stockpile is mostly flank, and on a flank the
+     * uphill half of the box goes straight into the hill: the truck was measured half buried on the
+     * side of the pile, which is what "the truck is under the terrain" means. Standing it on the
+     * highest ground it covers can leave the downhill end a little proud, and a machine floating a
+     * few centimetres reads as a machine, where a machine sunk to its windows does not.
+     */
+    const standOn = (x: number, y: number, reach = 6) => {
+      let top = -Infinity;
+      for (let dx = -reach; dx <= reach; dx += cm) {
+        for (let dy = -reach; dy <= reach; dy += cm) {
+          const g = groundAt(x + dx, y + dy);
+          if (g > top) top = g;
+        }
+      }
+      return top === -Infinity ? groundAt(x, y) : top;
+    };
     const mkLine = (
       pts: [number, number][], colour: number, lift: number, opacity = 1, width = 1,
     ) => {
@@ -662,12 +684,12 @@ export default function SiteView3D({
         // them either, because the light-theme ground sits in the same band. A gate built on that
         // would have passed whether or not a machine was ever drawn, which is precisely the defect
         // it exists to catch.
-        machines.push('loader', 'truck');
         const orange = new THREE.MeshLambertMaterial({ color: dark ? 0xff9d4d : 0xe07b1f });
         const steel = new THREE.MeshLambertMaterial({ color: dark ? 0x8b97a5 : 0x6c7885 });
 
         // THE LOADER, on the cut, working through the load phase.
         if (play.loader) {
+          machines.push('loader');
           const { x, y } = play.loader;
           const loader = new THREE.Group();
           const hull = new THREE.Mesh(new THREE.BoxGeometry(8, 2.8, 5.4), orange);
@@ -684,12 +706,13 @@ export default function SiteView3D({
           bucket.position.set(5.4, 1.3 + 3.2 * bite, 0);
           bucket.rotation.z = -0.5 * bite;
           loader.add(bucket);
-          loader.position.set(x - W / 2, groundAt(x, y), y - H / 2);
+          loader.position.set(x - W / 2, standOn(x, y, 5), y - H / 2);
           L.content.add(loader);
         }
 
         // THE TRUCK. Empty on the way in, filling while it waits, loaded on the way out.
         if (play.truck) {
+          machines.push('truck');
           const { x, y, heading } = play.truck;
           const body = new THREE.Group();
 
@@ -735,7 +758,7 @@ export default function SiteView3D({
             tray.add(ore);
           }
 
-          body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
+          body.position.set(x - W / 2, standOn(x, y), y - H / 2);
           body.rotation.y = -heading;
           L.content.add(body);
         }
@@ -807,20 +830,26 @@ export default function SiteView3D({
           }
         }
 
-        // Pivot at the rear: shift the group so the tray's own back edge is the origin, rotate, and
-        // shift back. Rotating about the middle would lift the tailgate too, which is the one part
-        // that has to stay down for the load to come out.
-        const REAR = -4.3;
-        tray.position.set(-1.2 + REAR, 4.3, 0);
-        tray.rotation.z = pitch;
+        // HINGED AT THE REAR, which is what a rear-dump body is. The PIVOT sits where the tray's back
+        // edge rests on the chassis and the pivot is what rotates; the tray hangs forward of it. The
+        // tailgate end therefore stays where it is and only the nose rises, which is the one thing
+        // that has to be true for the load to come out of the back.
+        //
+        // The previous version rotated the TRAY inside a pivot group and set the tray's height twice,
+        // once on the tray and again on the pivot. The tray came out at y = 8.6 with the chassis
+        // topping out at 2.9, so it floated a truck's height above the machine and swung away from it
+        // when it tipped. That is the "you destroyed the back section" report, and the arithmetic is
+        // the whole of it: one offset, applied once, on the pivot.
+        const REAR_X = -4.3;                  // the tray's back edge in the tray's own frame
+        const DECK_Y = 4.3;                   // where the tray sits on the chassis
         const pivot = new THREE.Group();
+        pivot.position.set(-1.2 + REAR_X, DECK_Y, 0);
+        pivot.rotation.z = pitch;
+        tray.position.set(-REAR_X, 0, 0);     // the tray's centre, forward of its own hinge
         pivot.add(tray);
-        tray.position.x = 0;
-        tray.translateX(-REAR);
-        pivot.position.set(-1.2 + REAR, 4.3 + 0.5 * lift, 0);
         body.add(pivot);
 
-        body.position.set(x - W / 2, groundAt(x, y), y - H / 2);
+        body.position.set(x - W / 2, standOn(x, y), y - H / 2);
         body.rotation.y = -heading;
         L.content.add(body);
       }
