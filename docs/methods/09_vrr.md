@@ -12,7 +12,7 @@ better consistency.
 
 The reciprocal convention also circulates in secondary sources, and this product's own plan was
 originally written against it. Building on the wrong direction would have inverted every number and
-made the recommendation layer advise the worse stacking method with apparent confidence. The direction
+made every comparison between stacking methods point the wrong way with apparent confidence. The direction
 is pinned by a test and the formula is rendered next to the value on every surface.
 
 ## The tonnage base
