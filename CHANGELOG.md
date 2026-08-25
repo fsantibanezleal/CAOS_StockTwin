@@ -7,6 +7,16 @@ and `tools/version-audit/check_version_coherence.py` is run before tagging.
 
 While the product is pre-release and its at-bar review is open, the version stays in `0.x`.
 
+## [0.07.000] - 2026-08-25
+
+### Added and fixed
+
+- Give the content routes real files, so a shared link answers 200
+- Cap the App-route notes and the caption blocks the paragraph rule could not reach
+- Cap the reading measure on the content routes
+- docs: the coarse-fraction range was two engine versions out of date
+- feat(scripts): scripts/local, the clone-to-running path in one numbered folder
+
 ## [Unreleased]
 
 ## [0.06.003] - 2026-08-05
