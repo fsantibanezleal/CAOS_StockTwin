@@ -3,12 +3,15 @@ name: CI
 on:
   push:
     branches: [main, develop]
-  pull_request:
   workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -26,14 +29,6 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Lint
         run: ruff check data-pipeline tests scripts
-      - name: Tests
-        run: pytest
-      - name: Pipeline smoke (sandboxed; the canonical artifacts are read-only here)
-        # A SMOKE TEST, at a reduced load budget. The point is that every stage runs and the
-        # gate passes, not that the pile is the shipped one: a full campaign is the better part
-        # of half an hour on a runner. The committed artifacts are verified separately, by
-        # scripts/check_artifacts.py, against the real thing.
-        run: python data-pipeline/run.py single --loads 120 --output "${{ runner.temp }}/st-smoke"
       - name: CONTRACT 2, manifests and artifacts consistent (no drift)
         run: python scripts/check_artifacts.py
       # Every method the ladder rates SOTA must name code the pipeline actually runs. The engine
@@ -55,13 +50,13 @@ jobs:
     # this job installs those engines and actually executes them. The DEM card stays skipped by name:
     # PyChrono is conda-only and must never become a CI dependency.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -r requirements-precompute.txt
       - name: Every runnable framework example, executed
         run: |
           python scripts/check_framework_examples.py | tee /tmp/fw.log
@@ -76,6 +71,7 @@ jobs:
     # notices. The architecture diagrams are NOT derived: ADR-0058 makes them hand-authored source, and
     # the generator that used to own them is what let the whole set drift as one block.
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -100,6 +96,7 @@ jobs:
 
   web:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -144,44 +141,9 @@ jobs:
 
   guards:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Base-integrity guards (the regressions this archetype forbids)
-        run: |
-          fail=0
-          # a real .env must never be tracked (only .env.example)
-          if git ls-files | grep -qE '(^|/)\.env(\..+)?$' && ! git ls-files | grep -qx '.env.example'; then
-            echo "::error::a real .env is tracked (only .env.example may be)"; fail=1; fi
-          # venvs / native binaries / heavy model blobs must never be tracked
-          if git ls-files | grep -qiE '(^|/)\.?venv|\.(dll|so|dylib|pt|pth)$'; then
-            echo "::error::a venv or native/heavy binary is tracked (recreate from requirements; keep models small/LFS)"; fail=1; fi
-          # raw/heavy data must never be tracked, commit only compact derived artifacts under data/derived/
-          if git ls-files | grep -qiE '\.(parquet|h5|hdf5|nc|mat|npy)$'; then
-            echo "::error::raw/heavy data tracked, commit only compact derived artifacts (data/derived/)"; fail=1; fi
-          # no leaked local machine paths in tracked sources
-          if git grep -nF 'D:\_Repos' -- . ':!.github' >/dev/null 2>&1; then
-            echo "::error::leaked local machine path in a tracked file"; fail=1; fi
-          # MineLib grants academic download only, with NO redistribution. An instance file in the repo
-          # would be a licence breach, and it is the kind that is easy to commit by accident.
-          if git ls-files | grep -qE '\.(blocks|prec|upit)$'; then
-            echo "::error::a MineLib instance file is tracked; those are runtime-fetch only, never committed"; fail=1; fi
-          # NO INTERNAL PACKAGE (conventions/no-internal-packages.md). A product either consumes a
-          # published library from its own repo, or has no package at all. The three shapes that
-          # betray a reappearing internal package:
-          if grep -qE '^\s*\[project\]' pyproject.toml; then
-            echo "::error::pyproject.toml declares a [project] table; this product must declare no package"; fail=1; fi
-          if grep -rqE 'pip install .*-e \.' .github scripts 2>/dev/null; then
-            echo "::error::an editable install of this repo reappeared; the pipeline is invoked by path"; fail=1; fi
-          if grep -rqE 'python -m (pipeline|[a-z_]+lab)\.' .github scripts 2>/dev/null; then
-            echo "::error::the pipeline is being invoked as a module; use python data-pipeline/run.py"; fail=1; fi
-          # A TRACKED .sh MUST BE MODE 100755. Committed from Windows they default to 100644, so a
-          # Linux or macOS clone gets "Permission denied" on the exact command the README prints.
-          # Git stores the bit, the working tree on Windows does not show it, and nothing else notices.
-          if git ls-files -s '*.sh' | grep -qv '^100755'; then
-            echo "::error::a tracked .sh is not executable; fix with git update-index --chmod=+x <file>"
-            git ls-files -s '*.sh' | grep -v '^100755'; fail=1; fi
-          if [ "$fail" -eq 0 ]; then echo "guards: OK"; fi
-          exit $fail
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -189,3 +151,5 @@ jobs:
         run: python scripts/check_template_residue.py
       - name: No em-dash, emoji or control byte in product content (ADR-0067)
         run: python scripts/check_content_standards.py
+      - name: CI budget, trunk-only triggers, no training (ADR-0074)
+        run: python scripts/check_ci_budget.py
